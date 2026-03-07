@@ -13,7 +13,7 @@ export const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
             </div>
 
             <div className="tabs-container">
-                {['🔥 Acción', '🌿 Vida', '🧠 Stats'].map((tab) => {
+                {['🔥 Acción', '🌿 Vida', '💸 Finanzas', '🧠 Stats'].map((tab) => {
                     const tabValue = tab.split(' ')[1];
                     return (
                         <button

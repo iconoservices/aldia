@@ -1,5 +1,125 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, X, Receipt, TrendingUp, Target, Moon, Lightbulb } from 'lucide-react';
+
 export const SuperFab = () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const menuItems = [
+        { id: 'gasto', icon: <Receipt size={24} />, color: '#f87171', label: 'Gasto' },
+        { id: 'ingreso', icon: <TrendingUp size={24} />, color: '#4ade80', label: 'Ingreso' },
+        { id: 'tarea', icon: <Target size={24} />, color: '#3b82f6', label: 'Misión' },
+        { id: 'sueno', icon: <Moon size={24} />, color: '#a855f7', label: 'Vida' },
+        { id: 'nota', icon: <Lightbulb size={24} />, color: '#facc15', label: 'Idea' },
+    ];
+
     return (
-        <button className="super-fab">+</button>
+        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 1000 }}>
+            {/* OVERLAY DARK SEMI-TRANSPARENTE */}
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsOpen(false)}
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0,0,0,0.3)',
+                            backdropFilter: 'blur(4px)',
+                            zIndex: -1
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* BOTONES RADIALES (BURBUJAS) */}
+            <div style={{ position: 'relative' }}>
+                <AnimatePresence>
+                    {isOpen && menuItems.map((item, index) => {
+                        // AJUSTE PARA ESQUINA INFERIOR DERECHA:
+                        // Queremos que las burbujas salgan hacia ARRIBA y hacia la IZQUIERDA.
+                        // Ángulos entre 180° (izquierda) y 270° (arriba).
+                        const startAngle = Math.PI; // 180 grados
+                        const endAngle = 1.5 * Math.PI; // 270 grados
+                        const angle = startAngle + (index / (menuItems.length - 1)) * (endAngle - startAngle);
+
+                        const radius = 95; // Distancia desde el centro
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+
+                        return (
+                            <motion.button
+                                key={item.id}
+                                initial={{ scale: 0, x: 0, y: 0 }}
+                                animate={{ scale: 1, x, y }}
+                                exit={{ scale: 0, x: 0, y: 0 }}
+                                transition={{ type: 'spring', stiffness: 300, damping: 20, delay: index * 0.04 }}
+                                style={{
+                                    position: 'absolute',
+                                    width: '52px',
+                                    height: '52px',
+                                    borderRadius: '50%',
+                                    background: item.color,
+                                    border: 'none',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+                                    cursor: 'pointer',
+                                    left: '4px',
+                                    top: '4px'
+                                }}
+                            >
+                                {item.icon}
+                                <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '110%',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 800,
+                                        color: 'white',
+                                        whiteSpace: 'nowrap',
+                                        textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                                    }}
+                                >
+                                    {item.label}
+                                </motion.span>
+                            </motion.button>
+                        );
+                    })}
+                </AnimatePresence>
+
+                {/* BOTÓN PRINCIPAL (+) */}
+                <motion.button
+                    onClick={() => setIsOpen(!isOpen)}
+                    animate={{ rotate: isOpen ? 45 : 0, scale: isOpen ? 0.9 : 1 }}
+                    whileTap={{ scale: 0.8 }}
+                    style={{
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '50%',
+                        background: isOpen ? '#1A1A1A' : 'var(--domain-orange)',
+                        color: 'white',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 8px 25px rgba(255, 140, 66, 0.4)',
+                        cursor: 'pointer',
+                        zIndex: 10
+                    }}
+                >
+                    {isOpen ? <X size={28} /> : <Plus size={32} strokeWidth={2.5} />}
+                </motion.button>
+            </div>
+        </div>
     );
 };
