@@ -19,6 +19,8 @@ export const SuperFab = ({ addMission, addTransaction, addHabit, addCalendarEven
         { id: 'agenda', icon: <Calendar size={24} />, color: '#f59e0b', label: 'Cita' },
         { id: 'sueno', icon: <Moon size={24} />, color: '#a855f7', label: 'Hábito' },
         { id: 'nota', icon: <Lightbulb size={24} />, color: '#facc15', label: 'Idea' },
+        { id: 'ingreso', icon: <TrendingUp size={24} />, color: '#4ade80', label: 'Ingreso' },
+        { id: 'gasto', icon: <Receipt size={24} />, color: '#f87171', label: 'Gasto' },
     ];
 
     return (
