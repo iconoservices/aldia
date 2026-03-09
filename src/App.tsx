@@ -53,7 +53,7 @@ function App() {
                   </div>
 
                   {/* 2. AGENDA (UPCOMING LIST) */}
-                  <div style={{ marginBottom: '1.2rem' }}>
+                  <div style={{ marginBottom: '0.8rem' }}>
                     <UpcomingList agenda={state.agenda} />
                   </div>
 

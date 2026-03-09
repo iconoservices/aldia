@@ -44,7 +44,7 @@ export const MissionList = ({ missions, toggleMission, title = 'Misiones' }: Mis
                 </div>
             </div>
 
-            <div className="time-block-container" style={{ background: '#F0EBE6', padding: '0.8rem', borderRadius: '24px', position: 'relative' }}>
+            <div className="time-block-container" style={{ background: '#F0EBE6', padding: '0.6rem', borderRadius: '20px', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.8rem', color: '#999', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>
                     <span>⚡ TRABAJO (14:00 - 18:00)</span>
                 </div>

@@ -53,19 +53,17 @@ export const UpcomingList = ({ agenda }: UpcomingListProps) => {
                                     boxShadow: isLive ? '0 4px 12px rgba(255,140,66,0.15)' : 'none'
                                 }}
                             >
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                                    <span style={{ fontSize: '0.85rem' }}>{event.title}</span>
-                                    <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{event.startTime}</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '10px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                                        {isLive && (
+                                            <div className="pulse-dot" style={{ minWidth: '6px', height: '6px', borderRadius: '50%', background: 'white' }}></div>
+                                        )}
+                                        <span style={{ fontSize: '0.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.title}</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.62rem', opacity: 0.8, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                        {event.startTime} - {event.endTime}
+                                    </span>
                                 </div>
-                                {isLive && (
-                                    <span style={{
-                                        fontSize: '0.55rem',
-                                        background: 'rgba(255,255,255,0.2)',
-                                        padding: '1px 5px',
-                                        borderRadius: '4px',
-                                        textTransform: 'uppercase'
-                                    }}>Live</span>
-                                )}
                             </div>
                         );
                     })
