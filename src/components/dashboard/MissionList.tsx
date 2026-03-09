@@ -5,9 +5,10 @@ import type { Mission } from '../../hooks/useAlDiaState';
 interface MissionListProps {
     missions: Mission[];
     toggleMission: (id: number) => void;
+    title?: string;
 }
 
-export const MissionList = ({ missions, toggleMission }: MissionListProps) => {
+export const MissionList = ({ missions, toggleMission, title = 'Misiones' }: MissionListProps) => {
     const handleToggle = (id: number, q: string) => {
         const mission = missions.find(m => m.id === id);
         if (mission?.completed) {
@@ -34,7 +35,7 @@ export const MissionList = ({ missions, toggleMission }: MissionListProps) => {
     return (
         <div style={{ marginTop: '0.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <h3 style={{ margin: 0 }}>Misiones</h3>
+                <h3 style={{ margin: 0 }}>{title}</h3>
                 <div style={{ display: 'flex', gap: '12px' }}>
                     <span style={{ fontSize: '0.75rem', color: '#888', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         ⊞ Matriz Joy

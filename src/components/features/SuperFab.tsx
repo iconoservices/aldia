@@ -53,7 +53,7 @@ export const SuperFab = ({ addMission, addTransaction, addHabit, addCalendarEven
                         const endAngle = Math.PI * 1.45; // Un poco menos de 270 grados
                         const angle = startAngle + (index / (menuItems.length - 1)) * (endAngle - startAngle);
 
-                        const radius = 125; // Más alejado para evitar solapamientos
+                        const radius = 150; // Mucho más alejado para evitar que se pisen las etiquetas y burbujas
                         const x = Math.cos(angle) * radius;
                         const y = Math.sin(angle) * radius;
 

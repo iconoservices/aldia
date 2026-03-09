@@ -44,11 +44,26 @@ function App() {
               <>
                 <BentoGrid performanceScore={state.performanceScore} />
                 <div className="dashboard-right-col">
+                  {/* 1. URGENTES (SOLO CRÍTICAS) */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <MissionList
+                      missions={state.missions.filter(m => m.critical && !m.completed)}
+                      toggleMission={state.toggleMission}
+                      title="Urgente (Q1)"
+                    />
+                  </div>
+
+                  {/* 2. AGENDA (UPCOMING LIST) */}
+                  <UpcomingList agenda={state.agenda} />
+
+                  {/* 3. AHORA MISMO (EVENTO ACTUAL) */}
                   <NowPlayingAgenda agenda={state.agenda} />
-                  <UpcomingList missions={state.missions} />
+
+                  {/* 4. RESTO DE MISIONES (NO CRÍTICAS O COMPLETADAS) */}
                   <MissionList
-                    missions={state.missions}
+                    missions={state.missions.filter(m => !m.critical || m.completed)}
                     toggleMission={state.toggleMission}
+                    title="Misiones"
                   />
                 </div>
               </>
