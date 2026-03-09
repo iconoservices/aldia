@@ -60,18 +60,10 @@ export const MissionList = ({ missions, toggleMission }: MissionListProps) => {
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => handleToggle(mission.id, mission.q)}
-                            className={`mission-item ${mission.critical ? 'critical-alert' : ''}`}
+                            className={`mission-item ${mission.critical && !mission.completed ? 'critical-alert' : ''}`}
                             style={{
-                                background: mission.completed ? '#E0D7D0' : (mission.critical ? 'var(--domain-orange)' : 'white'),
-                                border: 'none',
-                                padding: '0.8rem 1rem',
-                                marginBottom: '0.8rem',
-                                boxShadow: mission.critical && !mission.completed ? '0 8px 20px rgba(255, 140, 66, 0.3)' : '0 2px 8px rgba(0,0,0,0.02)',
-                                position: 'relative',
-                                overflow: 'hidden',
-                                cursor: 'pointer',
                                 opacity: mission.completed ? 0.6 : 1,
-                                transition: 'all 0.3s ease'
+                                background: mission.completed ? '#f5f5f5' : 'white',
                             }}
                         >
                             {mission.critical && !mission.completed && (

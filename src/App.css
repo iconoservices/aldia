@@ -1,11 +1,14 @@
 .aldia-container {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 0.8rem;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 /* HEADER COMPRIMIDO */
@@ -268,16 +271,29 @@ h3 {
   align-items: center;
   gap: 0.8rem;
   background: white;
-  padding: 0.7rem;
-  border-radius: 16px;
+  padding: 1rem;
+  border-radius: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  border: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.critical-alert {
+  border-left: 6px solid var(--domain-orange);
+}
+
+.mission-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .circle-check {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border: 2px solid #DDD;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* Dashboard Layout Base (Móvil: vertical) */
@@ -302,11 +318,14 @@ h3 {
   /* El Dashboard se divide en 2 columnas estilo panel de control */
   .dashboard {
     display: grid;
-    grid-template-columns: 1fr 1.15fr;
-    gap: 3rem;
-    overflow-y: auto;
-    height: calc(100vh - 120px);
-    padding-bottom: 2rem;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 4rem;
+    overflow-y: visible;
+    height: auto;
+    padding-bottom: 5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
   }
 
   /* La rejilla Bento ocupa la primera columna */
@@ -314,16 +333,20 @@ h3 {
     flex-direction: column;
     /* Apilar módulos de foco a la izquierda */
     height: fit-content;
+    max-width: 450px;
+    width: 100%;
   }
 
   .right-widgets {
     flex-direction: row;
     /* En PC los mini-widgets se ponen lado a lado */
+    max-width: 450px;
   }
 
   /* Agrupamos la lista de misiones y upcoming a la derecha */
   .dashboard-right-col {
     display: flex;
     flex-direction: column;
+    gap: 2.5rem;
   }
 }

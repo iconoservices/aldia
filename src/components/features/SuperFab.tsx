@@ -49,11 +49,11 @@ export const SuperFab = ({ addMission, addTransaction, addHabit }: SuperFabProps
             <div style={{ position: 'relative' }}>
                 <AnimatePresence>
                     {isOpen && menuItems.map((item, index) => {
-                        const startAngle = Math.PI;
-                        const endAngle = 1.5 * Math.PI;
+                        const startAngle = Math.PI * 0.95; // Desde casi la izquierda
+                        const endAngle = Math.PI * 1.6; // Hasta arriba del todo
                         const angle = startAngle + (index / (menuItems.length - 1)) * (endAngle - startAngle);
 
-                        const radius = 95;
+                        const radius = 140; // Mayor separación
                         const x = Math.cos(angle) * radius;
                         const y = Math.sin(angle) * radius;
 
@@ -87,16 +87,20 @@ export const SuperFab = ({ addMission, addTransaction, addHabit }: SuperFabProps
                             >
                                 {item.icon}
                                 <motion.span
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
                                     style={{
                                         position: 'absolute',
-                                        right: '110%',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 800,
-                                        color: 'white',
+                                        right: '120%',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 900,
+                                        color: '#333',
+                                        background: 'rgba(255,255,255,0.9)',
+                                        padding: '4px 10px',
+                                        borderRadius: '12px',
+                                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
                                         whiteSpace: 'nowrap',
-                                        textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                                        border: `2px solid ${item.color}`
                                     }}
                                 >
                                     {item.label}
