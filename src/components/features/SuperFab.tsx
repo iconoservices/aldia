@@ -87,16 +87,17 @@ export const SuperFab = ({ addMission, addTransaction, addHabit, addCalendarEven
                             >
                                 {item.icon}
                                 <motion.span
-                                    initial={{ opacity: 0, x: 10 }}
-                                    animate={{ opacity: 1, x: 0 }}
+                                    initial={{ opacity: 0, y: -10, x: '-50%' }}
+                                    animate={{ opacity: 1, y: 0, x: '-50%' }}
                                     style={{
                                         position: 'absolute',
-                                        right: '125%', // Un poco más separado
+                                        top: '115%', // Debajo del botón
+                                        left: '50%', // Centrado horizontal
                                         fontSize: '0.75rem',
                                         fontWeight: 900,
                                         color: '#333',
                                         background: 'rgba(255,255,255,0.95)',
-                                        padding: '5px 12px',
+                                        padding: '4px 10px',
                                         borderRadius: '12px',
                                         boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                                         whiteSpace: 'nowrap',
