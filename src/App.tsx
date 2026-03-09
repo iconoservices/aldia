@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 import { Header } from './components/layout/Header';
 import { BentoGrid } from './components/dashboard/BentoGrid';
-import { NowPlayingAgenda } from './components/dashboard/NowPlayingAgenda';
 import { UpcomingList } from './components/dashboard/UpcomingList';
 import { MissionList } from './components/dashboard/MissionList';
 import { VidaDashboard } from './components/dashboard/VidaDashboard';
@@ -54,10 +53,9 @@ function App() {
                   </div>
 
                   {/* 2. AGENDA (UPCOMING LIST) */}
-                  <UpcomingList agenda={state.agenda} />
-
-                  {/* 3. AHORA MISMO (EVENTO ACTUAL) */}
-                  <NowPlayingAgenda agenda={state.agenda} />
+                  <div style={{ marginBottom: '1.2rem' }}>
+                    <UpcomingList agenda={state.agenda} />
+                  </div>
 
                   {/* 4. RESTO DE MISIONES (NO CRÍTICAS O COMPLETADAS) */}
                   <MissionList
