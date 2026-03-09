@@ -49,6 +49,7 @@ function App() {
                       missions={state.missions.filter(m => m.critical && !m.completed)}
                       toggleMission={state.toggleMission}
                       title="Urgente (Q1)"
+                      showTimeBlock={false}
                     />
                   </div>
 

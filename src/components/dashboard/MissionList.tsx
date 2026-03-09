@@ -6,9 +6,10 @@ interface MissionListProps {
     missions: Mission[];
     toggleMission: (id: number) => void;
     title?: string;
+    showTimeBlock?: boolean;
 }
 
-export const MissionList = ({ missions, toggleMission, title = 'Misiones' }: MissionListProps) => {
+export const MissionList = ({ missions, toggleMission, title = 'Misiones', showTimeBlock = true }: MissionListProps) => {
     const handleToggle = (id: number, q: string) => {
         const mission = missions.find(m => m.id === id);
         if (mission?.completed) {
@@ -44,7 +45,10 @@ export const MissionList = ({ missions, toggleMission, title = 'Misiones' }: Mis
                 </div>
             </div>
 
-            <div className="time-block-container" style={{ background: '#F0EBE6', padding: '0.6rem', borderRadius: '20px', position: 'relative' }}>
+            <div
+                className={showTimeBlock ? "time-block-container" : ""}
+                style={showTimeBlock ? { background: '#F0EBE6', padding: '0.6rem', borderRadius: '20px', position: 'relative' } : {}}
+            >
                 <div className="mission-list">
                     {missions.length === 0 ? (
                         <div className="glass-card" style={{ padding: '2rem', textAlign: 'center', background: 'rgba(255,255,255,0.5)', border: '2px dashed #DDD' }}>
