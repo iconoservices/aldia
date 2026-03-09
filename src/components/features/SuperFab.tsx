@@ -49,8 +49,8 @@ export const SuperFab = ({ addMission, addTransaction, addHabit, addCalendarEven
             <div style={{ position: 'relative' }}>
                 <AnimatePresence>
                     {isOpen && menuItems.map((item, index) => {
-                        const startAngle = Math.PI * 1.05; // Un poco más de 180 grados
-                        const endAngle = Math.PI * 1.45; // Un poco menos de 270 grados
+                        const startAngle = Math.PI * 1.02; // Más cerca de 180 grados
+                        const endAngle = Math.PI * 1.55; // Pasa los 270 grados (arriba)
                         const angle = startAngle + (index / (menuItems.length - 1)) * (endAngle - startAngle);
 
                         const radius = 150; // Mucho más alejado para evitar que se pisen las etiquetas y burbujas

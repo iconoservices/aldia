@@ -83,8 +83,8 @@ export const MissionList = ({ missions, toggleMission, title = 'Misiones', showT
                             </div>
 
                             <div style={{ width: '100%', zIndex: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                    {mission.critical && !mission.completed ? <span /> : (
+                                {(!mission.critical || mission.completed) && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                         <span style={{
                                             fontSize: '0.65rem',
                                             fontWeight: 900,
@@ -94,27 +94,41 @@ export const MissionList = ({ missions, toggleMission, title = 'Misiones', showT
                                         }}>
                                             {mission.completed ? 'Misión Cumplida' : 'En Curso'}
                                         </span>
-                                    )}
-                                    <span style={{
-                                        fontSize: '0.6rem',
-                                        color: mission.critical ? 'white' : '#888',
+                                        <span style={{
+                                            fontSize: '0.6rem',
+                                            color: '#888',
+                                            fontWeight: 800,
+                                            background: '#F0EBE6',
+                                            padding: '2px 6px',
+                                            borderRadius: '8px'
+                                        }}>
+                                            {mission.q}
+                                        </span>
+                                    </div>
+                                )}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: (mission.critical && !mission.completed) ? '0' : '2px' }}>
+                                    <p style={{
+                                        margin: '0',
                                         fontWeight: 800,
-                                        background: mission.critical ? 'rgba(255,255,255,0.2)' : '#F0EBE6',
-                                        padding: '2px 6px',
-                                        borderRadius: '8px'
+                                        color: mission.critical ? 'white' : (mission.completed ? '#888' : 'var(--text-carbon)'),
+                                        fontSize: '0.95rem',
+                                        textDecoration: mission.completed ? 'line-through' : 'none'
                                     }}>
-                                        {mission.q}
-                                    </span>
+                                        {mission.text}
+                                    </p>
+                                    {(mission.critical && !mission.completed) && (
+                                        <span style={{
+                                            fontSize: '0.6rem',
+                                            color: 'white',
+                                            fontWeight: 800,
+                                            background: 'rgba(255,255,255,0.2)',
+                                            padding: '2px 6px',
+                                            borderRadius: '8px'
+                                        }}>
+                                            {mission.q}
+                                        </span>
+                                    )}
                                 </div>
-                                <p style={{
-                                    margin: '2px 0 0 0',
-                                    fontWeight: 800,
-                                    color: mission.critical ? 'white' : (mission.completed ? '#888' : 'var(--text-carbon)'),
-                                    fontSize: '0.95rem',
-                                    textDecoration: mission.completed ? 'line-through' : 'none'
-                                }}>
-                                    {mission.text}
-                                </p>
                             </div>
                         </motion.div>
                     ))}
