@@ -1,11 +1,46 @@
-import { Flame, Target, MoreVertical } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Flame, Target, MoreVertical, Play, Pause, RotateCcw } from 'lucide-react';
 
 interface BentoGridProps {
     performanceScore: number;
 }
 
 export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
-    // Cálculo dinámico del progreso del año
+    // --- LÓGICA POMODORO ---
+    const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutos por defecto
+    const [isActive, setIsActive] = useState(false);
+    const [initialTime] = useState(15 * 60);
+
+    useEffect(() => {
+        let interval: number | undefined;
+
+        if (isActive && timeLeft > 0) {
+            interval = window.setInterval(() => {
+                setTimeLeft((prev) => prev - 1);
+            }, 1000);
+        } else if (timeLeft === 0) {
+            setIsActive(false);
+            // Sonido o notificación aquí en el futuro
+        }
+
+        return () => clearInterval(interval);
+    }, [isActive, timeLeft]);
+
+    const toggleTimer = () => setIsActive(!isActive);
+    const resetTimer = () => {
+        setIsActive(false);
+        setTimeLeft(15 * 60);
+    };
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const progress = ((initialTime - timeLeft) / initialTime) * 360;
+
+    // --- CÁLCULO PROGRESO AÑO ---
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 0);
     const diff = (now.getTime() - start.getTime()) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
@@ -18,11 +53,43 @@ export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
             {/* HERO WIDGET (Pomodoro) */}
             <div className="glass-card hero-widget">
                 <div className="widget-header">
+                    <RotateCcw 
+                        size={18} 
+                        className="icon-subtle clickable" 
+                        onClick={resetTimer}
+                        style={{ cursor: 'pointer', marginRight: 'auto' }}
+                    />
                     <MoreVertical size={20} className="icon-subtle" />
                 </div>
-                <div className="pomodoro-visual">
-                    <h2 className="pomodoro-time">15:00</h2>
+                
+                <div 
+                    className="pomodoro-visual" 
+                    onClick={toggleTimer}
+                    style={{ 
+                        cursor: 'pointer',
+                        background: `conic-gradient(var(--domain-orange) ${progress}deg, #FFF5EB 0deg)`,
+                        border: 'none',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <div style={{
+                        position: 'absolute',
+                        width: '85%',
+                        height: '85%',
+                        background: 'white',
+                        borderRadius: '50%',
+                        zIndex: 0
+                    }}></div>
+                    
+                    <div style={{ zIndex: 1, textAlign: 'center' }}>
+                        <h2 className="pomodoro-time" style={{ margin: 0 }}>{formatTime(timeLeft)}</h2>
+                        {isActive ? <Pause size={16} color="#DDD" fill="#DDD" /> : <Play size={16} color="var(--domain-orange)" fill="var(--domain-orange)" />}
+                    </div>
                 </div>
+
                 <p className="widget-label">Enfoque Actual</p>
                 <span className="badge-active" style={{ color: performanceScore > 50 ? 'var(--domain-green)' : 'var(--domain-orange)' }}>
                     {performanceScore > 70 ? 'Ultra Foco' : 'Productivo'}

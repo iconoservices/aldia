@@ -1,4 +1,5 @@
-import { TrendingUp, Wallet, ArrowUpCircle, ArrowDownCircle, UserMinus, UserPlus } from 'lucide-react';
+import { TrendingUp, Wallet, ArrowUpCircle, ArrowDownCircle, UserMinus, UserPlus, BarChart3 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { Transaction } from '../../hooks/useAlDiaState';
 
 interface FinanzasProps {
@@ -53,6 +54,62 @@ export const FinanzasDashboard = ({ balance, income, expense, owe, owed, transac
                         <p style={{ margin: 0, fontSize: '0.75rem', color: '#888' }}>Basado en tus ingresos hoy</p>
                     </div>
                     <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#4ade80' }}>+${income > 0 ? income : '87.00'}</span>
+                </div>
+            </div>
+
+            {/* GRÁFICO DE BARRAS PREMIUM: FLUJO SEMANAL */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0 }}>Flujo Semanal (7d)</h3>
+                <BarChart3 size={18} color="#888" />
+            </div>
+
+            <div className="glass-card" style={{ marginBottom: '2rem', padding: '1.5rem', height: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '140px', gap: '8px', paddingBottom: '10px' }}>
+                    {[
+                        { day: 'Lun', exp: 120, inc: 400 },
+                        { day: 'Mar', exp: 450, inc: 100 },
+                        { day: 'Mié', exp: 200, inc: 800 },
+                        { day: 'Jue', exp: 800, inc: 300 },
+                        { day: 'Vie', exp: 300, inc: 1200 },
+                        { day: 'Sáb', exp: 1200, inc: 450 },
+                        { day: 'Dom', exp: expense, inc: income }
+                    ].map((data, i) => {
+                        const maxVal = 1200;
+                        const incHeight = (data.inc / maxVal) * 100;
+                        const expHeight = (data.exp / maxVal) * 100;
+
+                        return (
+                            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', height: '100%', justifyContent: 'flex-end' }}>
+                                <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '100%', width: '100%', justifyContent: 'center' }}>
+                                    {/* Barra de Ingreso */}
+                                    <motion.div
+                                        initial={{ height: 0 }}
+                                        animate={{ height: `${Math.min(incHeight, 100)}%` }}
+                                        transition={{ delay: i * 0.05, duration: 0.8 }}
+                                        style={{ width: '8px', background: 'var(--domain-green)', borderRadius: '4px 4px 0 0', opacity: 0.8 }}
+                                    />
+                                    {/* Barra de Gasto */}
+                                    <motion.div
+                                        initial={{ height: 0 }}
+                                        animate={{ height: `${Math.min(expHeight, 100)}%` }}
+                                        transition={{ delay: (i + 1) * 0.05, duration: 0.8 }}
+                                        style={{ width: '8px', background: '#f87171', borderRadius: '4px 4px 0 0', opacity: 0.8 }}
+                                    />
+                                </div>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: i === 6 ? 'var(--domain-orange)' : '#AAA' }}>{data.day}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--domain-green)' }}></div>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#888' }}>INGRESOS</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f87171' }}></div>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#888' }}>GASTOS</span>
+                    </div>
                 </div>
             </div>
 

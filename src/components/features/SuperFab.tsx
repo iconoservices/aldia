@@ -19,8 +19,6 @@ export const SuperFab = ({ addMission, addTransaction, addHabit, addCalendarEven
         { id: 'agenda', icon: <Calendar size={24} />, color: '#f59e0b', label: 'Cita' },
         { id: 'sueno', icon: <Moon size={24} />, color: '#a855f7', label: 'Hábito' },
         { id: 'nota', icon: <Lightbulb size={24} />, color: '#facc15', label: 'Idea' },
-        { id: 'ingreso', icon: <TrendingUp size={24} />, color: '#4ade80', label: 'Ingreso' },
-        { id: 'gasto', icon: <Receipt size={24} />, color: '#f87171', label: 'Gasto' },
     ];
 
     return (
@@ -65,7 +63,13 @@ export const SuperFab = ({ addMission, addTransaction, addHabit, addCalendarEven
                                 initial={{ scale: 0, x: 0, y: 0 }}
                                 animate={{ scale: 1, x, y }}
                                 exit={{ scale: 0, x: 0, y: 0 }}
-                                transition={{ type: 'spring', stiffness: 300, damping: 20, delay: index * 0.04 }}
+                                whileHover={{ scale: 1.15, filter: 'brightness(1.1)' }}
+                                transition={{ 
+                                    type: 'spring', 
+                                    stiffness: 500, // Más rígido para rebote rápido
+                                    damping: 15,    // Menos amortiguación para más oscilación
+                                    delay: index * 0.03 
+                                }}
                                 style={{
                                     position: 'absolute',
                                     width: '52px',

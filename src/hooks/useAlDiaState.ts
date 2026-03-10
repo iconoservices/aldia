@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { db, auth } from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged, type User } from 'firebase/auth';
 
 // Tipos de datos
 export interface Mission {
@@ -34,65 +37,106 @@ export interface Habit {
 }
 
 export const useAlDiaState = () => {
-    // 1. Estados Iniciales / Carga de LocalStorage
-    const [missions, setMissions] = useState<Mission[]>(() => {
-        const saved = localStorage.getItem('aldia_missions');
-        return saved ? JSON.parse(saved) : [
+    const [user, setUser] = useState<User | null>(null);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    // 1. Estados Iniciales
+    const [missions, setMissions] = useState<Mission[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [balance, setBalance] = useState(4250.00);
+    const [habits, setHabits] = useState<Habit[]>([]);
+    const [agenda, setAgenda] = useState<CalendarEvent[]>([]);
+
+    // 2. Manejo de Autenticación y Carga Inicial
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            setUser(user);
+            
+            if (user) {
+                // Cargar desde Firestore
+                const docRef = doc(db, 'users', user.uid);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.missions) setMissions(data.missions);
+                    if (data.transactions) setTransactions(data.transactions);
+                    if (data.balance !== undefined) setBalance(data.balance);
+                    if (data.habits) setHabits(data.habits);
+                    if (data.agenda) setAgenda(data.agenda);
+                } else {
+                    // Si no hay datos en cloud, intentar migrar los locales
+                    loadFromLocal();
+                }
+            } else {
+                // Cargar desde LocalStorage si no hay usuario
+                loadFromLocal();
+            }
+            setIsInitialLoad(false);
+        });
+
+        return unsubscribe;
+    }, []);
+
+    const loadFromLocal = () => {
+        const sMissions = localStorage.getItem('aldia_missions');
+        if (sMissions) setMissions(JSON.parse(sMissions));
+        else setMissions([
             { id: 1, text: 'Pagar Luz (Vence Hoy)', q: 'Q1', critical: true, completed: false },
             { id: 2, text: 'Terminar maquetación AlDía', q: 'Q2', critical: false, completed: false },
             { id: 3, text: 'Diseñar Menú Radial (+)', q: 'Q2', critical: false, completed: false },
             { id: 4, text: 'Revisar emails de suscripciones', q: 'Q3', critical: false, completed: false },
-        ];
-    });
+        ]);
 
-    const [transactions, setTransactions] = useState<Transaction[]>(() => {
-        const saved = localStorage.getItem('aldia_transactions');
-        return saved ? JSON.parse(saved) : [];
-    });
+        const sTransactions = localStorage.getItem('aldia_transactions');
+        if (sTransactions) setTransactions(JSON.parse(sTransactions));
 
-    const [balance, setBalance] = useState(() => {
-        const saved = localStorage.getItem('aldia_balance');
-        return saved ? parseFloat(saved) : 4250.00;
-    });
+        const sBalance = localStorage.getItem('aldia_balance');
+        if (sBalance) setBalance(parseFloat(sBalance));
 
-    const [habits, setHabits] = useState<Habit[]>(() => {
-        const saved = localStorage.getItem('aldia_habits');
-        return saved ? JSON.parse(saved) : [
+        const sHabits = localStorage.getItem('aldia_habits');
+        if (sHabits) setHabits(JSON.parse(sHabits));
+        else setHabits([
             { id: 1, name: 'Tomar 2L de Agua', completedDays: [0, 1, 2] },
             { id: 2, name: 'Leer 15 páginas', completedDays: [1] },
             { id: 3, name: 'Meditar 10 min', completedDays: [] }
-        ];
-    });
+        ]);
 
-    const [agenda, setAgenda] = useState<CalendarEvent[]>(() => {
-        const saved = localStorage.getItem('aldia_agenda');
-        return saved ? JSON.parse(saved) : [
+        const sAgenda = localStorage.getItem('aldia_agenda');
+        if (sAgenda) setAgenda(JSON.parse(sAgenda));
+        else setAgenda([
             { id: 1, title: 'Reunión de Maquetación', startTime: '15:00', endTime: '17:00', description: 'Avanzar en la lógica PWA de AlDía' },
             { id: 2, title: 'Gimnasio / Entreno', startTime: '18:30', endTime: '20:00', description: 'Día de pierna y cardio' },
             { id: 3, title: 'Cena con Equipo', startTime: '21:00', endTime: '22:30', description: 'Revisión mensual de objetivos' }
-        ];
-    });
+        ]);
+    };
 
-    // 2. Persistencia Automática
+    // 3. Persistencia Unificada (Local + Cloud)
     useEffect(() => {
+        if (isInitialLoad) return;
+
+        // Siempre guardar en LocalStorage por seguridad / offline
         localStorage.setItem('aldia_missions', JSON.stringify(missions));
-    }, [missions]);
-
-    useEffect(() => {
         localStorage.setItem('aldia_transactions', JSON.stringify(transactions));
-    }, [transactions]);
-
-    useEffect(() => {
         localStorage.setItem('aldia_balance', JSON.stringify(balance));
-    }, [balance]);
-
-    useEffect(() => {
         localStorage.setItem('aldia_habits', JSON.stringify(habits));
-    }, [habits]);
-
-    useEffect(() => {
         localStorage.setItem('aldia_agenda', JSON.stringify(agenda));
-    }, [agenda]);
+
+        // Borrar "old" LocalStorage keys if they were different (not needed here but good practice)
+
+        // Guardar en Firestore si hay usuario
+        if (user) {
+            const docRef = doc(db, 'users', user.uid);
+            setDoc(docRef, {
+                missions,
+                transactions,
+                balance,
+                habits,
+                agenda,
+                lastSync: new Date().toISOString()
+            }, { merge: true });
+        }
+    }, [missions, transactions, balance, habits, agenda, user, isInitialLoad]);
 
     // 3. Acciones (Cerebro)
 

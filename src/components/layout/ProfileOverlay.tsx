@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, LogOut, Edit2, Download, Share, Camera, User } from 'lucide-react';
 import { usePWA } from '../../hooks/usePWA';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ProfileOverlayProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ export const ProfileOverlay = ({ isOpen, onClose }: ProfileOverlayProps) => {
     const [name, setName] = useState('Juan Diego');
     const [isEditing, setIsEditing] = useState(false);
     const { isInstalled, install, canInstall } = usePWA();
+    const { user, loginWithGoogle, logout } = useAuth();
     const [showIOSGuide, setShowIOSGuide] = useState(false);
     const [profilePic, setProfilePic] = useState<string | null>(null);
 
@@ -163,6 +165,21 @@ export const ProfileOverlay = ({ isOpen, onClose }: ProfileOverlayProps) => {
                             <div className="settings-group">
                                 <h4 style={{ color: '#CCC', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', marginBottom: '10px' }}>Conectividad</h4>
                                 <div style={{ display: 'grid', gap: '0.8rem' }}>
+                                    {!user ? (
+                                        <button onClick={loginWithGoogle} style={{ ...settingItemStyle, background: 'var(--domain-blue)', color: 'white' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <User size={20} />
+                                                <span>Iniciar Sesión (Cloud Sync)</span>
+                                            </div>
+                                        </button>
+                                    ) : (
+                                        <div style={{ ...settingItemStyle, background: '#F0F7FF', cursor: 'default' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--domain-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'white' }}>✓</div>
+                                                <span>Cloud Sync Activo ({user.email})</span>
+                                            </div>
+                                        </div>
+                                    )}
                                     <button style={settingItemStyle}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <Calendar size={20} color="var(--domain-orange)" />
@@ -175,12 +192,21 @@ export const ProfileOverlay = ({ isOpen, onClose }: ProfileOverlayProps) => {
 
                             <div className="settings-group">
                                 <h4 style={{ color: '#CCC', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', marginBottom: '10px' }}>General</h4>
-                                <button style={{ ...settingItemStyle, color: '#f87171' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <LogOut size={20} />
-                                        <span>Cerrar Sesión local</span>
-                                    </div>
-                                </button>
+                                {user ? (
+                                    <button onClick={logout} style={{ ...settingItemStyle, color: '#f87171' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <LogOut size={20} />
+                                            <span>Cerrar Sesión</span>
+                                        </div>
+                                    </button>
+                                ) : (
+                                    <button style={{ ...settingItemStyle, color: '#f87171' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <LogOut size={20} />
+                                            <span>Limpiar caché local</span>
+                                        </div>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </motion.div>
