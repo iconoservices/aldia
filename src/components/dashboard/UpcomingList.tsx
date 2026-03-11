@@ -7,7 +7,7 @@ interface UpcomingListProps {
     title?: string;
 }
 
-export const UpcomingList = ({ agenda, hideOnEmpty = false, title = "Agenda" }: UpcomingListProps) => {
+export const UpcomingList = ({ agenda, title = "Agenda" }: UpcomingListProps) => {
     // Obtener la hora actual para filtrar eventos pasados
     const now = new Date();
     const currentHour = now.getHours();
@@ -21,7 +21,7 @@ export const UpcomingList = ({ agenda, hideOnEmpty = false, title = "Agenda" }: 
         return endTimeMinutes > currentTimeMinutes;
     }).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-    if (hideOnEmpty && upcomingEvents.length === 0) return null;
+    // No ocultamos el componente entero, solo mostramos estado vacío si no hay citas
 
     return (
         <div style={{ marginBottom: '1.2rem' }}>
@@ -37,10 +37,18 @@ export const UpcomingList = ({ agenda, hideOnEmpty = false, title = "Agenda" }: 
             }}>
                 {title}
             </h3>
-            <div className="upcoming-list" style={{ display: 'grid', gap: '0.8rem' }}>
+            <div className="upcoming-list" style={{ display: 'grid', gap: '0.6rem' }}>
                 {upcomingEvents.length === 0 ? (
-                    <div className="glass-card capsule upcoming-item" style={{ background: '#F5F5F5', color: '#AAA', textAlign: 'center', padding: '1rem', borderRadius: '18px' }}>
-                        No hay más citas hoy ✨
+                    <div style={{ 
+                        padding: '12px 20px', 
+                        background: 'rgba(0,0,0,0.03)', 
+                        borderRadius: '16px', 
+                        fontSize: '0.8rem', 
+                        color: '#999',
+                        fontWeight: 600,
+                        border: '1px dashed #DDD'
+                    }}>
+                         ✨ Sin citas hoy
                     </div>
                 ) : (
                     upcomingEvents.slice(0, 3).map(event => {
