@@ -8,10 +8,13 @@ interface BentoGridProps {
 
 export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
     // --- LÓGICA POMODORO ---
+    const [pomoMode, setPomoMode] = useState<'classic' | 'blocks'>('blocks');
     const [currentSession, setCurrentSession] = useState(1);
     const [isBreak, setIsBreak] = useState(false);
-    const WORK_TIME = 12 * 60; // 12 minutos de trabajo
-    const BREAK_TIME = 3 * 60;  // 3 minutos de descanso
+    
+    const WORK_TIME = pomoMode === 'blocks' ? 12 * 60 : 25 * 60;
+    const BREAK_TIME = pomoMode === 'blocks' ? 3 * 60 : 5 * 60;
+    const TOTAL_SESSIONS = pomoMode === 'blocks' ? 4 : 1;
     
     const [timeLeft, setTimeLeft] = useState(WORK_TIME); 
     const [isActive, setIsActive] = useState(false);
@@ -68,12 +71,12 @@ export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
             } else {
                 // Terminó descanso -> Siguiente sesión de trabajo
                 setIsBreak(false);
-                if (currentSession < 4) {
+                if (currentSession < TOTAL_SESSIONS) {
                     setCurrentSession((prev: number) => prev + 1);
                     setTimeLeft(WORK_TIME);
                     setInitialTime(WORK_TIME);
                 } else {
-                    // Terminó el ciclo de 1 hora
+                    // Terminó el ciclo
                     setCurrentSession(1);
                     setTimeLeft(WORK_TIME);
                     setInitialTime(WORK_TIME);
@@ -114,6 +117,11 @@ export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
         setInitialTime(WORK_TIME);
     };
 
+    // Reset completo cuando cambia el modo
+    useEffect(() => {
+        resetTimer();
+    }, [pomoMode]);
+
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -143,6 +151,28 @@ export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
                         style={{ cursor: 'pointer', marginRight: '6px' }}
                     />
                     <div style={{ marginRight: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <select 
+                            value={pomoMode} 
+                            onChange={(e) => {
+                                setIsActive(false);
+                                setPomoMode(e.target.value as any);
+                                // El useEffect de reset se encargará del resto si lo forzamos
+                            }}
+                            style={{ 
+                                fontSize: '0.6rem', 
+                                background: 'var(--domain-orange)', 
+                                border: 'none', 
+                                borderRadius: '6px',
+                                color: 'white',
+                                fontWeight: 800,
+                                outline: 'none',
+                                cursor: 'pointer',
+                                padding: '2px 4px'
+                            }}
+                        >
+                            <option value="blocks">Bloques (1h)</option>
+                            <option value="classic">Clásico (25m)</option>
+                        </select>
                         <div 
                             onClick={() => setSoundEnabled(!soundEnabled)}
                             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
@@ -206,37 +236,39 @@ export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
                     </div>
                 </div>
 
-                {/* SESIONES (BLOQUES) */}
-                <div style={{ display: 'flex', gap: '6px', width: '100%', padding: '0 10px', marginBottom: '10px' }}>
-                    {[1, 2, 3, 4].map((s) => (
-                        <div key={s} style={{ 
-                            flex: 1, 
-                            height: '6px', 
-                            borderRadius: '3px', 
-                            background: s < currentSession ? 'var(--domain-orange)' : (s === currentSession ? '#F0EBE6' : '#F9F9F9'),
-                            overflow: 'hidden',
-                            position: 'relative',
-                            border: s === currentSession ? '1.5px solid #EEE' : 'none'
-                        }}>
-                            {s === currentSession && (
-                                <motion.div 
-                                    initial={{ width: 0 }}
-                                    animate={{ width: progress + '%' }} // Usar porcentaje para la barra
-                                    style={{ 
-                                        height: '100%', 
-                                        background: isBreak ? 'var(--domain-green)' : 'var(--domain-orange)',
-                                        position: 'absolute',
-                                        left: 0,
-                                        top: 0
-                                    }} 
-                                />
-                            )}
-                        </div>
-                    ))}
-                </div>
+                {/* SESIONES (BLOQUES) - Solo si estamos en modo bloques */}
+                {pomoMode === 'blocks' && (
+                    <div style={{ display: 'flex', gap: '6px', width: '100%', padding: '0 10px', marginBottom: '10px' }}>
+                        {[1, 2, 3, 4].map((s) => (
+                            <div key={s} style={{ 
+                                flex: 1, 
+                                height: '6px', 
+                                borderRadius: '3px', 
+                                background: s < currentSession ? 'var(--domain-orange)' : (s === currentSession ? '#F0EBE6' : '#F9F9F9'),
+                                overflow: 'hidden',
+                                position: 'relative',
+                                border: s === currentSession ? '1.5px solid #EEE' : 'none'
+                            }}>
+                                {s === currentSession && (
+                                    <motion.div 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: progress + '%' }} 
+                                        style={{ 
+                                            height: '100%', 
+                                            background: isBreak ? 'var(--domain-green)' : 'var(--domain-orange)',
+                                            position: 'absolute',
+                                            left: 0,
+                                            top: 0
+                                        }} 
+                                    />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <p className="widget-label" style={{ marginBottom: '2px' }}>
-                    Bloque {currentSession} de 4
+                    {pomoMode === 'blocks' ? `Bloque ${currentSession} de 4` : (isBreak ? 'Descanso Clásico' : 'Enfoque Clásico')}
                 </p>
                 <span className="badge-active" style={{ color: performanceScore > 50 ? 'var(--domain-green)' : 'var(--domain-orange)', marginTop: 0 }}>
                     {performanceScore > 70 ? 'Ultra Foco' : 'Productivo'}
