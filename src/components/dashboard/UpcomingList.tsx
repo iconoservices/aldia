@@ -4,9 +4,10 @@ import { Clock } from 'lucide-react';
 interface UpcomingListProps {
     agenda: CalendarEvent[];
     hideOnEmpty?: boolean;
+    title?: string;
 }
 
-export const UpcomingList = ({ agenda, hideOnEmpty = false }: UpcomingListProps) => {
+export const UpcomingList = ({ agenda, hideOnEmpty = false, title = "Agenda" }: UpcomingListProps) => {
     // Obtener la hora actual para filtrar eventos pasados
     const now = new Date();
     const currentHour = now.getHours();
@@ -26,7 +27,7 @@ export const UpcomingList = ({ agenda, hideOnEmpty = false }: UpcomingListProps)
         <div style={{ marginBottom: '0.3rem' }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                 <Clock size={18} color="var(--domain-orange)" />
-                Agenda
+                {title}
             </h3>
             <div className="upcoming-list" style={{ display: 'grid', gap: '0.8rem' }}>
                 {upcomingEvents.length === 0 ? (
