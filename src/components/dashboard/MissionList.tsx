@@ -13,9 +13,10 @@ interface MissionListProps {
     showTimeBlock?: boolean;
     showMatrixLinks?: boolean;
     hideOnEmpty?: boolean;
+    onTimelineClick?: () => void;
 }
 
-export const MissionList = ({ missions, toggleMission, onOpenNote, title = 'Tareas', showTimeBlock = true, showMatrixLinks = true, hideOnEmpty = false }: MissionListProps) => {
+export const MissionList = ({ missions, toggleMission, onOpenNote, title = 'Tareas', showTimeBlock = true, showMatrixLinks = true, hideOnEmpty = false, onTimelineClick }: MissionListProps) => {
     const [isMatrixOpen, setIsMatrixOpen] = useState(false);
 
     const handleToggle = (id: number, q: string) => {
@@ -55,7 +56,12 @@ export const MissionList = ({ missions, toggleMission, onOpenNote, title = 'Tare
                         >
                             ⊞ Matriz Joy
                         </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--domain-orange)', fontWeight: 600, cursor: 'pointer' }}>Timeline ⭢</span>
+                        <span 
+                            onClick={onTimelineClick}
+                            style={{ fontSize: '0.75rem', color: 'var(--domain-orange)', fontWeight: 600, cursor: 'pointer' }}
+                        >
+                            Timeline ⭢
+                        </span>
                     </div>
                 )}
             </div>

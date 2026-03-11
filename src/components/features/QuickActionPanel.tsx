@@ -106,7 +106,7 @@ export const QuickActionPanel = ({ isOpen, onClose, actionType, addMission, addT
             setDate(new Date().toISOString().split('T')[0]);
             setStartTime('09:00');
             setEndTime('10:00');
-            setHasTime(true);
+            setHasTime(false);
             setNoteType('text');
             setNoteItems('');
             setNoteColor('#FFFFFF');

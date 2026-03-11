@@ -65,15 +65,16 @@ function App() {
                   {/* 4. RESTO DE MISIONES (NO CRÍTICAS O COMPLETADAS) */}
                   <MissionList
                     missions={state.missions.filter(m => {
-                      const isRelevantQuadrant = m.q === 'Q1' || m.q === 'Q2';
                       const today = new Date().toISOString().split('T')[0];
                       const isTodayOrPast = !m.dueDate || m.dueDate <= today;
-                      return isRelevantQuadrant && isTodayOrPast;
+                      // Si no es crítica, o si ya está completada pero es de hoy/pasado
+                      return (!m.critical || m.completed) && isTodayOrPast;
                     })}
                     toggleMission={state.toggleMission}
                     onOpenNote={setViewingNoteId}
                     title="Tareas de Hoy"
                     hideOnEmpty={true}
+                    onTimelineClick={() => setActiveTab('Vida')}
                   />
                 </div>
               </>
