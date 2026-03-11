@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 
 interface BentoGridProps {
     performanceScore: number;
+    missions: any[];
 }
 
-export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
+export const BentoGrid = ({ performanceScore, missions }: BentoGridProps) => {
     // --- LÓGICA POMODORO ---
     const [pomoMode, setPomoMode] = useState<'classic' | 'blocks'>('blocks');
+    const [activeMissionId, setActiveMissionId] = useState<number | null>(null);
     const [currentSession, setCurrentSession] = useState(1);
     const [isBreak, setIsBreak] = useState(false);
     
@@ -27,8 +29,10 @@ export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
     useEffect(() => {
         if (isActive && soundEnabled && audio && timeLeft > 0) {
             // Generar un pequeño tono tipo tictac (Beep)
-            const playTick = () => {
+            const playTick = async () => {
                 const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+                if (context.state === 'suspended') await context.resume();
+                
                 const currTime = context.currentTime;
                 const osc = context.createOscillator();
                 const gain = context.createGain();
@@ -108,7 +112,12 @@ export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
         return () => clearInterval(interval);
     }, [isActive, timeLeft]);
 
-    const toggleTimer = () => setIsActive(!isActive);
+    const toggleTimer = () => {
+        // Desbloquear AudioContext para navegadores móviles
+        const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+        if (context.state === 'suspended') context.resume();
+        setIsActive(!isActive);
+    };
     const resetTimer = () => {
         setIsActive(false);
         setIsBreak(false);
@@ -145,6 +154,28 @@ export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
             <div className="glass-card hero-widget">
                 <div className="widget-header" style={{ justifyContent: 'space-between', padding: '0 4px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <select 
+                            value={activeMissionId || ''} 
+                            onChange={(e) => setActiveMissionId(e.target.value ? Number(e.target.value) : null)}
+                            style={{ 
+                                fontSize: '0.65rem', 
+                                background: '#F5F5F5', 
+                                border: '1px solid #EEE', 
+                                borderRadius: '8px',
+                                color: '#666',
+                                fontWeight: 700,
+                                outline: 'none',
+                                cursor: 'pointer',
+                                padding: '4px 8px',
+                                maxWidth: '100px',
+                                textOverflow: 'ellipsis'
+                            }}
+                        >
+                            <option value="">🎯 ENFOCAR EN...</option>
+                            {missions.filter(m => !m.completed).map(m => (
+                                <option key={m.id} value={m.id}>{m.text}</option>
+                            ))}
+                        </select>
                         <RotateCcw 
                             size={18} 
                             className="icon-subtle clickable" 
@@ -229,14 +260,47 @@ export const BentoGrid = ({ performanceScore }: BentoGridProps) => {
                         zIndex: 0
                     }}></div>
                     
-                    <div style={{ zIndex: 1, textAlign: 'center' }}>
-                        <h2 className="pomodoro-time" style={{ margin: 0 }}>{formatTime(timeLeft)}</h2>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                            {isActive ? <Pause size={14} color="#DDD" fill="#DDD" /> : <Play size={14} color="var(--domain-orange)" fill="var(--domain-orange)" />}
-                            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: isBreak ? 'var(--domain-green)' : 'var(--domain-orange)', textTransform: 'uppercase' }}>
-                                {isBreak ? 'Descanso' : 'Enfoque'}
-                            </span>
-                        </div>
+                    <div style={{ zIndex: 1, textAlign: 'center', width: '80%', padding: '0 10px' }}>
+                        {activeMissionId && (
+                            <motion.p 
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                style={{ 
+                                    margin: '0 0 4px 0', 
+                                    fontSize: '0.65rem', 
+                                    fontWeight: 800, 
+                                    color: '#AAA',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '1px'
+                                }}
+                            >
+                                Enfocado en:
+                            </motion.p>
+                        )}
+                        <h2 className="pomodoro-time" style={{ margin: 0, fontSize: activeMissionId ? '2rem' : '2.4rem' }}>{formatTime(timeLeft)}</h2>
+                        
+                        {activeMissionId ? (
+                            <p style={{ 
+                                margin: '4px 0', 
+                                fontSize: '0.75rem', 
+                                fontWeight: 900, 
+                                color: 'var(--text-carbon)',
+                                lineHeight: 1.2,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden'
+                            }}>
+                                {missions.find(m => m.id === activeMissionId)?.text}
+                            </p>
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                {isActive ? <Pause size={14} color="#DDD" fill="#DDD" /> : <Play size={14} color="var(--domain-orange)" fill="var(--domain-orange)" />}
+                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: isBreak ? 'var(--domain-green)' : 'var(--domain-orange)', textTransform: 'uppercase' }}>
+                                    {isBreak ? 'Descanso' : 'Enfoque'}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -10,9 +10,15 @@ interface VidaProps {
     timeBlocks: TimeBlock[];
     addTimeBlock: (label: string, start: string, end: string, color: string) => void;
     removeTimeBlock: (id: number) => void;
+    missions: any[];
+    agenda: any[];
 }
 
-export const VidaDashboard = ({ habits, toggleHabit, addHabit, timeBlocks, addTimeBlock, removeTimeBlock }: VidaProps) => {
+export const VidaDashboard = ({ 
+    habits, toggleHabit, addHabit, 
+    timeBlocks, addTimeBlock, removeTimeBlock,
+    missions, agenda
+}: VidaProps) => {
     const [selectedDay, setSelectedDay] = useState(new Date().getDate());
     const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
     const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
@@ -148,46 +154,93 @@ export const VidaDashboard = ({ habits, toggleHabit, addHabit, timeBlocks, addTi
                         </div>
                     ))}
 
-                    {/* Bloques Flotantes */}
+                    {/* Bloques Flotantes, Agenda y Tareas con Hora */}
                     <div style={{ position: 'absolute', top: 0, left: '6px', right: '6px', height: '100%' }}>
+                        {/* 1. Bloques de Tiempo Manuales */}
                         {timeBlocks.map((block) => {
                             const [startH, startM] = block.start.split(':').map(Number);
                             const [endH, endM] = block.end.split(':').map(Number);
                             const startTotal = (startH - 8) * 60 + startM;
                             const endTotal = (endH - 8) * 60 + endM;
                             const duration = endTotal - startTotal;
-                            
-                            const pixelsPerMinute = 35 / 60; // 35px por hora
+                            const pixelsPerMinute = 35 / 60;
                             const topPos = startTotal * pixelsPerMinute;
-                            const heightPos = duration * pixelsPerMinute;
+                            const heightPos = Math.max(duration * pixelsPerMinute, 25);
 
                             return (
                                 <motion.div 
-                                    key={block.id}
+                                    key={`block-${block.id}`}
                                     initial={{ opacity: 0, x: -5 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     style={{ 
-                                        position: 'absolute', 
-                                        top: topPos, 
-                                        left: 0, 
-                                        right: 0, 
-                                        height: Math.max(heightPos, 20),
-                                        background: block.color + '10',
-                                        borderLeft: `3px solid ${block.color}`,
-                                        borderRadius: '6px',
-                                        padding: '4px 8px',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        zIndex: 1,
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                                        position: 'absolute', top: topPos, left: 0, right: 0, height: heightPos,
+                                        background: block.color + '15',
+                                        borderLeft: `4px solid ${block.color}`,
+                                        borderRadius: '8px', padding: '4px 10px',
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                        zIndex: 1, boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
                                     }}
                                 >
                                     <div style={{ overflow: 'hidden' }}>
-                                        <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 900, color: block.color, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{block.label}</p>
-                                        {heightPos > 25 && <p style={{ margin: 0, fontSize: '0.5rem', fontWeight: 600, color: block.color, opacity: 0.7 }}>{block.start}</p>}
+                                        <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 900, color: block.color, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{block.label}</p>
+                                        <p style={{ margin: 0, fontSize: '0.55rem', fontWeight: 700, opacity: 0.6, color: block.color }}>{block.start} - {block.end}</p>
                                     </div>
-                                    <Trash2 size={10} color={block.color} style={{ cursor: 'pointer', opacity: 0.4 }} onClick={() => removeTimeBlock(block.id)} />
+                                    <Trash2 size={12} color={block.color} style={{ cursor: 'pointer', opacity: 0.5 }} onClick={() => removeTimeBlock(block.id)} />
+                                </motion.div>
+                            );
+                        })}
+
+                        {/* 2. Eventos de Agenda */}
+                        {agenda.filter(event => {
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            return !event.date || event.date === todayStr;
+                        }).map((event) => {
+                            const [startH, startM] = event.startTime.split(':').map(Number);
+                            const [endH, endM] = event.endTime.split(':').map(Number);
+                            const startTotal = (startH - 8) * 60 + startM;
+                            const endTotal = (endH - 8) * 60 + endM;
+                            const duration = endTotal - startTotal;
+                            const topPos = startTotal * (35/60);
+                            const heightPos = Math.max(duration * (35/60), 30);
+
+                            return (
+                                <motion.div 
+                                    key={`agenda-${event.id}`}
+                                    style={{ 
+                                        position: 'absolute', top: topPos, left: '15px', right: '2px', height: heightPos,
+                                        background: 'var(--domain-orange)',
+                                        color: 'white',
+                                        borderRadius: '10px', padding: '6px 12px',
+                                        zIndex: 2, boxShadow: '0 6px 15px rgba(255, 140, 66, 0.2)',
+                                        display: 'flex', flexDirection: 'column', justifyContent: 'center'
+                                    }}
+                                >
+                                    <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 900, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>🗓️ {event.title}</p>
+                                    <p style={{ margin: 0, fontSize: '0.5rem', fontWeight: 700, opacity: 0.9 }}>{event.startTime}</p>
+                                </motion.div>
+                            );
+                        })}
+
+                        {/* 3. Tareas con Hora específica */}
+                        {missions.filter(m => m.dueTime && !m.completed).map((m) => {
+                            const [startH, startM] = (m.dueTime || '12:00').split(':').map(Number);
+                            const startTotal = (startH - 8) * 60 + startM;
+                            const topPos = startTotal * (35/60);
+
+                            return (
+                                <motion.div 
+                                    key={`task-${m.id}`}
+                                    style={{ 
+                                        position: 'absolute', top: topPos, left: '5px', height: '26px',
+                                        background: 'white', border: '1.5px solid #EEE',
+                                        borderRadius: '20px', padding: '2px 12px',
+                                        zIndex: 3, boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                                        display: 'flex', alignItems: 'center', gap: '6px'
+                                    }}
+                                >
+                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: m.critical ? 'var(--domain-orange)' : 'var(--domain-purple)' }}></div>
+                                    <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: '#333' }}>{m.text}</p>
+                                    <span style={{ fontSize: '0.55rem', fontWeight: 600, color: '#AAA' }}>{m.dueTime}</span>
                                 </motion.div>
                             );
                         })}

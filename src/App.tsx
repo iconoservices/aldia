@@ -46,7 +46,7 @@ function App() {
           >
             {activeTab === 'Acción' ? (
               <>
-                <BentoGrid performanceScore={state.performanceScore} />
+                <BentoGrid performanceScore={state.performanceScore} missions={state.missions} />
                 <div className="dashboard-right-col">
                   {/* 1. SECCIÓN DE ALTA PRIORIDAD (Agenda y Misiones Q1) */}
                   <UpcomingList 
@@ -88,6 +88,8 @@ function App() {
                 timeBlocks={state.timeBlocks}
                 addTimeBlock={state.addTimeBlock}
                 removeTimeBlock={state.removeTimeBlock}
+                missions={state.missions}
+                agenda={state.agenda}
               />
             ) : activeTab === 'Cerebro' ? (
               <CerebroDashboard 
