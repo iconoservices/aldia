@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check } from 'lucide-react';
+import { X, Check, Clock, Calendar } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface QuickActionPanelProps {
@@ -168,13 +168,23 @@ export const QuickActionPanel = ({ isOpen, onClose, actionType, addMission, addT
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
+                            {/* CANTIDAD (FINANZAS) */}
                             {currentConfig.isFinancial && (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
-                                    <span style={{ fontSize: '0.8rem', color: '#888', fontWeight: 700, textTransform: 'uppercase' }}>CANTIDAD</span>
+                                <div style={{ 
+                                    background: '#F9F9F9', 
+                                    padding: '1.5rem', 
+                                    borderRadius: '24px', 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    alignItems: 'center', 
+                                    gap: '4px',
+                                    border: '1px solid #EEE'
+                                }}>
+                                    <span style={{ fontSize: '0.7rem', color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Cantidad</span>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <span style={{ fontSize: '2.5rem', fontWeight: 500, color: '#CCC' }}>$</span>
+                                        <span style={{ fontSize: '2rem', fontWeight: 600, color: '#CCC' }}>$</span>
                                         <input
                                             type="number"
                                             autoFocus
@@ -182,323 +192,251 @@ export const QuickActionPanel = ({ isOpen, onClose, actionType, addMission, addT
                                             onChange={(e) => setAmount(e.target.value)}
                                             placeholder="0.00"
                                             style={{
-                                                fontSize: '3rem',
+                                                fontSize: '2.5rem',
                                                 fontWeight: 900,
                                                 color: currentConfig.color,
                                                 border: 'none',
                                                 outline: 'none',
                                                 background: 'transparent',
-                                                width: '180px',
-                                                textAlign: 'center',
-                                                caretColor: currentConfig.color
+                                                width: '160px',
+                                                textAlign: 'center'
                                             }}
                                         />
                                     </div>
                                 </div>
                             )}
 
-                            <div>
-                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', marginLeft: '12px', marginBottom: '4px', display: 'block' }}>
-                                    {currentConfig.isFinancial ? 'CONCEPTO' : (actionType === 'sueno' ? 'NOMBRE DEL HÁBITO' : (actionType === 'nota' ? 'TÍTULO' : 'QUÉ VAS A HACER'))}
+                            {/* INPUT PRINCIPAL */}
+                            <div style={{ position: 'relative' }}>
+                                <label style={{ fontSize: '0.65rem', fontWeight: 800, color: '#AAA', position: 'absolute', top: '10px', left: '16px', textTransform: 'uppercase' }}>
+                                    {currentConfig.isFinancial ? 'Concepto' : (actionType === 'sueno' ? 'Hábito' : (actionType === 'nota' ? 'Título' : 'Nombre de la Tarea'))}
                                 </label>
                                 <input
                                     type="text"
                                     value={concept}
                                     onChange={(e) => setConcept(e.target.value)}
-                                    placeholder={currentConfig.isFinancial ? 'Ej. Uber, Cena, Venta Logo...' : 'Escribe aquí...'}
+                                    placeholder="..."
                                     style={{
                                         width: '100%',
-                                        padding: '16px',
-                                        borderRadius: '16px',
-                                        border: '2px solid #F0F0F0',
-                                        fontSize: '1rem',
-                                        fontWeight: 600,
+                                        padding: '24px 16px 12px 16px',
+                                        borderRadius: '20px',
+                                        border: '2px solid #F5F5F5',
+                                        background: '#FAFAFA',
+                                        fontSize: '1.1rem',
+                                        fontWeight: 700,
                                         outline: 'none',
                                         boxSizing: 'border-box'
                                     }}
                                 />
                             </div>
 
-                            {actionType === 'nota' && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    <div style={{ display: 'flex', background: '#F5F5F5', padding: '4px', borderRadius: '14px', gap: '4px' }}>
-                                        <button 
-                                            type="button"
-                                            onClick={() => setNoteType('text')}
-                                            style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '11px', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', background: noteType === 'text' ? 'white' : 'transparent', color: noteType === 'text' ? '#333' : '#888' }}
-                                        >
-                                            TEXTO
-                                        </button>
-                                        <button 
-                                            type="button"
-                                            onClick={() => setNoteType('checklist')}
-                                            style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '11px', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', background: noteType === 'checklist' ? 'white' : 'transparent', color: noteType === 'checklist' ? '#333' : '#888' }}
-                                        >
-                                            LISTA (Keep)
-                                        </button>
+                            {/* SECCIONES ESPECÍFICAS */}
+                            {actionType === 'tarea' && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {/* CUADRANTE + REPETICIÓN (FILA COMPACTA) */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                        <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
+                                            <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Importancia</p>
+                                            <div style={{ display: 'flex', gap: '4px' }}>
+                                                {['Q1', 'Q2', 'Q3', 'Q4'].map(q => (
+                                                    <button
+                                                        key={q} type="button" onClick={() => setSelectedQ(q)}
+                                                        style={{
+                                                            flex: 1, padding: '6px 0', borderRadius: '10px', border: 'none',
+                                                            fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer',
+                                                            background: selectedQ === q ? 'var(--domain-orange)' : 'white',
+                                                            color: selectedQ === q ? 'white' : '#CCC',
+                                                            boxShadow: selectedQ === q ? '0 4px 10px rgba(255,140,66,0.3)' : 'none'
+                                                        }}
+                                                    >{q}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
+                                            <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Repetir</p>
+                                            <select 
+                                                value={repeat} 
+                                                onChange={(e) => setRepeat(e.target.value as any)}
+                                                style={{ width: '100%', padding: '6px 8px', borderRadius: '10px', border: 'none', background: 'white', fontWeight: 800, fontSize: '0.75rem', color: repeat !== 'none' ? 'var(--domain-orange)' : '#BBB', outline: 'none' }}
+                                            >
+                                                <option value="none">Una vez</option>
+                                                <option value="daily">Diaria</option>
+                                                <option value="weekly">Semanal</option>
+                                                <option value="monthly">Mensual</option>
+                                            </select>
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', marginLeft: '12px', marginBottom: '4px', display: 'block' }}>
-                                            {noteType === 'text' ? 'CONTENIDO' : 'ITEMS (Uno por línea)'}
-                                        </label>
-                                        <textarea
-                                            value={noteItems}
-                                            onChange={(e) => setNoteItems(e.target.value)}
-                                            placeholder={noteType === 'text' ? 'Escribe tu idea...' : 'Avena\nCafé\nHuevos...'}
-                                            rows={5}
-                                            style={{
-                                                width: '100%',
-                                                padding: '16px',
-                                                borderRadius: '16px',
-                                                border: '2px solid #F0F0F0',
-                                                fontSize: '0.95rem',
-                                                fontWeight: 500,
-                                                outline: 'none',
-                                                resize: 'none',
-                                                boxSizing: 'border-box',
-                                                fontFamily: 'inherit'
-                                            }}
-                                        />
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '4px 0' }}>
-                                        {['#FFFFFF', '#FEF9C3', '#DBEAFE', '#F3E8FF', '#DCFCE7', '#FEE2E2'].map(color => (
-                                            <button
-                                                key={color}
-                                                type="button"
-                                                onClick={() => setNoteColor(color)}
-                                                style={{
-                                                    minWidth: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '50%',
-                                                    border: noteColor === color ? '2px solid #888' : '1px solid #E0E0E0',
-                                                    background: color,
-                                                    cursor: 'pointer'
-                                                }}
+                                    {/* CATEGORÍAS + FECHA (FILA COMPACTA) */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                        <div style={{ position: 'relative' }}>
+                                            <label style={{ fontSize: '0.6rem', fontWeight: 800, color: '#BBB', position: 'absolute', top: '6px', left: '12px', textTransform: 'uppercase' }}>Etiquetas</label>
+                                            <input
+                                                type="text" value={labels} onChange={(e) => setLabels(e.target.value)}
+                                                placeholder="Casa, Job..."
+                                                style={{ width: '100%', padding: '18px 12px 6px 12px', borderRadius: '16px', border: '1px solid #EEE', fontSize: '0.85rem', fontWeight: 600, outline: 'none', boxSizing: 'border-box' }}
                                             />
-                                        ))}
+                                        </div>
+                                        <div style={{ position: 'relative' }}>
+                                            <label style={{ fontSize: '0.6rem', fontWeight: 800, color: '#BBB', position: 'absolute', top: '6px', left: '12px', textTransform: 'uppercase' }}>Fecha</label>
+                                            <input
+                                                type="date" value={date} onChange={(e) => setDate(e.target.value)}
+                                                style={{ width: '100%', padding: '18px 12px 6px 12px', borderRadius: '16px', border: '1px solid #EEE', fontSize: '0.85rem', fontWeight: 600, outline: 'none', boxSizing: 'border-box', appearance: 'none' }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
 
-                            {actionType === 'tarea' && (
-                                <div style={{ background: '#F9F9F9', borderRadius: '16px', padding: '12px' }}>
-                                    <p style={{ margin: '0 0 10px 0', fontWeight: 700, fontSize: '0.85rem', color: '#888', textAlign: 'center' }}>CUADRANTE RELEVANCIA</p>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                                        {['Q1', 'Q2', 'Q3', 'Q4'].map(q => (
+                            {actionType === 'nota' && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div style={{ display: 'flex', background: '#F5F5F5', padding: '4px', borderRadius: '14px', gap: '4px' }}>
+                                        <button 
+                                            type="button" onClick={() => setNoteType('text')}
+                                            style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '11px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer', background: noteType === 'text' ? 'white' : 'transparent', color: noteType === 'text' ? '#333' : '#AAA', boxShadow: noteType === 'text' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}
+                                        >NOTAS</button>
+                                        <button 
+                                            type="button" onClick={() => setNoteType('checklist')}
+                                            style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '11px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer', background: noteType === 'checklist' ? 'white' : 'transparent', color: noteType === 'checklist' ? '#333' : '#AAA', boxShadow: noteType === 'checklist' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}
+                                        >LISTA (KEEP)</button>
+                                    </div>
+
+                                    <div style={{ position: 'relative' }}>
+                                        <textarea
+                                            value={noteItems}
+                                            onChange={(e) => setNoteItems(e.target.value)}
+                                            placeholder={noteType === 'text' ? 'Contenido de la nota...' : '• Item 1\n• Item 2...'}
+                                            rows={6}
+                                            style={{ width: '100%', padding: '16px', borderRadius: '20px', border: '2px solid #F5F5F5', background: '#FAFAFA', fontSize: '0.95rem', fontWeight: 500, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', background: '#F9F9F9', padding: '10px', borderRadius: '16px' }}>
+                                        {['#FFFFFF', '#FEF9C3', '#DBEAFE', '#F3E8FF', '#DCFCE7', '#FEE2E2'].map(color => (
                                             <button
-                                                key={q}
-                                                type="button"
-                                                onClick={() => setSelectedQ(q)}
-                                                style={{
-                                                    padding: '10px 0',
-                                                    borderRadius: '12px',
-                                                    border: 'none',
-                                                    fontWeight: 900,
-                                                    fontSize: '0.8rem',
-                                                    cursor: 'pointer',
-                                                    background: selectedQ === q ? 'var(--domain-orange)' : 'white',
-                                                    color: selectedQ === q ? 'white' : '#888',
-                                                    boxShadow: selectedQ === q ? '0 4px 10px rgba(255,140,66,0.3)' : 'none'
-                                                }}
-                                            >
-                                                {q}
-                                            </button>
+                                                key={color} type="button" onClick={() => setNoteColor(color)}
+                                                style={{ minWidth: '28px', height: '28px', borderRadius: '50%', border: noteColor === color ? '2px solid #333' : '1px solid #DDD', background: color, cursor: 'pointer', transform: noteColor === color ? 'scale(1.1)' : 'scale(1)', transition: 'transform 0.2s' }}
+                                            />
                                         ))}
-                                    </div>
-                                    <p style={{ margin: '10px 0 0 0', fontSize: '0.62rem', color: '#AAA', textAlign: 'center', fontWeight: 600 }}>
-                                        {selectedQ === 'Q1' ? '🔥 URGENTE / CRÍTICA' : selectedQ === 'Q2' ? '🎯 ENFOQUE / PLAN' : selectedQ === 'Q3' ? '⏱️ APOYO / DELEGAR' : '🗑️ ELIMINAR / IDEAS'}
-                                    </p>
-
-                                    <div style={{ marginTop: '1.2rem', borderTop: '1px solid #EEE', paddingTop: '1rem' }}>
-                                        <p style={{ margin: '0 0 8px 0', fontWeight: 700, fontSize: '0.85rem', color: '#888', textAlign: 'center' }}>🔄 REPETIR</p>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-                                            {[
-                                                { id: 'none', label: 'Una vez' },
-                                                { id: 'daily', label: 'Diario' },
-                                                { id: 'weekly', label: 'Semanal' },
-                                                { id: 'monthly', label: 'Mensual' }
-                                            ].map(opt => (
-                                                <button
-                                                    key={opt.id}
-                                                    type="button"
-                                                    onClick={() => setRepeat(opt.id as any)}
-                                                    style={{
-                                                        padding: '8px 0',
-                                                        borderRadius: '10px',
-                                                        border: '1px solid #EEE',
-                                                        fontWeight: 800,
-                                                        fontSize: '0.6rem',
-                                                        cursor: 'pointer',
-                                                        background: repeat === opt.id ? '#333' : 'white',
-                                                        color: repeat === opt.id ? 'white' : '#888'
-                                                    }}
-                                                >
-                                                    {opt.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div style={{ marginTop: '1.2rem', borderTop: '1px solid #EEE', paddingTop: '1rem' }}>
-                                        <p style={{ margin: '0 0 8px 0', fontWeight: 700, fontSize: '0.85rem', color: '#888', textAlign: 'center' }}>🏷️ CATEGORÍAS (Separadas por coma)</p>
-                                        <input
-                                            type="text"
-                                            value={labels}
-                                            onChange={(e) => setLabels(e.target.value)}
-                                            placeholder="Ej. Casa, Trabajo, Urgente..."
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px',
-                                                borderRadius: '12px',
-                                                border: '2px solid #F0F0F0',
-                                                fontSize: '0.9rem',
-                                                fontWeight: 600,
-                                                outline: 'none',
-                                                boxSizing: 'border-box'
-                                            }}
-                                        />
-                                    </div>
-
-                                    <div style={{ marginTop: '1.2rem', borderTop: '1px solid #EEE', paddingTop: '1rem' }}>
-                                        <p style={{ margin: '0 0 8px 0', fontWeight: 700, fontSize: '0.85rem', color: '#888', textAlign: 'center' }}>📅 FECHA INICIO / META</p>
-                                        <input
-                                            type="date"
-                                            value={date}
-                                            onChange={(e) => setDate(e.target.value)}
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px',
-                                                borderRadius: '12px',
-                                                border: '2px solid #F0F0F0',
-                                                fontSize: '0.9rem',
-                                                fontWeight: 600,
-                                                outline: 'none',
-                                                boxSizing: 'border-box'
-                                            }}
-                                        />
                                     </div>
                                 </div>
                             )}
 
                             {actionType === 'agenda' && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    <div>
-                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', marginLeft: '12px', marginBottom: '4px', display: 'block' }}>FECHA</label>
-                                        <input
-                                            type="date"
-                                            value={date}
-                                            onChange={(e) => setDate(e.target.value)}
-                                            style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #F0F0F0', fontSize: '1rem', fontWeight: 600, outline: 'none', appearance: 'none', boxSizing: 'border-box' }}
-                                        />
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                        <div style={{ position: 'relative' }}>
+                                            <label style={{ fontSize: '0.6rem', fontWeight: 800, color: '#BBB', position: 'absolute', top: '6px', left: '12px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Calendar size={10} /> Fecha
+                                            </label>
+                                            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: '100%', padding: '18px 12px 6px 12px', borderRadius: '16px', border: '1px solid #EEE', fontSize: '0.85rem', fontWeight: 600, outline: 'none', boxSizing: 'border-box' }} />
+                                        </div>
+                                        <div 
+                                            onClick={() => setHasTime(!hasTime)}
+                                            style={{ 
+                                                background: !hasTime ? '#F0F9FF' : '#F9F9F9', 
+                                                borderRadius: '16px', 
+                                                border: !hasTime ? '2px solid #0EA5E9' : '2px solid #EEE',
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center', 
+                                                cursor: 'pointer', 
+                                                transition: 'all 0.2s',
+                                                gap: '8px'
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '18px',
+                                                height: '18px',
+                                                borderRadius: '4px',
+                                                border: '2px solid #DDD',
+                                                background: !hasTime ? '#0EA5E9' : 'white',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}>
+                                                {!hasTime && <Check size={12} color="white" strokeWidth={4} />}
+                                            </div>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: !hasTime ? '#0369A1' : '#AAA' }}>TODO EL DÍA</span>
+                                        </div>
                                     </div>
                                     
-                                    <div style={{ background: '#F9F9F9', borderRadius: '16px', padding: '12px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-carbon)' }}>¿Tiene hora específica?</span>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={hasTime} 
-                                                onChange={(e) => setHasTime(e.target.checked)}
-                                                style={{ width: '20px', height: '20px', accentColor: '#f59e0b' }}
-                                            />
+                                    <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '20px' }}>
+                                        <div 
+                                            onClick={() => setHasTime(!hasTime)}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: hasTime ? '10px' : '0' }}
+                                        >
+                                            <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '6px',
+                                                border: '2px solid #DDD',
+                                                background: hasTime ? 'var(--domain-orange)' : 'white',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}>
+                                                {hasTime && <Check size={14} color="white" strokeWidth={4} />}
+                                            </div>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: hasTime ? '#333' : '#888', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Clock size={16} /> Definir horario específico
+                                            </span>
                                         </div>
                                         
                                         {hasTime && (
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                                <div>
-                                                    <label style={{ fontSize: '0.65rem', fontWeight: 700, color: '#AAA', marginBottom: '4px', display: 'block' }}>INICIO</label>
-                                                    <input
-                                                        type="time"
-                                                        value={startTime}
-                                                        onChange={(e) => setStartTime(e.target.value)}
-                                                        style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E0E0E0', fontSize: '0.9rem', fontWeight: 600, outline: 'none' }}
-                                                    />
+                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                                <div style={{ position: 'relative' }}>
+                                                    <label style={{ fontSize: '0.6rem', fontWeight: 800, color: '#BBB', position: 'absolute', top: '6px', left: '12px', textTransform: 'uppercase' }}>Inicio</label>
+                                                    <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} style={{ width: '100%', padding: '18px 12px 6px 12px', borderRadius: '16px', border: '1px solid #EEE', fontSize: '0.85rem', fontWeight: 600 }} />
                                                 </div>
-                                                <div>
-                                                    <label style={{ fontSize: '0.65rem', fontWeight: 700, color: '#AAA', marginBottom: '4px', display: 'block' }}>FIN</label>
-                                                    <input
-                                                        type="time"
-                                                        value={endTime}
-                                                        onChange={(e) => setEndTime(e.target.value)}
-                                                        style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E0E0E0', fontSize: '0.9rem', fontWeight: 600, outline: 'none' }}
-                                                    />
+                                                <div style={{ position: 'relative' }}>
+                                                    <label style={{ fontSize: '0.6rem', fontWeight: 800, color: '#BBB', position: 'absolute', top: '6px', left: '12px', textTransform: 'uppercase' }}>Fin</label>
+                                                    <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} style={{ width: '100%', padding: '18px 12px 6px 12px', borderRadius: '16px', border: '1px solid #EEE', fontSize: '0.85rem', fontWeight: 600 }} />
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         )}
                                     </div>
                                 </div>
                             )}
 
                             {currentConfig.isFinancial && (
-                                <div style={{ background: '#F9F9F9', borderRadius: '16px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div>
-                                        <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-carbon)' }}>Modo de Transacción</p>
-                                        <p style={{ margin: 0, fontSize: '0.7rem', color: '#888' }}>
-                                            {isDebt ? 'Impactará la sección "Deudas"' : 'Afecta tu Balance Total hoy'}
-                                        </p>
-                                    </div>
-                                    <div style={{ display: 'flex', background: '#E0E0E0', borderRadius: '20px', padding: '4px' }}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsDebt(false)}
-                                            style={{
-                                                background: !isDebt ? 'white' : 'transparent',
-                                                color: !isDebt ? 'var(--text-carbon)' : '#888',
-                                                border: 'none',
-                                                padding: '6px 12px',
-                                                borderRadius: '16px',
-                                                fontWeight: 800,
-                                                fontSize: '0.75rem',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            REAL (Cash)
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsDebt(true)}
-                                            style={{
-                                                background: isDebt ? currentConfig.color : 'transparent',
-                                                color: isDebt ? 'white' : '#888',
-                                                border: 'none',
-                                                padding: '6px 12px',
-                                                borderRadius: '16px',
-                                                fontWeight: 800,
-                                                fontSize: '0.75rem',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            {actionType === 'gasto' ? 'DEBO' : 'ME DEBEN'}
-                                        </button>
-                                    </div>
+                                <div style={{ background: '#F9F9F9', borderRadius: '20px', padding: '6px', display: 'flex', gap: '4px' }}>
+                                    <button
+                                        type="button" onClick={() => setIsDebt(false)}
+                                        style={{ flex: 1, background: !isDebt ? 'white' : 'transparent', color: !isDebt ? '#333' : '#AAA', border: 'none', padding: '10px', borderRadius: '16px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer', boxShadow: !isDebt ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}
+                                    >PAGO REAL</button>
+                                    <button
+                                        type="button" onClick={() => setIsDebt(true)}
+                                        style={{ flex: 1, background: isDebt ? currentConfig.color : 'transparent', color: isDebt ? 'white' : '#AAA', border: 'none', padding: '10px', borderRadius: '16px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer' }}
+                                    >{actionType === 'gasto' ? 'DEBO' : 'ME DEBEN'}</button>
                                 </div>
                             )}
 
                             <motion.button
                                 whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.95 }}
+                                whileTap={{ scale: 0.98 }}
                                 type="submit"
                                 style={{
                                     background: currentConfig.color,
                                     color: 'white',
                                     border: 'none',
-                                    padding: '16px',
-                                    borderRadius: '16px',
+                                    padding: '18px',
+                                    borderRadius: '20px',
                                     fontSize: '1rem',
                                     fontWeight: 900,
-                                    marginTop: '1rem',
+                                    marginTop: '0.5rem',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     justifyContent: 'center',
                                     alignItems: 'center',
                                     gap: '8px',
-                                    boxShadow: `0 8px 20px ${currentConfig.color}40`
+                                    boxShadow: `0 10px 25px ${currentConfig.color}40`,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '1px'
                                 }}
                             >
                                 <Check size={20} strokeWidth={3} />
-                                CONFIRMAR
+                                Confirmar {currentConfig.title.split(' ')[1]}
                             </motion.button>
 
                         </form>
