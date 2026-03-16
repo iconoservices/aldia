@@ -21,6 +21,7 @@ export interface Mission {
     isRoutine?: boolean; // Para identificar tareas que vienen de una rutina
     routineId?: number; // Referencia a la rutina de origen
     isHabit?: boolean; // Para identificar habitos en la lista de misiones
+    habitCount?: number; // Para mostrar cuántas veces se ha completado el hábito
 }
 
 export interface Routine {

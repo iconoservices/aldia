@@ -239,7 +239,7 @@ export const MissionList = ({
                                                 padding: '2px 6px',
                                                 borderRadius: '6px'
                                             }}>
-                                                🌱 Hábito
+                                                🌱 Hábito {mission.habitCount !== undefined && `(${mission.habitCount}/7)`}
                                             </span>
                                         )}
                                         {mission.repeat !== 'none' && (

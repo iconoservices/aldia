@@ -107,7 +107,8 @@ function App() {
                       text: h.name,
                       completed: h.completedDays.includes(todayIndex),
                       q: 'Q2',
-                      isHabit: true
+                      isHabit: true,
+                      habitCount: h.completedDays.length
                     }));
 
                     const filteredMissions = [
