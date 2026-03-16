@@ -85,6 +85,7 @@ export interface Project {
     color: string;
     status: 'activo' | 'pausado' | 'completado';
     targetHoursPerWeek?: number;
+    checklist?: { id: number; text: string; completed: boolean }[];
 }
 
 export interface Note {
@@ -207,9 +208,9 @@ export const useAlDiaState = () => {
         const sProjects = localStorage.getItem('aldia_projects');
         if (sProjects) setProjects(JSON.parse(sProjects));
         else setProjects([
-            { id: 1, name: 'AlDía App', color: '#ff8c42', status: 'activo', targetHoursPerWeek: 10 },
-            { id: 2, name: 'Personal/Life', color: '#3b82f6', status: 'activo', targetHoursPerWeek: 5 },
-            { id: 3, name: 'Trabajo / Oficina', color: '#10b981', status: 'activo', targetHoursPerWeek: 40 }
+            { id: 1, name: 'AlDía App', color: '#ff8c42', status: 'activo', targetHoursPerWeek: 10, checklist: [] },
+            { id: 2, name: 'Personal/Life', color: '#3b82f6', status: 'activo', targetHoursPerWeek: 5, checklist: [] },
+            { id: 3, name: 'Trabajo / Oficina', color: '#10b981', status: 'activo', targetHoursPerWeek: 40, checklist: [] }
         ]);
 
         const sRutinas = localStorage.getItem('aldia_rutinas');
@@ -489,9 +490,58 @@ export const useAlDiaState = () => {
                 name, 
                 color, 
                 status: 'activo',
-                targetHoursPerWeek
+                targetHoursPerWeek,
+                checklist: []
             };
             setProjects(prev => [newProject, ...prev]);
+        },
+        addProjectTask: (projectId: number, text: string) => {
+            setProjects(prev => prev.map(p => {
+                if (p.id !== projectId) return p;
+                const newTask = { id: Date.now() + Math.random(), text, completed: false };
+                return { ...p, checklist: [...(p.checklist || []), newTask] };
+            }));
+        },
+        toggleProjectTask: (projectId: number, taskId: number) => {
+            setProjects(prev => prev.map(p => {
+                if (p.id !== projectId) return p;
+                return {
+                    ...p,
+                    checklist: (p.checklist || []).map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)
+                };
+            }));
+        },
+        removeProjectTask: (projectId: number, taskId: number) => {
+            setProjects(prev => prev.map(p => {
+                if (p.id !== projectId) return p;
+                return {
+                    ...p,
+                    checklist: (p.checklist || []).filter(t => t.id !== taskId)
+                };
+            }));
+        },
+        promoteTaskToRoutine: (projectId: number, taskId: number, routineId: number) => {
+            const project = projects.find(p => p.id === projectId);
+            const task = project?.checklist?.find(t => t.id === taskId);
+            
+            if (task) {
+                // Añadir a la rutina
+                setRutinas(prev => prev.map(r => {
+                    if (r.id !== routineId) return r;
+                    return {
+                        ...r,
+                        items: [...r.items, { id: Date.now() + Math.random(), text: task.text, completed: false }]
+                    };
+                }));
+                // Eliminar del proyecto si se desea (o dejarlo marcado, pero según el plan es promoverlo/moverlo)
+                setProjects(prev => prev.map(p => {
+                    if (p.id !== projectId) return p;
+                    return {
+                        ...p,
+                        checklist: (p.checklist || []).filter(t => t.id !== taskId)
+                    };
+                }));
+            }
         },
         updateProject: (id: number, updates: Partial<Project>) => {
             setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));

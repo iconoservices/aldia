@@ -201,8 +201,13 @@ function App() {
                 projects={state.projects}
                 missions={state.missions}
                 timeBlocks={state.timeBlocks}
+                rutinas={state.rutinas}
                 onAddProject={() => setIsAddingProject(true)}
                 deleteProject={state.deleteProject}
+                addProjectTask={state.addProjectTask}
+                toggleProjectTask={state.toggleProjectTask}
+                removeProjectTask={state.removeProjectTask}
+                promoteTaskToRoutine={state.promoteTaskToRoutine}
               />
             ) : activeTab === 'Stats' ? (
               <StatsDashboard

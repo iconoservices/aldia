@@ -1,18 +1,29 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Zap, Plus, MoreVertical, Trophy, Trash2 } from 'lucide-react';
-import type { Project, Mission, TimeBlock } from '../../hooks/useAlDiaState';
+import { Target, Zap, Plus, MoreVertical, Trophy, Trash2, CheckCircle2, Circle, ListTodo, ArrowRight } from 'lucide-react';
+import type { Project, Mission, TimeBlock, Routine } from '../../hooks/useAlDiaState';
 
 interface ProyectosDashboardProps {
     projects: Project[];
     missions: Mission[];
     timeBlocks: TimeBlock[];
+    rutinas: Routine[];
     onAddProject: () => void;
     deleteProject?: (id: number) => void;
+    addProjectTask?: (projectId: number, text: string) => void;
+    toggleProjectTask?: (projectId: number, taskId: number) => void;
+    removeProjectTask?: (projectId: number, taskId: number) => void;
+    promoteTaskToRoutine?: (projectId: number, taskId: number, routineId: number) => void;
 }
 
-export const ProyectosDashboard = ({ projects, missions, timeBlocks, onAddProject, deleteProject }: ProyectosDashboardProps) => {
+export const ProyectosDashboard = ({ 
+    projects, missions, timeBlocks, rutinas, onAddProject, deleteProject,
+    addProjectTask, toggleProjectTask, removeProjectTask, promoteTaskToRoutine 
+}: ProyectosDashboardProps) => {
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+    const [expandedChecklistId, setExpandedChecklistId] = useState<number | null>(null);
+    const [newTaskText, setNewTaskText] = useState("");
+    const [promotingTask, setPromotingTask] = useState<{ projectId: number, taskId: number } | null>(null);
 
     // Calculo del tiempo dedicado esta semana (simplificado para el demo)
     const projectStats = projects.map(p => {
@@ -141,7 +152,7 @@ export const ProyectosDashboard = ({ projects, missions, timeBlocks, onAddProjec
 
                             {/* Barra de progreso visual si hay target */}
                             {p.targetHoursPerWeek && (
-                                <div style={{ width: '100%', height: '8px', background: '#F0F0F0', borderRadius: '4px', overflow: 'hidden' }}>
+                                <div style={{ width: '100%', height: '8px', background: '#F0F0F0', borderRadius: '4px', overflow: 'hidden', marginBottom: '1rem' }}>
                                     <motion.div 
                                         initial={{ width: 0 }}
                                         animate={{ width: `${p.progress}%` }}
@@ -150,6 +161,156 @@ export const ProyectosDashboard = ({ projects, missions, timeBlocks, onAddProjec
                                     />
                                 </div>
                             )}
+
+                            {/* Checklist Section */}
+                            <div style={{ borderTop: '1px solid #F0F0F0', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                                <div 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedChecklistId(expandedChecklistId === p.id ? null : p.id);
+                                    }}
+                                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#888', cursor: 'pointer' }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <ListTodo size={14} />
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>
+                                            CHECKLIST ({p.checklist?.length || 0})
+                                        </span>
+                                    </div>
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 700 }}>{expandedChecklistId === p.id ? 'OCULTAR' : 'VER'}</span>
+                                </div>
+
+                                <AnimatePresence>
+                                    {expandedChecklistId === p.id && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            style={{ overflow: 'hidden' }}
+                                        >
+                                            <div style={{ display: 'flex', gap: '8px', margin: '12px 0' }} onClick={e => e.stopPropagation()}>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Nueva idea o tarea..."
+                                                    value={newTaskText}
+                                                    onChange={(e) => setNewTaskText(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' && newTaskText.trim() && addProjectTask) {
+                                                            addProjectTask(p.id, newTaskText.trim());
+                                                            setNewTaskText("");
+                                                        }
+                                                    }}
+                                                    style={{ 
+                                                        flex: 1, padding: '8px 12px', borderRadius: '10px', border: '1px solid #EEE',
+                                                        fontSize: '0.8rem', background: '#F9F9F9', outline: 'none'
+                                                    }}
+                                                />
+                                                <button 
+                                                    onClick={() => {
+                                                        if (newTaskText.trim() && addProjectTask) {
+                                                            addProjectTask(p.id, newTaskText.trim());
+                                                            setNewTaskText("");
+                                                        }
+                                                    }}
+                                                    style={{ 
+                                                        background: p.color, color: 'white', border: 'none', 
+                                                        borderRadius: '10px', padding: '0 12px', cursor: 'pointer' 
+                                                    }}
+                                                >
+                                                    <Plus size={16} />
+                                                </button>
+                                            </div>
+
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                {p.checklist?.map(task => (
+                                                    <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={e => e.stopPropagation()}>
+                                                        <button 
+                                                            onClick={() => toggleProjectTask?.(p.id, task.id)}
+                                                            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', color: task.completed ? 'var(--domain-green)' : '#CCC' }}
+                                                        >
+                                                            {task.completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                                                        </button>
+                                                        <span style={{ 
+                                                            flex: 1, fontSize: '0.8rem', fontWeight: 600, 
+                                                            textDecoration: task.completed ? 'line-through' : 'none',
+                                                            color: task.completed ? '#AAA' : 'var(--text-carbon)'
+                                                        }}>
+                                                            {task.text}
+                                                        </span>
+                                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                                            <button 
+                                                                onClick={() => setPromotingTask({ projectId: p.id, taskId: task.id })}
+                                                                title="Promover a Rutina"
+                                                                style={{ background: '#F0F9FF', border: 'none', padding: '4px', borderRadius: '6px', color: '#0EA5E9', cursor: 'pointer' }}
+                                                            >
+                                                                <ArrowRight size={14} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => removeProjectTask?.(p.id, task.id)}
+                                                                style={{ background: '#FEF2F2', border: 'none', padding: '4px', borderRadius: '6px', color: '#EF4444', cursor: 'pointer' }}
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* Modal de Promoción a Rutina */}
+                            <AnimatePresence>
+                                {promotingTask?.projectId === p.id && (
+                                    <div 
+                                        style={{ 
+                                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, 
+                                            background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            padding: '20px'
+                                        }}
+                                        onClick={() => setPromotingTask(null)}
+                                    >
+                                        <motion.div 
+                                            initial={{ scale: 0.9, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            exit={{ scale: 0.9, opacity: 0 }}
+                                            className="glass-card"
+                                            style={{ width: '100%', maxWidth: '320px', padding: '1.5rem', background: 'white' }}
+                                            onClick={e => e.stopPropagation()}
+                                        >
+                                            <h4 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: 900 }}>¿A qué rutina lo enviamos?</h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                {rutinas.map(r => (
+                                                    <button
+                                                        key={r.id}
+                                                        onClick={() => {
+                                                            promoteTaskToRoutine?.(promotingTask.projectId, promotingTask.taskId, r.id);
+                                                            setPromotingTask(null);
+                                                        }}
+                                                        style={{ 
+                                                            display: 'flex', alignItems: 'center', gap: '10px', padding: '12px',
+                                                            borderRadius: '12px', border: '1px solid #EEE', background: 'white',
+                                                            fontWeight: 800, color: 'var(--text-carbon)', cursor: 'pointer', textAlign: 'left'
+                                                        }}
+                                                        onMouseEnter={e => e.currentTarget.style.background = '#F8F8F8'}
+                                                        onMouseLeave={e => e.currentTarget.style.background = 'white'}
+                                                    >
+                                                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: r.color }} />
+                                                        {r.title}
+                                                    </button>
+                                                ))}
+                                                <button 
+                                                    onClick={() => setPromotingTask(null)}
+                                                    style={{ marginTop: '10px', padding: '10px', border: 'none', background: 'transparent', color: '#888', fontWeight: 700, cursor: 'pointer' }}
+                                                >
+                                                    CANCELAR
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    </div>
+                                )}
+                            </AnimatePresence>
 
                         </motion.div>
                     ))}
