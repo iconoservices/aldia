@@ -36,6 +36,7 @@ export interface CalendarEvent {
     startTime: string; // HH:mm
     endTime: string;   // HH:mm
     description?: string;
+    projectId?: number;
 }
 
 export interface Habit {
@@ -280,14 +281,15 @@ export const useAlDiaState = () => {
     };
 
     // Añadir cita a la agenda
-    const addCalendarEvent = (title: string, date: string, startTime: string, endTime: string, description: string) => {
+    const addCalendarEvent = (title: string, date: string, startTime: string, endTime: string, description: string, projectId?: number) => {
         const newEvent: CalendarEvent = {
             id: Date.now() + Math.random(),
             title,
             date,
             startTime,
             endTime,
-            description
+            description,
+            projectId
         };
         setAgenda(prev => [...prev, newEvent].sort((a, b) => {
             if (a.date !== b.date) return a.date.localeCompare(b.date);

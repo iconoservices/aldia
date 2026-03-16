@@ -67,6 +67,14 @@
   flex: 1;
 }
 
+.desktop-only {
+  display: none;
+}
+
+.mobile-only {
+  display: block;
+}
+
 .tab-btn {
   background: transparent;
   border: none;
@@ -102,6 +110,12 @@
     gap: 6px;
     font-size: 0.85rem;
   }
+  .desktop-only {
+    display: block;
+  }
+  .mobile-only {
+    display: none;
+  }
 }
 
 .profile-pic {
@@ -114,9 +128,25 @@
 
 .header-right {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+@media (min-width: 600px) {
+  .header-right {
+    flex-direction: row;
+    gap: 12px;
+  }
+}
+
+.stats-mobile-btn {
+  padding: 4px 8px !important;
+  font-size: 0.65rem !important;
+  border-radius: 10px !important;
+  background: #F0EBE6 !important;
+  min-width: 60px;
 }
 
 /* BENTO GRID */

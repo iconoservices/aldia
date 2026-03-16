@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock } from 'lucide-react';
+import { X, Check, Clock, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface QuickActionPanelProps {
@@ -10,7 +10,7 @@ interface QuickActionPanelProps {
     addMission: (text: string, q?: string, repeat?: 'none' | 'daily' | 'weekly' | 'monthly', noteId?: number, labels?: string[], dueDate?: string, dueTime?: string, habitId?: number, projectId?: number) => void;
     addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean) => void;
     addHabit: (name: string) => void;
-    addCalendarEvent?: (title: string, date: string, start: string, end: string, desc: string) => void;
+    addCalendarEvent?: (title: string, date: string, start: string, end: string, desc: string, projectId?: number) => void;
     addNote: (title: string, content: string, type: 'text' | 'checklist', items: { text: string; completed: boolean }[], q: string, color: string) => void;
     addTimeBlock: (label: string, start: string, end: string, color: string, projectId?: number) => void;
     addProject?: (name: string, color: string, targetHoursPerWeek?: number) => void;
@@ -25,6 +25,11 @@ export const QuickActionPanel = ({ isOpen, onClose, actionType, addMission, addT
     const [repeat, setRepeat] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
     const [asHabit, setAsHabit] = useState(false);
     const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(undefined);
+    
+    // Quick Project Creation
+    const [isCreatingProject, setIsCreatingProject] = useState(false);
+    const [quickProjectName, setQuickProjectName] = useState('');
+    const [quickProjectColor, setQuickProjectColor] = useState('#ff8c42');
     
     // Estados para Agenda/Tiempo
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -91,7 +96,7 @@ export const QuickActionPanel = ({ isOpen, onClose, actionType, addMission, addT
         } else if (actionType === 'agenda' && addCalendarEvent) {
             const finalStart = hasTime ? startTime : '00:00';
             const finalEnd = hasTime ? endTime : '23:59';
-            addCalendarEvent(concept || 'Agenda', date, finalStart, finalEnd, 'Añadido desde AlDía');
+            addCalendarEvent(concept || 'Agenda', date, finalStart, finalEnd, 'Añadido desde AlDía', selectedProjectId);
             confetti({
                 particleCount: 60,
                 spread: 50,
@@ -263,40 +268,87 @@ export const QuickActionPanel = ({ isOpen, onClose, actionType, addMission, addT
                                 />
                             </div>
 
-                            {/* SELECTOR DE PROYECTO (Para Tareas y Bloques) */}
-                            {(actionType === 'tarea' || actionType === 'bloque') && projects.length > 0 && (
+                            {/* SELECTOR DE PROYECTO (Para Tareas, Bloques y Agenda) */}
+                            {(actionType === 'tarea' || actionType === 'bloque' || actionType === 'agenda') && (
                                 <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
-                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Proyecto (Opcional)</p>
-                                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedProjectId(undefined)}
-                                            style={{
-                                                padding: '6px 12px', borderRadius: '12px', border: '1px solid #EEE',
-                                                background: selectedProjectId === undefined ? '#333' : 'white',
-                                                color: selectedProjectId === undefined ? 'white' : '#888',
-                                                fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
-                                            }}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                        <p style={{ margin: '0 0 0 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Proyecto (Opcional)</p>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setIsCreatingProject(!isCreatingProject)}
+                                            style={{ background: isCreatingProject ? 'var(--domain-orange)' : '#EEE', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                                         >
-                                            Ninguno
+                                            {isCreatingProject ? <X size={12} color="white" /> : <Plus size={12} color="#888" />}
                                         </button>
-                                        {projects.map(p => (
+                                    </div>
+
+                                    {isCreatingProject ? (
+                                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Nombre del proyecto..." 
+                                                value={quickProjectName}
+                                                onChange={(e) => setQuickProjectName(e.target.value)}
+                                                style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', border: '1px solid #DDD', fontSize: '0.8rem', fontWeight: 600 }}
+                                            />
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', gap: '6px' }}>
+                                                    {['#ff8c42', '#3b82f6', '#10B911', '#8b5cf6', '#EC4899'].map(c => (
+                                                        <button 
+                                                            key={c} type="button" onClick={() => setQuickProjectColor(c)}
+                                                            style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, border: quickProjectColor === c ? '2px solid #333' : 'none', cursor: 'pointer' }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {
+                                                        if (quickProjectName && addProject) {
+                                                            const newId = Date.now() + Math.random();
+                                                            addProject(quickProjectName, quickProjectColor);
+                                                            setSelectedProjectId(newId);
+                                                            setIsCreatingProject(false);
+                                                            setQuickProjectName('');
+                                                        }
+                                                    }}
+                                                    style={{ background: 'var(--domain-green)', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer' }}
+                                                >
+                                                    CREAR
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
                                             <button
-                                                key={p.id}
                                                 type="button"
-                                                onClick={() => setSelectedProjectId(p.id)}
+                                                onClick={() => setSelectedProjectId(undefined)}
                                                 style={{
-                                                    padding: '6px 12px', borderRadius: '12px', border: `1px solid ${p.color}40`,
-                                                    background: selectedProjectId === p.id ? p.color : `${p.color}10`,
-                                                    color: selectedProjectId === p.id ? 'white' : p.color,
-                                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap',
-                                                    boxShadow: selectedProjectId === p.id ? `0 4px 10px ${p.color}40` : 'none'
+                                                    padding: '6px 12px', borderRadius: '12px', border: '1px solid #EEE',
+                                                    background: selectedProjectId === undefined ? '#333' : 'white',
+                                                    color: selectedProjectId === undefined ? 'white' : '#888',
+                                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
                                                 }}
                                             >
-                                                {p.name}
+                                                Ninguno
                                             </button>
-                                        ))}
-                                    </div>
+                                            {projects.map(p => (
+                                                <button
+                                                    key={p.id}
+                                                    type="button"
+                                                    onClick={() => setSelectedProjectId(p.id)}
+                                                    style={{
+                                                        padding: '6px 12px', borderRadius: '12px', border: `1px solid ${p.color}40`,
+                                                        background: selectedProjectId === p.id ? p.color : `${p.color}10`,
+                                                        color: selectedProjectId === p.id ? 'white' : p.color,
+                                                        fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                                                        boxShadow: selectedProjectId === p.id ? `0 4px 10px ${p.color}40` : 'none'
+                                                    }}
+                                                >
+                                                    {p.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

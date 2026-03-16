@@ -24,24 +24,37 @@ export const Header = ({ activeTab, setActiveTab, onProfileClick }: HeaderProps)
         return () => window.removeEventListener('storage', handleStorage);
     }, []);
 
+    const allTabs = ['🔥 Acción', '📅 Calendario', '🧠 Cerebro', '🌿 Vida', '📁 Proyectos', '💸 Finanzas', '📊 Stats'];
+    const mainTabs = allTabs.slice(0, 6);
+    const statsTab = allTabs[6];
+
+    const renderTab = (tab: string, className = "") => {
+        const tabValue = tab.split(' ')[1];
+        return (
+            <button
+                key={tab}
+                className={`tab-btn ${activeTab === tabValue ? 'active-tab' : ''} ${className}`}
+                onClick={() => setActiveTab(tabValue)}
+            >
+                {tab}
+            </button>
+        );
+    };
+
     return (
         <header className="aldia-header">
             <div className="tabs-container">
-                {['🔥 Acción', '📅 Calendario', '🧠 Cerebro', '🌿 Vida', '📁 Proyectos', '💸 Finanzas', '📊 Stats'].map((tab) => {
-                    const tabValue = tab.split(' ')[1];
-                    return (
-                        <button
-                            key={tab}
-                            className={`tab-btn ${activeTab === tabValue ? 'active-tab' : ''}`}
-                            onClick={() => setActiveTab(tabValue)}
-                        >
-                            {tab}
-                        </button>
-                    );
-                })}
+                {mainTabs.map(tab => renderTab(tab))}
+                {/* Desktop only Stats */}
+                <div className="desktop-only">
+                    {renderTab(statsTab)}
+                </div>
             </div>
 
             <div className="header-right">
+                <div className="mobile-only stats-mobile-wrapper">
+                    {renderTab(statsTab, "stats-mobile-btn")}
+                </div>
                 {canInstall && !isInstalled && (
                     <button
                         onClick={install}

@@ -32,7 +32,6 @@ export const SuperFab = ({ addMission, addTransaction, addHabit, addCalendarEven
         { id: 'nota', icon: <Lightbulb size={24} />, color: '#facc15', label: 'Nota' },
         { id: 'agenda', icon: <Calendar size={24} />, color: '#f59e0b', label: 'Agenda' },
         { id: 'bloque', icon: <Clock size={24} />, color: '#8b5cf6', label: 'Bloque' },
-        { id: 'proyecto', icon: <Target size={24} />, color: '#ff8c42', label: 'Proyecto' },
         { id: 'tarea', icon: <Target size={24} />, color: '#3b82f6', label: 'Tarea' },
     ];
 
