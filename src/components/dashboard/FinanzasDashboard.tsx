@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { TrendingUp, Wallet, ArrowUpCircle, ArrowDownCircle, UserMinus, UserPlus, BarChart3, Plus, Trash2, Edit2, Check, X, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Transaction, FixedExpense } from '../../hooks/useAlDiaState';
