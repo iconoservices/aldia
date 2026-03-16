@@ -1,26 +1,39 @@
 import { useState, useEffect } from 'react';
 import { auth, googleProvider } from '../firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, type User } from 'firebase/auth';
+import { 
+    signInWithRedirect, 
+    signOut, 
+    onAuthStateChanged, 
+    getRedirectResult,
+    type User 
+} from 'firebase/auth';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
-            setLoading(loading); // Keep loading state if needed, but here simple
+        // 1. Listen for auth state changes
+        const unsubscribe = onAuthStateChanged(auth, (u) => {
+            setUser(u);
             setLoading(false);
         });
+
+        // 2. Check for redirect result (important for loginWithRedirect)
+        getRedirectResult(auth).catch((error) => {
+            console.error("Error recovering from Google Redirect:", error);
+        });
+
         return unsubscribe;
     }, []);
 
     const loginWithGoogle = async () => {
         try {
-            const result = await signInWithPopup(auth, googleProvider);
-            return result.user;
+            // signInWithRedirect is much better for mobile/PWAs
+            await signInWithRedirect(auth, googleProvider);
         } catch (error) {
-            console.error("Error logging in with Google:", error);
+            console.error("Error starting Google Login:", error);
+            alert("Error al iniciar sesión: " + (error instanceof Error ? error.message : "Desconocido"));
             throw error;
         }
     };
