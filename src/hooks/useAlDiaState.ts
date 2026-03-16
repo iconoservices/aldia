@@ -47,6 +47,7 @@ export interface FixedExpense {
     text: string;
     amount: number;
     active: boolean;
+    projectId?: number;
 }
 
 export interface CalendarEvent {
@@ -569,8 +570,8 @@ export const useAlDiaState = () => {
         monthlyBudget,
         updateMonthlyBudget: (amount: number) => setMonthlyBudget(amount),
         fixedExpenses,
-        addFixedExpense: (text: string, amount: number) => {
-            const newExpense: FixedExpense = { id: Date.now() + Math.random(), text, amount, active: true };
+        addFixedExpense: (text: string, amount: number, projectId?: number) => {
+            const newExpense: FixedExpense = { id: Date.now() + Math.random(), text, amount, active: true, projectId };
             setFixedExpenses(prev => [...prev, newExpense]);
         },
         removeFixedExpense: (id: number) => {
@@ -578,6 +579,9 @@ export const useAlDiaState = () => {
         },
         toggleFixedExpense: (id: number) => {
             setFixedExpenses(prev => prev.map(e => e.id === id ? { ...e, active: !e.active } : e));
+        },
+        updateFixedExpense: (id: number, updates: Partial<FixedExpense>) => {
+            setFixedExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
         }
     };
 };

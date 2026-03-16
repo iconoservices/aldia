@@ -1,4 +1,4 @@
-import { TrendingUp, Wallet, ArrowUpCircle, ArrowDownCircle, UserMinus, UserPlus, BarChart3, Plus, Trash2 } from 'lucide-react';
+import { TrendingUp, Wallet, ArrowUpCircle, ArrowDownCircle, UserMinus, UserPlus, BarChart3, Plus, Trash2, Edit2, Check, X, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Transaction, FixedExpense } from '../../hooks/useAlDiaState';
 
@@ -12,16 +12,17 @@ interface FinanzasProps {
     monthlyBudget: number;
     updateMonthlyBudget: (amount: number) => void;
     fixedExpenses: FixedExpense[];
-    addFixedExpense: (text: string, amount: number) => void;
+    addFixedExpense: (text: string, amount: number, projectId?: number) => void;
     removeFixedExpense: (id: number) => void;
     toggleFixedExpense: (id: number) => void;
+    updateFixedExpense: (id: number, updates: Partial<FixedExpense>) => void;
     projects: { id: number, name: string, color: string }[];
 }
 
 export const FinanzasDashboard = ({ 
     balance, income, expense, owe, owed, transactions,
     monthlyBudget, updateMonthlyBudget, fixedExpenses, 
-    addFixedExpense, removeFixedExpense, toggleFixedExpense,
+    addFixedExpense, removeFixedExpense, toggleFixedExpense, updateFixedExpense,
     projects 
 }: FinanzasProps) => {
     return (
@@ -169,51 +170,19 @@ export const FinanzasDashboard = ({
                 <div className="glass-card" style={{ padding: '1.2rem', background: '#FFF' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {fixedExpenses.map((expense) => (
-                            <div key={expense.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: expense.active ? 1 : 0.4, transition: 'opacity 0.3s' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <div 
-                                        onClick={() => toggleFixedExpense(expense.id)}
-                                        style={{ width: '32px', height: '18px', borderRadius: '20px', background: expense.active ? 'var(--domain-blue)' : '#DDD', position: 'relative', cursor: 'pointer' }}
-                                    >
-                                        <motion.div 
-                                            animate={{ x: expense.active ? 16 : 2 }}
-                                            style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'white', position: 'absolute', top: '2px' }}
-                                        />
-                                    </div>
-                                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-carbon)' }}>{expense.text}</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#666' }}>${expense.amount}</span>
-                                    <button 
-                                        onClick={() => removeFixedExpense(expense.id)}
-                                        style={{ background: 'transparent', border: 'none', color: '#EEE', cursor: 'pointer' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.color = '#f87171'}
-                                        onMouseLeave={(e) => e.currentTarget.style.color = '#EEE'}
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
-                            </div>
+                            <FixedExpenseItem 
+                                key={expense.id} 
+                                expense={expense} 
+                                toggleFixedExpense={toggleFixedExpense}
+                                removeFixedExpense={removeFixedExpense}
+                                updateFixedExpense={updateFixedExpense}
+                                projects={projects}
+                            />
                         ))}
                         
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px', paddingTop: '12px', borderTop: '1px dashed #EEE' }}>
-                            <Plus size={16} color="#CCC" />
-                            <input 
-                                placeholder="Nuevo gasto fijo (ej. Alquiler)..."
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && e.currentTarget.value) {
-                                        const parts = e.currentTarget.value.split(':');
-                                        const text = parts[0];
-                                        const amount = parts[1] ? Number(parts[1]) : 0;
-                                        if (text && !isNaN(amount)) {
-                                            addFixedExpense(text, amount);
-                                            e.currentTarget.value = '';
-                                        }
-                                    }
-                                }}
-                                style={{ border: 'none', background: 'transparent', fontSize: '0.85rem', fontWeight: 600, outline: 'none', width: '100%' }}
-                            />
-                            <span style={{ fontSize: '0.6rem', color: '#BBB', whiteSpace: 'nowrap' }}>usa "Nombre: 500"</span>
+                        {/* Formulario de Nuevo Gasto Fijo */}
+                        <div style={{ marginTop: '4px', paddingTop: '12px', borderTop: '1px dashed #EEE' }}>
+                            <NewFixedExpenseForm addFixedExpense={addFixedExpense} projects={projects} />
                         </div>
                     </div>
 
@@ -291,5 +260,159 @@ export const FinanzasDashboard = ({
                 )}
             </div>
         </div>
+    );
+};
+
+// --- SUB-COMPONENTES AUXILIARES ---
+
+const FixedExpenseItem = ({ expense, toggleFixedExpense, removeFixedExpense, updateFixedExpense, projects }: { 
+    expense: FixedExpense, 
+    toggleFixedExpense: (id: number) => void, 
+    removeFixedExpense: (id: number) => void,
+    updateFixedExpense: (id: number, updates: Partial<FixedExpense>) => void,
+    projects: { id: number, name: string, color: string }[] 
+}) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState(expense.text);
+    const [editAmount, setEditAmount] = useState(expense.amount.toString());
+    const [editProjectId, setEditProjectId] = useState(expense.projectId);
+
+    const handleSave = () => {
+        updateFixedExpense(expense.id, {
+            text: editName,
+            amount: parseFloat(editAmount) || 0,
+            projectId: editProjectId
+        });
+        setIsEditing(false);
+    };
+
+    const project = projects.find(p => p.id === expense.projectId);
+
+    if (isEditing) {
+        return (
+            <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '10px', border: '1px solid #EEE' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <input 
+                        value={editName} onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Nombre.." 
+                        style={{ flex: 2, padding: '8px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.85rem', fontWeight: 600 }}
+                    />
+                    <input 
+                        type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)}
+                        placeholder="$" 
+                        style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.85rem', fontWeight: 600 }}
+                    />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <select 
+                        value={editProjectId || ''} 
+                        onChange={(e) => setEditProjectId(e.target.value ? Number(e.target.value) : undefined)}
+                        style={{ padding: '6px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.75rem', fontWeight: 700, background: 'white' }}
+                    >
+                        <option value="">Sin Proyecto</option>
+                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                        <button onClick={() => setIsEditing(false)} style={{ background: '#EEE', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer' }}><X size={16} color="#888" /></button>
+                        <button onClick={handleSave} style={{ background: 'var(--domain-green)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer' }}><Check size={16} color="white" /></button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: expense.active ? 1 : 0.4, transition: 'opacity 0.3s' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div 
+                    onClick={() => toggleFixedExpense(expense.id)}
+                    style={{ width: '32px', height: '18px', borderRadius: '20px', background: expense.active ? 'var(--domain-blue)' : '#DDD', position: 'relative', cursor: 'pointer' }}
+                >
+                    <motion.div 
+                        animate={{ x: expense.active ? 16 : 2 }}
+                        style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'white', position: 'absolute', top: '2px' }}
+                    />
+                </div>
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-carbon)' }}>{expense.text}</span>
+                        {project && (
+                            <span style={{ fontSize: '0.6rem', fontWeight: 900, color: project.color, background: `${project.color}15`, padding: '1px 6px', borderRadius: '6px', textTransform: 'uppercase' }}>
+                                {project.name}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#666' }}>${expense.amount.toLocaleString()}</span>
+                <button onClick={() => setIsEditing(true)} style={{ background: 'transparent', border: 'none', color: '#DDD', cursor: 'pointer' }}><Edit2 size={14} /></button>
+                <button onClick={() => removeFixedExpense(expense.id)} style={{ background: 'transparent', border: 'none', color: '#EEE', cursor: 'pointer' }}><Trash2 size={14} /></button>
+            </div>
+        </div>
+    );
+};
+
+const NewFixedExpenseForm = ({ addFixedExpense, projects }: { addFixedExpense: (t: string, a: number, p?: number) => void, projects: { id: number, name: string, color: string }[] }) => {
+    const [name, setName] = useState('');
+    const [amount, setAmount] = useState('');
+    const [projectId, setProjectId] = useState<number | undefined>(undefined);
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const handleSubmit = () => {
+        if (name && amount) {
+            addFixedExpense(name, parseFloat(amount), projectId);
+            setName('');
+            setAmount('');
+            setProjectId(undefined);
+            setIsExpanded(false);
+        }
+    };
+
+    if (!isExpanded) {
+        return (
+            <button 
+                onClick={() => setIsExpanded(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'transparent', border: 'none', padding: '0', cursor: 'pointer', width: '100%' }}
+            >
+                <Plus size={16} color="#CCC" />
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#AAA' }}>Nuevo gasto fijo...</span>
+            </button>
+        );
+    }
+
+    return (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#F8FAFC', padding: '12px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                    autoFocus
+                    placeholder="Nombre (ej. Alquiler)" 
+                    value={name} onChange={(e) => setName(e.target.value)}
+                    style={{ flex: 2, padding: '8px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.85rem', fontWeight: 600 }}
+                />
+                <input 
+                    type="number" placeholder="$ 0.00" 
+                    value={amount} onChange={(e) => setAmount(e.target.value)}
+                    style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.85rem', fontWeight: 600 }}
+                />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Tag size={12} color="#94A3B8" />
+                    <select 
+                        value={projectId || ''} 
+                        onChange={(e) => setProjectId(e.target.value ? Number(e.target.value) : undefined)}
+                        style={{ padding: '4px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.7rem', fontWeight: 700, background: 'white' }}
+                    >
+                        <option value="">Sin Proyecto</option>
+                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                    <button onClick={() => setIsExpanded(false)} style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: '#E2E8F0', color: '#475569', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>CANCELAR</button>
+                    <button onClick={handleSubmit} style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: 'var(--domain-blue)', color: 'white', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>AGREGAR</button>
+                </div>
+            </div>
+        </motion.div>
     );
 };

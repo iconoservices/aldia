@@ -123,6 +123,7 @@ function App() {
                 addFixedExpense={state.addFixedExpense}
                 removeFixedExpense={state.removeFixedExpense}
                 toggleFixedExpense={state.toggleFixedExpense}
+                updateFixedExpense={state.updateFixedExpense}
                 projects={state.projects}
               />
             ) : activeTab === 'Proyectos' ? (
