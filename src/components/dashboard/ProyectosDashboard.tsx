@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Target, Clock, Zap, Plus, MoreVertical, Play, Trophy } from 'lucide-react';
+import { Target, Zap, Plus, MoreVertical, Trophy } from 'lucide-react';
 import type { Project, Mission, TimeBlock } from '../../hooks/useAlDiaState';
 
 interface ProyectosDashboardProps {

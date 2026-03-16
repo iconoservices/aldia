@@ -1,7 +1,7 @@
 import { CheckCircle2, ListTodo, CreditCard, Plus, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
 import type { Habit, TimeBlock } from '../../hooks/useAlDiaState';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { TimeBlockModal } from '../features/TimeBlockModal';
 
 interface VidaProps {
