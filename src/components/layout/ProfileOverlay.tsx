@@ -178,7 +178,7 @@ export const ProfileOverlay = ({ isOpen, onClose }: ProfileOverlayProps) => {
                                         <button onClick={loginWithGoogle} style={{ ...settingItemStyle, background: 'var(--domain-blue)', color: 'white' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                 <User size={20} />
-                                                <span>Iniciar Sesión (Cloud Sync)</span>
+                                                <span>Sincronizar Cuenta de Google</span>
                                             </div>
                                         </button>
                                     ) : (
