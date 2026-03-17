@@ -496,29 +496,41 @@ export const useAlDiaState = () => {
             setProjects(prev => [newProject, ...prev]);
         },
         addProjectTask: (projectId: number, text: string) => {
-            setProjects(prev => prev.map(p => {
-                if (p.id !== projectId) return p;
-                const newTask = { id: Date.now() + Math.random(), text, completed: false };
-                return { ...p, checklist: [...(p.checklist || []), newTask] };
-            }));
+            setProjects(prev => {
+                if (!Array.isArray(prev)) return [];
+                return prev.map(p => {
+                    if (p.id !== projectId) return p;
+                    const newTask = { id: Date.now() + Math.random(), text, completed: false };
+                    const currentChecklist = Array.isArray(p.checklist) ? p.checklist : [];
+                    return { ...p, checklist: [...currentChecklist, newTask] };
+                });
+            });
         },
         toggleProjectTask: (projectId: number, taskId: number) => {
-            setProjects(prev => prev.map(p => {
-                if (p.id !== projectId) return p;
-                return {
-                    ...p,
-                    checklist: (p.checklist || []).map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)
-                };
-            }));
+            setProjects(prev => {
+                if (!Array.isArray(prev)) return [];
+                return prev.map(p => {
+                    if (p.id !== projectId) return p;
+                    const currentChecklist = Array.isArray(p.checklist) ? p.checklist : [];
+                    return {
+                        ...p,
+                        checklist: currentChecklist.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)
+                    };
+                });
+            });
         },
         removeProjectTask: (projectId: number, taskId: number) => {
-            setProjects(prev => prev.map(p => {
-                if (p.id !== projectId) return p;
-                return {
-                    ...p,
-                    checklist: (p.checklist || []).filter(t => t.id !== taskId)
-                };
-            }));
+            setProjects(prev => {
+                if (!Array.isArray(prev)) return [];
+                return prev.map(p => {
+                    if (p.id !== projectId) return p;
+                    const currentChecklist = Array.isArray(p.checklist) ? p.checklist : [];
+                    return {
+                        ...p,
+                        checklist: currentChecklist.filter(t => t.id !== taskId)
+                    };
+                });
+            });
         },
         promoteTaskToRoutine: (projectId: number, taskId: number, routineId: number) => {
             const project = projects.find(p => p.id === projectId);
