@@ -44,24 +44,25 @@ export const useFinanzasState = () => {
         setFixedExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     };
 
-    // Métricas calculadas
+    // Métricas calculadas (DEFENSIVAS)
     const todayStr = new Date().toISOString().split('T')[0];
+    const txArr = Array.isArray(transactions) ? transactions : [];
 
-    const todayIncome = transactions
-        .filter(t => t.type === 'ingreso' && !t.isDebt && t.fullDate === todayStr)
-        .reduce((acc, t) => acc + t.amount, 0);
+    const todayIncome = txArr
+        .filter(t => t?.type === 'ingreso' && !t.isDebt && t.fullDate === todayStr)
+        .reduce((acc, t) => acc + (Number(t?.amount) || 0), 0);
 
-    const todayExpense = transactions
-        .filter(t => t.type === 'gasto' && !t.isDebt && t.fullDate === todayStr)
-        .reduce((acc, t) => acc + Math.abs(t.amount), 0);
+    const todayExpense = txArr
+        .filter(t => t?.type === 'gasto' && !t.isDebt && t.fullDate === todayStr)
+        .reduce((acc, t) => acc + Math.abs(Number(t?.amount) || 0), 0);
 
-    const debtsOwe = transactions
-        .filter(t => t.type === 'gasto' && t.isDebt)
-        .reduce((acc, t) => acc + Math.abs(t.amount), 0);
+    const debtsOwe = txArr
+        .filter(t => t?.type === 'gasto' && t.isDebt)
+        .reduce((acc, t) => acc + Math.abs(Number(t?.amount) || 0), 0);
 
-    const debtsOwed = transactions
-        .filter(t => t.type === 'ingreso' && t.isDebt)
-        .reduce((acc, t) => acc + t.amount, 0);
+    const debtsOwed = txArr
+        .filter(t => t?.type === 'ingreso' && t.isDebt)
+        .reduce((acc, t) => acc + (Number(t?.amount) || 0), 0);
 
     return {
         transactions,

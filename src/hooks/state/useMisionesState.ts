@@ -107,13 +107,13 @@ export const useMisionesState = () => {
         }));
     };
 
-    // Métricas calculadas
-    const completedMissionsCount = missions.filter(m => m.completed).length;
-    const totalMissionsCount = missions.length;
+    // Métricas calculadas (DEFENSIVAS)
+    const completedMissionsCount = Array.isArray(missions) ? missions.filter(m => m?.completed).length : 0;
+    const totalMissionsCount = Array.isArray(missions) ? missions.length : 0;
     const missionFocusScore = totalMissionsCount > 0 ? (completedMissionsCount / totalMissionsCount) * 100 : 0;
 
-    const habitPerformance = habits.length > 0
-        ? (habits.reduce((acc, h) => acc + h.completedDays.length, 0) / (habits.length * 7)) * 100
+    const habitPerformance = (Array.isArray(habits) && habits.length > 0)
+        ? (habits.reduce((acc, h) => acc + (Array.isArray(h?.completedDays) ? h.completedDays.length : 0), 0) / (habits.length * 7)) * 100
         : 0;
 
     const performanceScore = (missionFocusScore + habitPerformance) / 2;

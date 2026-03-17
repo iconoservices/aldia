@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db, auth } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, type User } from 'firebase/auth';
@@ -139,39 +139,42 @@ export const useAlDiaState = () => {
         notes, setNotes, addNote, removeNote, toggleNoteItem
     } = useCerebroState();
 
-    // 2. Manejo de Autenticación y Carga Inicial
+    // 2. Manejo de Autenticación y Carga Inicial (Simplificado)
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
             
             if (user) {
-                // Cargar desde Firestore
-                const docRef = doc(db, 'users', user.uid);
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
+                try {
+                    const docRef = doc(db, 'users', user.uid);
+                    const docSnap = await getDoc(docRef);
                     
-                    // Lógica de "Mezcla" (Merge): Priorizar Cloud, pero si falta algo, usar Local
-                    const localData = getLocalBackup();
+                    if (docSnap.exists()) {
+                        const data = docSnap.data() || {};
+                        
+                        // Carga Directa (con validación de seguridad para evitar pantallas blancas)
+                        const validate = (val: any) => Array.isArray(val) ? val : [];
 
-                    setMisionesDirect(data.missions || localData.missions);
-                    setTransactions(data.transactions || localData.transactions);
-                    setBalance(data.balance !== undefined ? data.balance : localData.balance);
-                    setHabits(data.habits || localData.habits);
-                    setAgenda(data.agenda || localData.agenda);
-                    setTimeBlocks(data.timeBlocks || localData.timeBlocks);
-                    setNotes(data.notes || localData.notes);
-                    setProjects(data.projects || localData.projects);
-                    setRutinas(data.rutinas || localData.rutinas);
-                    setMonthlyBudget(data.monthlyBudget !== undefined ? data.monthlyBudget : localData.monthlyBudget);
-                    setFixedExpenses(data.fixedExpenses || localData.fixedExpenses);
-                } else {
-                    // Si no hay documento en cloud, cargar todo de local
+                        setMisionesDirect(validate(data.missions));
+                        setTransactions(validate(data.transactions));
+                        setHabits(validate(data.habits));
+                        setAgenda(validate(data.agenda));
+                        setNotes(validate(data.notes));
+                        setProjects(validate(data.projects));
+                        setRutinas(validate(data.rutinas));
+                        setFixedExpenses(validate(data.fixedExpenses));
+                        setTimeBlocks(validate(data.timeBlocks));
+
+                        if (data.balance !== undefined) setBalance(Number(data.balance));
+                        if (data.monthlyBudget !== undefined) setMonthlyBudget(Number(data.monthlyBudget));
+                    } else {
+                        loadFromLocal();
+                    }
+                } catch (error) {
+                    console.error("Error al cargar datos de la nube:", error);
                     loadFromLocal();
                 }
             } else {
-                // Si no hay usuario, cargar de local
                 loadFromLocal();
             }
             setIsInitialLoad(false);
@@ -251,39 +254,11 @@ export const useAlDiaState = () => {
         if (sFixedExpenses) setFixedExpenses(JSON.parse(sFixedExpenses));
     };
 
-    const getLocalBackup = () => {
-        const sMissions = localStorage.getItem('aldia_missions');
-        const sTransactions = localStorage.getItem('aldia_transactions');
-        const sBalance = localStorage.getItem('aldia_balance');
-        const sHabits = localStorage.getItem('aldia_habits');
-        const sAgenda = localStorage.getItem('aldia_agenda');
-        const sTimeBlocks = localStorage.getItem('aldia_timeblocks');
-        const sNotes = localStorage.getItem('aldia_notes');
-        const sProjects = localStorage.getItem('aldia_projects');
-        const sRutinas = localStorage.getItem('aldia_rutinas');
-        const sMonthlyBudget = localStorage.getItem('aldia_monthly_budget');
-        const sFixedExpenses = localStorage.getItem('aldia_fixed_expenses');
-
-        return {
-            missions: sMissions ? JSON.parse(sMissions) : [],
-            transactions: sTransactions ? JSON.parse(sTransactions) : [],
-            balance: sBalance ? parseFloat(sBalance) : 4250.00,
-            habits: sHabits ? JSON.parse(sHabits) : [],
-            agenda: sAgenda ? JSON.parse(sAgenda) : [],
-            timeBlocks: sTimeBlocks ? JSON.parse(sTimeBlocks) : [],
-            notes: sNotes ? JSON.parse(sNotes) : [],
-            projects: sProjects ? JSON.parse(sProjects) : [],
-            rutinas: sRutinas ? JSON.parse(sRutinas) : [],
-            monthlyBudget: sMonthlyBudget ? parseFloat(sMonthlyBudget) : 0,
-            fixedExpenses: sFixedExpenses ? JSON.parse(sFixedExpenses) : []
-        };
-    };
-
-    // 3. Persistencia Unificada (Local + Cloud)
+    // 3. Persistencia Unificada (Local + Cloud Debounced)
     useEffect(() => {
         if (isInitialLoad) return;
 
-        // Siempre guardar en LocalStorage por seguridad / offline
+        // Siempre guardar en LocalStorage por seguridad / offline (INSTANTÁNEO)
         localStorage.setItem('aldia_missions', JSON.stringify(misionesState));
         localStorage.setItem('aldia_transactions', JSON.stringify(transactions));
         localStorage.setItem('aldia_balance', JSON.stringify(balance));
@@ -296,35 +271,37 @@ export const useAlDiaState = () => {
         localStorage.setItem('aldia_monthly_budget', JSON.stringify(monthlyBudget));
         localStorage.setItem('aldia_fixed_expenses', JSON.stringify(fixedExpenses));
 
-        // Borrar "old" LocalStorage keys if they were different (not needed here but good practice)
-
-        // Guardar en Firestore si hay usuario
+        // Guardar en Firestore si hay usuario (DEBOUNCED / ASÍNCRONO)
         if (user) {
-            const docRef = doc(db, 'users', user.uid);
-            setDoc(docRef, {
-                missions: misionesState,
-                transactions,
-                balance,
-                habits,
-                agenda,
-                timeBlocks,
-                notes,
-                projects,
-                rutinas,
-                monthlyBudget,
-                fixedExpenses,
-                lastSync: new Date().toISOString()
-            }, { merge: true });
+            const syncTimer = setTimeout(() => {
+                const docRef = doc(db, 'users', user.uid);
+                setDoc(docRef, {
+                    missions: misionesState,
+                    transactions,
+                    balance,
+                    habits,
+                    agenda,
+                    timeBlocks,
+                    notes,
+                    projects,
+                    rutinas,
+                    monthlyBudget,
+                    fixedExpenses,
+                    lastSync: new Date().toISOString()
+                }, { merge: true });
+            }, 2000); // 2 segundos de calma para evitar freezes
+
+            return () => clearTimeout(syncTimer); // Limpiar si el estado cambia antes de los 2s
         }
     }, [misionesState, transactions, balance, habits, agenda, timeBlocks, notes, projects, rutinas, monthlyBudget, fixedExpenses, user, isInitialLoad]);
 
-    // 3. Lógica Derivada (Calculada)
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todayIndex = (new Date().getDay() + 6) % 7; // 0=Mon, 6=Sun
+    // 3. Lógica Derivada (Calculada con useMemo - DEFENSIVA)
+    const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+    const todayIndex = useMemo(() => (new Date().getDay() + 6) % 7, []); // 0=Mon, 6=Sun
 
-    const routineMissions = (rutinas || [])
-        .filter(r => r.isActive && r.repeatDays?.includes(todayIndex))
-        .flatMap(r => (r.items || []).map(item => ({
+    const routineMissions = useMemo(() => (Array.isArray(rutinas) ? rutinas : [])
+        .filter(r => r?.isActive && Array.isArray(r.repeatDays) && r.repeatDays.includes(todayIndex))
+        .flatMap(r => (Array.isArray(r.items) ? r.items : []).map(item => ({
             id: item.id,
             uid: `routine-${r.id}-${item.id}`,
             text: item.text,
@@ -335,25 +312,25 @@ export const useAlDiaState = () => {
             critical: false as const,
             isRoutine: true,
             routineId: r.id
-        })));
+        }))), [rutinas, todayIndex]);
 
-    const habitMissions = (habits || []).map(h => ({
+    const habitMissions = useMemo(() => (Array.isArray(habits) ? habits : []).map(h => ({
         id: h.id,
         uid: `habit-${h.id}`,
         text: h.name,
-        completed: (h.completedDays || []).includes(todayIndex),
+        completed: Array.isArray(h.completedDays) && h.completedDays.includes(todayIndex),
         q: 'Q2' as const,
         repeat: 'none' as const,
         critical: false as const,
         isHabit: true,
-        habitCount: (h.completedDays || []).length
-    }));
+        habitCount: Array.isArray(h.completedDays) ? h.completedDays.length : 0
+    })), [habits, todayIndex]);
 
-    const todayMissions = [
-        ...(misionesState || []).filter(m => !m.dueDate || m.dueDate <= todayStr).map(m => ({ ...m, uid: `task-${m.id}` })),
+    const todayMissions = useMemo(() => [
+        ...(Array.isArray(misionesState) ? misionesState : []).filter(m => m && (!m.dueDate || m.dueDate <= todayStr)).map(m => ({ ...m, uid: `task-${m.id}` })),
         ...routineMissions,
         ...habitMissions
-    ] as Mission[];
+    ] as Mission[], [misionesState, routineMissions, habitMissions, todayStr]);
 
     // 4. Acciones (Consolidadas)
     return {
