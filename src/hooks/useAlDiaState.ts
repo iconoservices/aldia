@@ -139,8 +139,60 @@ export const useAlDiaState = () => {
         notes, setNotes, addNote, removeNote, toggleNoteItem
     } = useCerebroState();
 
-    // 2. Manejo de Autenticación y Carga Inicial (Simplificado)
+    // 2. Lógica de Carga (LocalStorage First)
     useEffect(() => {
+        // Carga inmediata de LocalStorage para evitar estados vacíos
+        const loadInitialLocal = () => {
+            const keys = {
+                missions: 'aldia_missions',
+                transactions: 'aldia_transactions',
+                balance: 'aldia_balance',
+                habits: 'aldia_habits',
+                agenda: 'aldia_agenda',
+                timeblocks: 'aldia_timeblocks',
+                notes: 'aldia_notes',
+                projects: 'aldia_projects',
+                rutinas: 'aldia_rutinas',
+                budget: 'aldia_monthly_budget',
+                fixed: 'aldia_fixed_expenses'
+            };
+
+            const sMissions = localStorage.getItem(keys.missions);
+            if (sMissions) setMisionesDirect(JSON.parse(sMissions));
+            
+            const sTransactions = localStorage.getItem(keys.transactions);
+            if (sTransactions) setTransactions(JSON.parse(sTransactions));
+
+            const sBalance = localStorage.getItem(keys.balance);
+            if (sBalance) setBalance(parseFloat(sBalance));
+
+            const sHabits = localStorage.getItem(keys.habits);
+            if (sHabits) setHabits(JSON.parse(sHabits));
+
+            const sAgenda = localStorage.getItem(keys.agenda);
+            if (sAgenda) setAgenda(JSON.parse(sAgenda));
+
+            const sTimeBlocks = localStorage.getItem(keys.timeblocks);
+            if (sTimeBlocks) setTimeBlocks(JSON.parse(sTimeBlocks));
+
+            const sNotes = localStorage.getItem(keys.notes);
+            if (sNotes) setNotes(JSON.parse(sNotes));
+
+            const sProjects = localStorage.getItem(keys.projects);
+            if (sProjects) setProjects(JSON.parse(sProjects));
+
+            const sRutinas = localStorage.getItem(keys.rutinas);
+            if (sRutinas) setRutinas(JSON.parse(sRutinas));
+
+            const sBudget = localStorage.getItem(keys.budget);
+            if (sBudget) setMonthlyBudget(parseFloat(sBudget));
+
+            const sFixed = localStorage.getItem(keys.fixed);
+            if (sFixed) setFixedExpenses(JSON.parse(sFixed));
+        };
+
+        loadInitialLocal();
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
             
@@ -150,109 +202,43 @@ export const useAlDiaState = () => {
                     const docSnap = await getDoc(docRef);
                     
                     if (docSnap.exists()) {
-                        const data = docSnap.data() || {};
-                        
-                        // Carga Directa (con validación de seguridad para evitar pantallas blancas)
+                        const cloud = docSnap.data() || {};
                         const validate = (val: any) => Array.isArray(val) ? val : [];
 
-                        setMisionesDirect(validate(data.missions));
-                        setTransactions(validate(data.transactions));
-                        setHabits(validate(data.habits));
-                        setAgenda(validate(data.agenda));
-                        setNotes(validate(data.notes));
-                        setProjects(validate(data.projects));
-                        setRutinas(validate(data.rutinas));
-                        setFixedExpenses(validate(data.fixedExpenses));
-                        setTimeBlocks(validate(data.timeBlocks));
+                        // "SMART MERGE" LIGERO: Si Cloud tiene datos, combinarlos con Local por ID
+                        // Esto evita borrar lo que el usuario acaba de anotar
+                        const smartMerge = <T extends { id: number }>(cloudArr: any[], localArr: any[]): T[] => {
+                            const combined = [...validate(cloudArr)];
+                            const cloudIds = new Set(combined.map(item => item?.id).filter(id => id !== undefined));
+                            
+                            validate(localArr).forEach(item => {
+                                if (item?.id && !cloudIds.has(item.id)) combined.push(item);
+                            });
+                            return combined;
+                        };
 
-                        if (data.balance !== undefined) setBalance(Number(data.balance));
-                        if (data.monthlyBudget !== undefined) setMonthlyBudget(Number(data.monthlyBudget));
-                    } else {
-                        loadFromLocal();
+                        setMisionesDirect(prev => smartMerge(cloud.missions, prev));
+                        setTransactions(prev => smartMerge(cloud.transactions, prev));
+                        setHabits(prev => smartMerge(cloud.habits, prev));
+                        setAgenda(prev => smartMerge(cloud.agenda, prev));
+                        setNotes(prev => smartMerge(cloud.notes, prev));
+                        setProjects(prev => smartMerge(cloud.projects, prev));
+                        setRutinas(prev => smartMerge(cloud.rutinas, prev));
+                        setFixedExpenses(prev => smartMerge(cloud.fixedExpenses, prev));
+                        setTimeBlocks(prev => smartMerge(cloud.timeBlocks, prev));
+
+                        if (cloud.balance !== undefined) setBalance(Number(cloud.balance));
+                        if (cloud.monthlyBudget !== undefined) setMonthlyBudget(Number(cloud.monthlyBudget));
                     }
                 } catch (error) {
-                    console.error("Error al cargar datos de la nube:", error);
-                    loadFromLocal();
+                    console.error("Error en sincronización Cloud:", error);
                 }
-            } else {
-                loadFromLocal();
             }
             setIsInitialLoad(false);
         });
 
         return unsubscribe;
     }, []);
-
-    const loadFromLocal = () => {
-        const sMissions = localStorage.getItem('aldia_missions');
-        if (sMissions) setMisionesDirect(JSON.parse(sMissions));
-        else setMisionesDirect([
-            { id: 1, text: 'Pagar Luz (Vence Hoy)', q: 'Q1', critical: true, completed: false, repeat: 'monthly' },
-            { id: 2, text: 'Terminar maquetación AlDía', q: 'Q2', critical: false, completed: false, repeat: 'none' },
-            { id: 3, text: 'Diseñar Menú Radial (+)', q: 'Q2', critical: false, completed: false, repeat: 'none' },
-            { id: 4, text: 'Revisar emails de suscripciones', q: 'Q3', critical: false, completed: false, repeat: 'daily' },
-        ]);
-
-        const sTransactions = localStorage.getItem('aldia_transactions');
-        if (sTransactions) setTransactions(JSON.parse(sTransactions));
-
-        const sBalance = localStorage.getItem('aldia_balance');
-        if (sBalance) setBalance(parseFloat(sBalance));
-
-        const sHabits = localStorage.getItem('aldia_habits');
-        if (sHabits) setHabits(JSON.parse(sHabits));
-        else setHabits([
-            { id: 1, name: 'Tomar 2L de Agua', completedDays: [0, 1, 2] },
-            { id: 2, name: 'Leer 15 páginas', completedDays: [1] },
-            { id: 3, name: 'Meditar 10 min', completedDays: [] }
-        ]);
-
-        const sAgenda = localStorage.getItem('aldia_agenda');
-        const todayStr = new Date().toISOString().split('T')[0];
-        if (sAgenda) setAgenda(JSON.parse(sAgenda));
-        else setAgenda([
-            { id: 1, title: 'Reunión de Maquetación', date: todayStr, startTime: '15:00', endTime: '17:00', description: 'Avanzar en la lógica PWA de AlDía' },
-            { id: 2, title: 'Gimnasio / Entreno', date: todayStr, startTime: '18:30', endTime: '20:00', description: 'Día de pierna y cardio' },
-            { id: 3, title: 'Cena con Equipo', date: todayStr, startTime: '21:00', endTime: '22:30', description: 'Revisión mensual de objetivos' }
-        ]);
-
-        const sTimeBlocks = localStorage.getItem('aldia_timeblocks');
-        if (sTimeBlocks) setTimeBlocks(JSON.parse(sTimeBlocks));
-        else setTimeBlocks([
-            { id: 1, label: 'Deep Work', start: '09:00', end: '12:00', color: '#3b82f6' },
-            { id: 2, label: 'Almuerzo / Break', start: '13:00', end: '14:00', color: '#facc15' },
-            { id: 3, label: 'Admin / Mails', start: '14:00', end: '15:00', color: '#10b981' }
-        ]);
-
-        const sNotes = localStorage.getItem('aldia_notes');
-        if (sNotes) setNotes(JSON.parse(sNotes));
-        else setNotes([
-            { id: 1, title: 'Ideas de Contenido', content: 'Hablar de minimalismo digital en el siguiente video.', type: 'text', items: [], q: 'Q2', color: '#FEF9C3', date: new Date().toISOString() },
-            { id: 2, title: 'Supermercado', content: '', type: 'checklist', items: [{ id: 1, text: 'Avena', completed: false }, { id: 2, text: 'Café', completed: true }], q: 'Q4', color: '#DBEAFE', date: new Date().toISOString() }
-        ]);
-
-        const sProjects = localStorage.getItem('aldia_projects');
-        if (sProjects) setProjects(JSON.parse(sProjects));
-        else setProjects([
-            { id: 1, name: 'AlDía App', color: '#ff8c42', status: 'activo', targetHoursPerWeek: 10, checklist: [] },
-            { id: 2, name: 'Personal/Life', color: '#3b82f6', status: 'activo', targetHoursPerWeek: 5, checklist: [] },
-            { id: 3, name: 'Trabajo / Oficina', color: '#10b981', status: 'activo', targetHoursPerWeek: 40, checklist: [] }
-        ]);
-
-        const sRutinas = localStorage.getItem('aldia_rutinas');
-        if (sRutinas) setRutinas(JSON.parse(sRutinas));
-        else setRutinas([
-            { id: 1, title: 'Rutina Mañana', color: '#f59e0b', isActive: true, repeatDays: [0,1,2,3,4,5,6], startTime: '07:00', endTime: '09:00', items: [] },
-            { id: 2, title: 'Rutina Tarde', color: '#8b5cf6', isActive: true, repeatDays: [0,1,2,3,4,5,6], startTime: '13:00', endTime: '15:00', items: [] },
-            { id: 3, title: 'Rutina Noche', color: '#3b82f6', isActive: true, repeatDays: [0,1,2,3,4,5,6], startTime: '21:00', endTime: '23:00', items: [] }
-        ]);
-
-        const sMonthlyBudget = localStorage.getItem('aldia_monthly_budget');
-        if (sMonthlyBudget) setMonthlyBudget(parseFloat(sMonthlyBudget));
-
-        const sFixedExpenses = localStorage.getItem('aldia_fixed_expenses');
-        if (sFixedExpenses) setFixedExpenses(JSON.parse(sFixedExpenses));
-    };
 
     // 3. Persistencia Unificada (Local + Cloud Debounced)
     useEffect(() => {
