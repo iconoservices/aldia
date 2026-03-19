@@ -1,4 +1,4 @@
-import { BarChart3, Activity, Target, Flame, CalendarDays } from 'lucide-react';
+import { BarChart3, Activity, Target, Flame } from 'lucide-react';
 
 interface StatsProps {
     performanceScore: number;
@@ -32,7 +32,7 @@ export const StatsDashboard = ({ performanceScore, missionFocusScore, completedM
             <div className="glass-card" style={{ marginBottom: '1.5rem', padding: '1.2rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '6px' }}>
                     {[...Array(30)].map((_, i) => {
-                        const intensity = i % 4; // Solo visual
+                        const intensity = 0; // Estado inicial limpio
                         const bgColors = ['#F0EBE6', '#FFECCF', '#FFB76B', 'var(--domain-orange)'];
                         return (
                             <div key={i} style={{
@@ -80,23 +80,13 @@ export const StatsDashboard = ({ performanceScore, missionFocusScore, completedM
             {/* TROFEOS / RACHAS */}
             <h3 style={{ marginBottom: '1rem' }}>Tus Trofeos Vivos</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', borderLeft: '4px solid var(--domain-orange)' }}>
-                    <div style={{ background: '#FFF5EB', padding: '12px', borderRadius: '14px' }}>
-                        <Flame size={24} color="var(--domain-orange)" />
+                <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', borderLeft: '4px solid #EEE' }}>
+                    <div style={{ background: '#F5F5F5', padding: '12px', borderRadius: '14px' }}>
+                        <Flame size={24} color="#CCC" />
                     </div>
                     <div>
-                        <p style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: 'var(--text-carbon)' }}>Imparable: 12 Días</p>
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#888' }}>Tu racha de misiones impecable.</p>
-                    </div>
-                </div>
-
-                <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', borderLeft: '4px solid var(--domain-purple)' }}>
-                    <div style={{ background: '#F4EFFF', padding: '12px', borderRadius: '14px' }}>
-                        <CalendarDays size={24} color="var(--domain-purple)" />
-                    </div>
-                    <div>
-                        <p style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: 'var(--text-carbon)' }}>Arquitecto de Hábitos</p>
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#888' }}>90% de tus hábitos completados.</p>
+                        <p style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: '#AAA' }}>Próximamente</p>
+                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#BBB' }}>Completa misiones para ganar trofeos.</p>
                     </div>
                 </div>
             </div>

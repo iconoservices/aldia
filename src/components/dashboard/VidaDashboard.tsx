@@ -1,4 +1,4 @@
-import { CheckCircle2, ListTodo, CreditCard, Plus, Check, Trash2, Calendar, LayoutGrid, Clock, Edit2 } from 'lucide-react';
+import { Plus, Check, Trash2, Calendar, LayoutGrid, Clock, Edit2 } from 'lucide-react';
 import type { Habit, Routine } from '../../hooks/useAlDiaState';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
@@ -428,26 +428,13 @@ export const VidaDashboard = ({
             </div>
 
             {/* CHECKLISTS (MAESTROS / ASÍNCRONOS) */}
-            <div>
+            {/* CHECKLISTS (MAESTROS / ASÍNCRONOS) - Hidden until implemented */}
+            {/* <div>
                 <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-carbon)' }}>📋 Listas Maestras</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
-                    <div className="glass-card" style={{ padding: '1.2rem', textAlign: 'center', border: '1px solid #EAE0FE', cursor: 'pointer' }}>
-                        <CreditCard size={28} color="var(--domain-orange)" style={{ marginBottom: '8px' }} />
-                        <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem' }}>Pagos / Recur.</p>
-                        <p style={{ margin: 0, fontSize: '0.65rem', color: '#888', fontWeight: 700 }}>2 pendientes</p>
-                    </div>
-                    <div className="glass-card" style={{ padding: '1.2rem', textAlign: 'center', border: '1px solid #EAE0FE', cursor: 'pointer' }}>
-                        <ListTodo size={28} color="var(--domain-purple)" style={{ marginBottom: '8px' }} />
-                        <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem' }}>Súper / Mercado</p>
-                        <p style={{ margin: 0, fontSize: '0.65rem', color: '#888', fontWeight: 700 }}>12 items</p>
-                    </div>
-                    <div className="glass-card" style={{ padding: '1.2rem', textAlign: 'center', border: '1px solid #EAE0FE', cursor: 'pointer' }}>
-                        <CheckCircle2 size={28} color="var(--domain-green)" style={{ marginBottom: '8px' }} />
-                        <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem' }}>Procesos OK</p>
-                        <p style={{ margin: 0, fontSize: '0.65rem', color: '#888', fontWeight: 700 }}>Verificado</p>
-                    </div>
+                    ...
                 </div>
-            </div>
+            </div> */}
 
             {editingRoutine && (
                 <RoutineEditOverlay 

@@ -346,9 +346,10 @@ export const BentoGrid = ({ performanceScore, missions }: BentoGridProps) => {
             {/* RIGHT COLUMN (Streak + Minis) */}
             <div className="right-widgets">
                 {/* HORIZONTAL PILL (Fire Streak) */}
-                <div className="glass-card streak-widget">
+                {/* STREAK WIDGET (Dynamic or Hidden if 0) */}
+                <div className="glass-card streak-widget" style={{ opacity: 0.5 }}>
                     <Flame size={28} color="white" strokeWidth={2.5} fill="white" />
-                    <p>8 Días de Racha</p>
+                    <p>¡Empieza tu Racha!</p>
                 </div>
 
                 {/* DOS CUADRADOS SMALL -> AHORA SOLO UNO O AJUSTADO */}

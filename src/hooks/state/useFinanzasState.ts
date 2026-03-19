@@ -3,7 +3,7 @@ import type { Transaction, FixedExpense } from '../useAlDiaState';
 
 export const useFinanzasState = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [balance, setBalance] = useState(4250.00);
+    const [balance, setBalance] = useState(0.00);
     const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
     const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);
 
