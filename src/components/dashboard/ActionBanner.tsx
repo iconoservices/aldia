@@ -8,7 +8,7 @@ interface ActionBannerProps {
     missions: any[];
 }
 
-export const ActionBanner = ({ performanceScore }: ActionBannerProps) => {
+export const ActionBanner = (_props: ActionBannerProps) => {
     // --- LÓGICA POMODORO ---
     const [timeLeft, setTimeLeft] = useState(12 * 60);
     const [isActive, setIsActive] = useState(false);

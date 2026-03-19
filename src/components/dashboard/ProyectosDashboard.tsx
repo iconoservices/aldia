@@ -1,26 +1,25 @@
-import { useState, useMemo } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, ListTodo, ArrowRight, Zap, MoreVertical, Trophy, Edit2, Check, X, Tag, GripVertical } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Trash2, CheckCircle2, Circle, ListTodo, ArrowRight, Zap, GripVertical } from 'lucide-react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../ui/GlassCard';
-import { DomainIcon } from '../ui/DomainIcon';
-import type { Project, Mission } from '../../hooks/useAlDiaState';
+import type { Project, Mission, Routine } from '../../hooks/useAlDiaState';
 
 interface ProyectosProps {
     projects: Project[];
     missions: Mission[];
     timeBlocks: any[];
-    rutinas: any[];
+    rutinas: Routine[];
     onAddProject: () => void;
     deleteProject: (id: number) => void;
     addProjectTask: (projectId: number, text: string) => void;
     toggleProjectTask: (projectId: number, taskId: number) => void;
     removeProjectTask: (projectId: number, taskId: number) => void;
-    promoteTaskToRoutine: (projectId: number, taskText: string) => void;
+    promoteTaskToRoutine: (projectId: number, taskId: number, routineId: number) => void;
     reorderProjectTasks?: (projectId: number, newTasks: { id: number; text: string; completed: boolean }[]) => void;
 }
 
 export const ProyectosDashboard = ({ 
-    projects, missions, onAddProject, deleteProject,
+    projects, missions, rutinas, onAddProject, deleteProject,
     addProjectTask, toggleProjectTask, removeProjectTask, promoteTaskToRoutine,
     reorderProjectTasks
 }: ProyectosProps) => {
@@ -48,7 +47,6 @@ export const ProyectosDashboard = ({
                 </button>
             </div>
 
-            {/* GRID DE PROYECTOS OPTIMIZADO PARA DENSIDAD (2 COLUMNAS) */}
             <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', 
@@ -65,6 +63,7 @@ export const ProyectosDashboard = ({
                         removeProjectTask={removeProjectTask}
                         promoteTaskToRoutine={promoteTaskToRoutine}
                         reorderProjectTasks={reorderProjectTasks}
+                        rutinas={rutinas}
                     />
                 ))}
                 {activeProjects.length === 0 && (
@@ -74,7 +73,6 @@ export const ProyectosDashboard = ({
                 )}
             </div>
 
-            {/* SECCIÓN DE TAREAS PENDIENTES POR PROYECTO (VISTA LISTA) */}
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 900 }}>Tareas de Proyectos</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                 {projects.map(p => {
@@ -106,20 +104,21 @@ export const ProyectosDashboard = ({
 
 const ProjectCard = ({ 
     project, deleteProject, addProjectTask, toggleProjectTask, removeProjectTask, promoteTaskToRoutine,
-    reorderProjectTasks 
+    reorderProjectTasks, rutinas
 }: { 
     project: Project, 
     deleteProject: (id: number) => void,
-    addProjectTask: (id: number, t: string) => void,
+    addProjectTask: (pid: number, t: string) => void,
     toggleProjectTask: (pid: number, tid: number) => void,
     removeProjectTask: (pid: number, tid: number) => void,
-    promoteTaskToRoutine: (pid: number, t: string) => void,
-    reorderProjectTasks?: (pid: number, tasks: any[]) => void
+    promoteTaskToRoutine: (pid: number, tid: number, rid: number) => void,
+    reorderProjectTasks?: (pid: number, tasks: any[]) => void,
+    rutinas: Routine[]
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [newTaskText, setNewTaskText] = useState('');
     
-    const completedCount = project.checklist?.filter(t => t.completed).length || 0;
+    const completedCount = project.checklist?.filter((t: any) => t.completed).length || 0;
     const totalCount = project.checklist?.length || 0;
     const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
@@ -201,14 +200,14 @@ const ProjectCard = ({
                                 <Reorder.Group 
                                     axis="y" 
                                     values={project.checklist || []} 
-                                    onReorder={(newOrder) => {
+                                    onReorder={(newOrder: any) => {
                                         if (reorderProjectTasks) {
                                             reorderProjectTasks(project.id, newOrder);
                                         }
                                     }}
                                     style={{ display: 'flex', flexDirection: 'column', gap: '6px', listStyle: 'none', padding: 0 }}
                                 >
-                                    {(project.checklist || []).map(task => (
+                                    {(project.checklist || []).map((task: any) => (
                                         <Reorder.Item 
                                             key={task.id} 
                                             value={task}
@@ -236,7 +235,10 @@ const ProjectCard = ({
                                             </span>
                                             <div style={{ display: 'flex', gap: '4px' }}>
                                                 <button 
-                                                    onClick={() => promoteTaskToRoutine(project.id, task.text)}
+                                                    onClick={() => {
+                                                        const rid = rutinas[0]?.id || Date.now();
+                                                        promoteTaskToRoutine(project.id, task.id, rid);
+                                                    }}
                                                     title="Promover a Rutina"
                                                     style={{ background: 'transparent', border: 'none', color: '#EEE', cursor: 'pointer', padding: '2px' }}
                                                 >

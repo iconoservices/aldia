@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
-import { TrendingUp, ArrowUpCircle, ArrowDownCircle, UserMinus, UserPlus, BarChart3, Plus, Trash2, Edit2, Check, X, Tag, Calculator, PiggyBank, Wallet } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, UserMinus, UserPlus, BarChart3, Plus, Trash2, Edit2, Check, X, Calculator, PiggyBank, Wallet } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '../ui/GlassCard';
 import { DomainIcon } from '../ui/DomainIcon';
-import { ModernInput } from '../ui/ModernInput';
 import type { Transaction, FixedExpense } from '../../hooks/useAlDiaState';
 
 interface FinanzasProps {

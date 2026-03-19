@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, Reorder } from 'framer-motion';
+import { Reorder } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { JoyMatrixModal } from '../features/JoyMatrixModal';
 import { Repeat, Calendar, Clock, Edit2, Trash2, GripVertical } from 'lucide-react';
