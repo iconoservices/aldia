@@ -33,7 +33,7 @@ export const QuickActionPanel = ({
     const [asHabit, setAsHabit] = useState(false);
     const [asRoutine, setAsRoutine] = useState(false);
     const [routineId, setRoutineId] = useState<number>(1); // Default to Mañana
-    const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(undefined);
+    const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(1);
     const [selectedAccountId, setSelectedAccountId] = useState<number | undefined>(undefined);
     const [repeatDays, setRepeatDays] = useState<number[]>([]);
     
@@ -348,21 +348,6 @@ export const QuickActionPanel = ({
                                         </motion.div>
                                     ) : (
                                         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '4px' }}>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedProjectId(undefined);
-                                                    setSelectedAccountId(undefined);
-                                                }}
-                                                style={{
-                                                    padding: '6px 12px', borderRadius: '12px', border: '1px solid #EEE',
-                                                    background: selectedProjectId === undefined ? '#333' : 'white',
-                                                    color: selectedProjectId === undefined ? 'white' : '#888',
-                                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
-                                                }}
-                                            >
-                                                ☕ Personal
-                                            </button>
                                             {projects.map(p => (
                                                 <button
                                                     key={p.id}
