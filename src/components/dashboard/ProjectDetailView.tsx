@@ -34,7 +34,7 @@ export const ProjectDetailView = ({
             .filter(acc => acc.projectIds?.includes(project.id) || usedAccountIds.has(acc.id))
             .map(acc => {
                 const bal = transactions
-                    .filter(tx => tx.accountId === acc.id && tx.projectId === project.id && !tx.isDebt)
+                    .filter(tx => tx.accountId === acc.id && tx.projectId === project.id && !tx.isCashless)
                     .reduce((sum, tx) => sum + tx.amount, 0);
                 return { ...acc, balance: bal };
             });

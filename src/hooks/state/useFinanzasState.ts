@@ -7,10 +7,11 @@ export const useFinanzasState = () => {
     const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
     const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);
 
-    const addTransaction = (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number) => {
+    const addTransaction = (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean) => {
         const value = Math.abs(amount);
 
-        if (!isDebt) {
+        // Solo movemos el balance si NO es una transacción sin efectivo (fiao)
+        if (!isCashless) {
             setBalance(prev => type === 'ingreso' ? prev + value : prev - value);
         }
 
@@ -20,6 +21,7 @@ export const useFinanzasState = () => {
             amount: type === 'ingreso' ? value : -value,
             type,
             isDebt,
+            isCashless,
             date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             fullDate: new Date().toISOString().split('T')[0],
             projectId,
@@ -38,11 +40,11 @@ export const useFinanzasState = () => {
     };
 
     const toggleFixedExpense = (id: number) => {
-        setFixedExpenses(prev => prev.map(e => e.id === id ? { ...e, active: !e.active } : e));
+        setFixedExpenses((prev: FixedExpense[]) => prev.map(e => e.id === id ? { ...e, active: !e.active } : e));
     };
 
     const updateFixedExpense = (id: number, updates: Partial<FixedExpense>) => {
-        setFixedExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+        setFixedExpenses((prev: FixedExpense[]) => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     };
 
     // Métricas calculadas (DEFENSIVAS)
@@ -58,12 +60,12 @@ export const useFinanzasState = () => {
         .reduce((acc, t) => acc + Math.abs(Number(t?.amount) || 0), 0);
 
     const debtsOwe = txArr
-        .filter(t => t?.type === 'gasto' && t.isDebt)
+        .filter(t => t.isDebt && ((t.type === 'gasto' && t.isCashless) || (t.type === 'ingreso' && !t.isCashless)))
         .reduce((acc, t) => acc + Math.abs(Number(t?.amount) || 0), 0);
 
     const debtsOwed = txArr
-        .filter(t => t?.type === 'ingreso' && t.isDebt)
-        .reduce((acc, t) => acc + (Number(t?.amount) || 0), 0);
+        .filter(t => t.isDebt && ((t.type === 'ingreso' && t.isCashless) || (t.type === 'gasto' && !t.isCashless)))
+        .reduce((acc, t) => acc + Math.abs(Number(t?.amount) || 0), 0);
 
     return {
         transactions,

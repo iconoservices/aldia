@@ -8,7 +8,7 @@ interface QuickActionPanelProps {
     onClose: () => void;
     actionType: string | null;
     addMission: (text: string, q?: string, repeat?: 'none' | 'daily' | 'weekly' | 'monthly', noteId?: number, labels?: string[], dueDate?: string, dueTime?: string, habitId?: number, projectId?: number, repeatDays?: number[]) => void;
-    addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number) => void;
+    addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean) => void;
     addHabit: (name: string) => void;
     addRoutineItem?: (routineId: number, text: string, time?: string) => void;
     addCalendarEvent?: (title: string, date: string, start: string, end: string, desc: string, projectId?: number) => void;
@@ -27,7 +27,7 @@ export const QuickActionPanel = ({
 }: QuickActionPanelProps) => {
     const [amount, setAmount] = useState('');
     const [concept, setConcept] = useState('');
-    const [isDebt, setIsDebt] = useState(false);
+    const [debtMode, setDebtMode] = useState<'normal' | 'fiao' | 'prestamo'>('normal');
     const [selectedQ, setSelectedQ] = useState('Q2');
     const [repeat, setRepeat] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
     const [asHabit, setAsHabit] = useState(false);
@@ -94,7 +94,9 @@ export const QuickActionPanel = ({
                 alert("Debes seleccionar una cuenta");
                 return;
             }
-            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parseFloat(amount) || 0, actionType, isDebt, selectedProjectId, selectedAccountId);
+            const isActuallyDebt = debtMode !== 'normal';
+            const isCashless = debtMode === 'fiao';
+            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parseFloat(amount) || 0, actionType as any, isActuallyDebt, selectedProjectId, selectedAccountId, isCashless);
             confetti({
                 particleCount: 80,
                 spread: 70,
@@ -180,7 +182,7 @@ export const QuickActionPanel = ({
         setTimeout(() => {
             setAmount('');
             setConcept('');
-            setIsDebt(false);
+            setDebtMode('normal');
             setDate(new Date().toISOString().split('T')[0]);
             setStartTime('09:00');
             setEndTime('10:00');
@@ -647,9 +649,32 @@ export const QuickActionPanel = ({
 
                             {/* FINANZAS */}
                             {currentConfig.isFinancial && (
-                                <div style={{ background: '#F9F9F9', borderRadius: '20px', padding: '6px', display: 'flex', gap: '4px' }}>
-                                    <button type="button" onClick={() => setIsDebt(false)} style={{ flex: 1, background: !isDebt ? 'white' : 'transparent', color: !isDebt ? '#333' : '#AAA', border: 'none', padding: '10px', borderRadius: '16px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer' }}>PAGO REAL</button>
-                                    <button type="button" onClick={() => setIsDebt(true)} style={{ flex: 1, background: isDebt ? currentConfig.color : 'transparent', color: isDebt ? 'white' : '#AAA', border: 'none', padding: '10px', borderRadius: '16px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer' }}>{actionType === 'gasto' ? 'DEBO' : 'ME DEBEN'}</button>
+                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '24px', border: '1px solid #EEE' }}>
+                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.65rem', color: '#BBB', textTransform: 'uppercase' }}>Tipo de Movimiento</p>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                        {[
+                                            { id: 'normal', label: 'Efectivo', color: 'var(--domain-green)' },
+                                            { id: 'fiao', label: actionType === 'ingreso' ? 'Por Cobrar' : 'A Cuenta', color: 'var(--domain-orange)' },
+                                            { id: 'prestamo', label: actionType === 'ingreso' ? 'Préstamo Recibido' : 'Préstamo Realizado', color: 'var(--domain-blue)' }
+                                        ].map(m => (
+                                            <button
+                                                key={m.id} type="button" onClick={() => setDebtMode(m.id as any)}
+                                                style={{
+                                                    flex: 1, padding: '12px 6px', borderRadius: '16px', border: 'none',
+                                                    fontWeight: 900, fontSize: '0.65rem', cursor: 'pointer',
+                                                    background: debtMode === m.id ? m.color : 'white',
+                                                    color: debtMode === m.id ? 'white' : '#CCC',
+                                                    boxShadow: debtMode === m.id ? `0 4px 12px ${m.color}30` : 'none',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >{m.label.toUpperCase()}</button>
+                                        ))}
+                                    </div>
+                                    <p style={{ margin: '8px 0 0 10px', fontSize: '0.6rem', color: '#AAA', fontWeight: 600 }}>
+                                        {debtMode === 'normal' && '✓ Afecta tu saldo actual.'}
+                                        {debtMode === 'fiao' && '⚠ No mueve efectivo. Solo anota la deuda.'}
+                                        {debtMode === 'prestamo' && '⚠ Mueve efectivo y registra la deuda.'}
+                                    </p>
                                 </div>
                             )}
 
