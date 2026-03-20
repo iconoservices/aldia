@@ -148,13 +148,7 @@ export const useAlDiaState = () => {
         notes, setNotes, addNote, removeNote, toggleNoteItem, updateNote
     } = useCerebroState();
 
-    const [accounts, setAccounts] = useState<Account[]>([
-        { id: 1, name: 'Efectivo', color: '#4ade80', projectId: 1 },
-        { id: 2, name: 'Yape', color: '#8b5cf6', projectId: 1 },
-        { id: 3, name: 'Plin', color: '#3b82f6', projectId: 1 },
-        { id: 4, name: 'BCP', color: '#f59e0b', projectId: 1 },
-        { id: 5, name: 'BBVA', color: '#004481', projectId: 1 }
-    ]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
 
     // 2. Lógica de Carga (LocalStorage First)
     useEffect(() => {
