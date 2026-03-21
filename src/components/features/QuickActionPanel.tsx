@@ -270,6 +270,57 @@ export const QuickActionPanel = ({
 
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
+                            {/* TIPO DE MOVIMIENTO (PRIORIDAD 1 PARA FINANZAS) */}
+                            {currentConfig.isFinancial && (
+                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '24px', border: '1px solid #EEE' }}>
+                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.65rem', color: '#BBB', textTransform: 'uppercase' }}>Tipo de Movimiento</p>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                        {[
+                                            { id: 'normal', label: 'Efectivo', color: 'var(--domain-green)' },
+                                            { id: 'fiao', label: actionType === 'ingreso' ? 'Por Cobrar' : 'A Cuenta', color: 'var(--domain-orange)' },
+                                            { id: 'prestamo', label: actionType === 'ingreso' ? 'Préstamo Recibido' : 'Préstamo Realizado', color: 'var(--domain-blue)' }
+                                        ].map(m => (
+                                            <button
+                                                key={m.id} type="button" onClick={() => setDebtMode(m.id as any)}
+                                                style={{
+                                                    flex: 1, padding: '12px 6px', borderRadius: '16px', border: 'none',
+                                                    fontWeight: 900, fontSize: '0.65rem', cursor: 'pointer',
+                                                    background: debtMode === m.id ? m.color : 'white',
+                                                    color: debtMode === m.id ? 'white' : '#CCC',
+                                                    boxShadow: debtMode === m.id ? `0 4px 12px ${m.color}30` : 'none',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >{m.label.toUpperCase()}</button>
+                                        ))}
+                                    </div>
+                                    <p style={{ margin: '8px 0 0 10px', fontSize: '0.6rem', color: '#AAA', fontWeight: 600 }}>
+                                        {debtMode === 'normal' && '✓ Afecta tu saldo actual.'}
+                                        {debtMode === 'fiao' && '⚠ No mueve efectivo. Solo anota la deuda.'}
+                                        {debtMode === 'prestamo' && '⚠ Mueve efectivo y registra la deuda.'}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* CAMPO DE CONTACTO (PRIORIDAD 2 SI ES DEUDA) */}
+                            {currentConfig.isFinancial && debtMode !== 'normal' && (
+                                <motion.div 
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    style={{ background: '#F9F9F9', padding: '16px', borderRadius: '24px', border: `2px solid ${debtMode === 'fiao' ? 'var(--domain-orange)' : 'var(--domain-blue)'}30` }}
+                                >
+                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.65rem', color: '#666', textTransform: 'uppercase' }}>
+                                        {actionType === 'ingreso' ? '👤 ¿Quién te debe? (Cliente)' : '👤 ¿A quién le debes?'}
+                                    </p>
+                                    <input 
+                                        type="text"
+                                        placeholder="Nombre o entidad..."
+                                        value={contactName}
+                                        onChange={(e) => setContactName(e.target.value)}
+                                        style={{ width: '100%', padding: '12px', borderRadius: '16px', border: '1px solid #EEE', outline: 'none', fontSize: '1rem', fontWeight: 700, background: 'white' }}
+                                    />
+                                </motion.div>
+                            )}
+
                             {/* CANTIDAD (FINANZAS) */}
                             {currentConfig.isFinancial && (
                                 <div style={{ 
@@ -667,55 +718,9 @@ export const QuickActionPanel = ({
                              )}
 
                             {/* FINANZAS */}
-                            {currentConfig.isFinancial && (
-                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '24px', border: '1px solid #EEE' }}>
-                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.65rem', color: '#BBB', textTransform: 'uppercase' }}>Tipo de Movimiento</p>
-                                    <div style={{ display: 'flex', gap: '6px' }}>
-                                        {[
-                                            { id: 'normal', label: 'Efectivo', color: 'var(--domain-green)' },
-                                            { id: 'fiao', label: actionType === 'ingreso' ? 'Por Cobrar' : 'A Cuenta', color: 'var(--domain-orange)' },
-                                            { id: 'prestamo', label: actionType === 'ingreso' ? 'Préstamo Recibido' : 'Préstamo Realizado', color: 'var(--domain-blue)' }
-                                        ].map(m => (
-                                            <button
-                                                key={m.id} type="button" onClick={() => setDebtMode(m.id as any)}
-                                                style={{
-                                                    flex: 1, padding: '12px 6px', borderRadius: '16px', border: 'none',
-                                                    fontWeight: 900, fontSize: '0.65rem', cursor: 'pointer',
-                                                    background: debtMode === m.id ? m.color : 'white',
-                                                    color: debtMode === m.id ? 'white' : '#CCC',
-                                                    boxShadow: debtMode === m.id ? `0 4px 12px ${m.color}30` : 'none',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >{m.label.toUpperCase()}</button>
-                                        ))}
-                                    </div>
-                                    <p style={{ margin: '8px 0 0 10px', fontSize: '0.6rem', color: '#AAA', fontWeight: 600 }}>
-                                        {debtMode === 'normal' && '✓ Afecta tu saldo actual.'}
-                                        {debtMode === 'fiao' && '⚠ No mueve efectivo. Solo anota la deuda.'}
-                                        {debtMode === 'prestamo' && '⚠ Mueve efectivo y registra la deuda.'}
-                                    </p>
-                                </div>
-                            )}
 
-                            {/* CAMPO DE CONTACTO (SOLO SI NO ES NORMAL) */}
-                            {currentConfig.isFinancial && debtMode !== 'normal' && (
-                                <motion.div 
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    style={{ background: '#F9F9F9', padding: '16px', borderRadius: '24px', border: `2px solid ${debtMode === 'fiao' ? 'var(--domain-orange)' : 'var(--domain-blue)'}30` }}
-                                >
-                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.65rem', color: '#666', textTransform: 'uppercase' }}>
-                                        {actionType === 'ingreso' ? '👤 ¿Quién te debe? (Cliente)' : '👤 ¿A quién le debes?'}
-                                    </p>
-                                    <input 
-                                        type="text"
-                                        placeholder="Nombre o entidad..."
-                                        value={contactName}
-                                        onChange={(e) => setContactName(e.target.value)}
-                                        style={{ width: '100%', padding: '12px', borderRadius: '16px', border: '1px solid #EEE', outline: 'none', fontSize: '1rem', fontWeight: 700, background: 'white' }}
-                                    />
-                                </motion.div>
-                            )}
+
+
 
                             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" style={{ background: currentConfig.color, color: 'white', border: 'none', padding: '18px', borderRadius: '20px', fontSize: '1.1rem', fontWeight: 900, marginTop: '1rem', cursor: 'pointer', boxShadow: `0 10px 25px ${currentConfig.color}40` }}>
                                 <Check size={20} strokeWidth={3} /> GUARDAR
