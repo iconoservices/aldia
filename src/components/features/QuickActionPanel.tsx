@@ -100,7 +100,8 @@ export const QuickActionPanel = ({
             }
             const isActuallyDebt = debtMode !== 'normal';
             const isCashless = debtMode === 'fiao';
-            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parseFloat(amount) || 0, actionType as any, isActuallyDebt, selectedProjectId, selectedAccountId, isCashless, selectedCategory, contactName);
+            const cName = contactName.trim();
+            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parseFloat(amount) || 0, actionType as any, isActuallyDebt, selectedProjectId, selectedAccountId, isCashless, selectedCategory, cName);
             confetti({
                 particleCount: 80,
                 spread: 70,

@@ -155,6 +155,25 @@ export const useFinanzasState = () => {
         setTransactions((prev: Transaction[]) => prev.map(t => t.id === id ? { ...t, ...updates } : t));
     };
 
+    const updateTransactionGroup = (oldText: string, oldContact: string | undefined, updates: { text?: string, contact?: string, amount?: number }, originalId: number) => {
+        setTransactions((prev: Transaction[]) => prev.map(t => {
+            const isOriginal = t.id === originalId;
+            const tTextBase = t.text.startsWith('Pago: ') ? t.text.replace('Pago: ', '') : t.text;
+            const matchesGroup = tTextBase === oldText && t.contact === oldContact && t.isDebt;
+
+            if (isOriginal) {
+                return { ...t, ...updates };
+            } else if (matchesGroup) {
+                // Si es un pago/abono, actualizamos el texto (prefijo Pago:) y el contacto
+                const newUpdates: Partial<Transaction> = {};
+                if (updates.text) newUpdates.text = t.text.startsWith('Pago: ') ? `Pago: ${updates.text}` : updates.text;
+                if (updates.contact !== undefined) newUpdates.contact = updates.contact;
+                return { ...t, ...newUpdates };
+            }
+            return t;
+        }));
+    };
+
     return {
         transactions,
         setTransactions,
@@ -166,6 +185,7 @@ export const useFinanzasState = () => {
         addTransaction,
         removeTransaction,
         updateTransaction,
+        updateTransactionGroup,
         addFixedExpense,
         removeFixedExpense,
         toggleFixedExpense,

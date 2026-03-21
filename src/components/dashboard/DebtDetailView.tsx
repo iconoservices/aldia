@@ -11,10 +11,10 @@ interface DebtDetailViewProps {
     onClose: () => void;
     repayDebt: (originalTx: Transaction, amount: number, accountId: number) => void;
     removeTransaction: (id: number) => void;
-    updateTransaction: (id: number, updates: Partial<Transaction>) => void;
+    updateTransactionGroup: (oldText: string, oldContact: string | undefined, updates: { text?: string, contact?: string, amount?: number }, originalId: number) => void;
 }
 
-export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, repayDebt, removeTransaction, updateTransaction }: DebtDetailViewProps) => {
+export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, repayDebt, removeTransaction, updateTransactionGroup }: DebtDetailViewProps) => {
     const [mode, setMode] = useState<'owe' | 'owed'>(initialMode);
     const [repayingId, setRepayingId] = useState<number | null>(null);
     const [repayAmount, setRepayAmount] = useState('');
@@ -86,12 +86,12 @@ export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, r
         }
     };
 
-    const handleUpdate = (txId: number) => {
-        updateTransaction(txId, {
+    const handleUpdate = (item: any) => {
+        updateTransactionGroup(item.name, item.contact, {
             text: editName,
             amount: parseFloat(editAmount) || 0,
             contact: editContact
-        });
+        }, item.originalTx.id);
         setEditingId(null);
     };
 
@@ -193,7 +193,7 @@ export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, r
                                                     onChange={(e) => setEditAmount(e.target.value)}
                                                     style={{ width: '80px', padding: '6px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.85rem', fontWeight: 900 }}
                                                 />
-                                                <button onClick={() => handleUpdate(item.originalTx.id)} style={{ background: 'var(--domain-green)', border: 'none', borderRadius: '6px', padding: '4px', cursor: 'pointer' }}><Check size={14} color="white" /></button>
+                                                <button onClick={() => handleUpdate(item)} style={{ background: 'var(--domain-green)', border: 'none', borderRadius: '6px', padding: '4px', cursor: 'pointer' }}><Check size={14} color="white" /></button>
                                                 <button onClick={() => setEditingId(null)} style={{ background: '#EEE', border: 'none', borderRadius: '6px', padding: '4px', cursor: 'pointer' }}><X size={14} color="#888" /></button>
                                             </div>
                                         </div>

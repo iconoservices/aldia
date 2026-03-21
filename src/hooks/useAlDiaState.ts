@@ -137,7 +137,7 @@ export const useAlDiaState = () => {
         updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid, repayDebt: repayDebtBase, 
         todayIncome, todayExpense, todayNet, todayIncomeReal, todayExpenseReal,
         totalIncomeReal, totalExpenseReal, totalNetReal, debtsOwe, debtsOwed,
-        removeTransaction, updateTransaction
+        removeTransaction, updateTransaction, updateTransactionGroup
     } = useFinanzasState();
 
     const {
@@ -416,8 +416,8 @@ export const useAlDiaState = () => {
 
         // Finanzas
         transactions, 
-        addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string) => {
-            addTransaction(text, amount, type, isDebt, projectId, accountId, isCashless, category);
+        addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string, contact?: string) => {
+            addTransaction(text, amount, type, isDebt, projectId, accountId, isCashless, category, contact);
             if (projectId && accountId) {
                 setAccounts(prev => prev.map(acc => {
                     if (acc.id === accountId && !acc.projectIds?.includes(projectId)) {
@@ -435,6 +435,7 @@ export const useAlDiaState = () => {
         repayDebt: repayDebtBase,
         removeTransaction,
         updateTransaction,
+        updateTransactionGroup,
 
         // Proyectos & Rutinas
         projects, addProject, addProjectTask, toggleProjectTask, removeProjectTask, reorderProjectTasks,

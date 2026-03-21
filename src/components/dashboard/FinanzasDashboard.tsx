@@ -35,17 +35,21 @@ interface FinanzasProps {
     repayDebt: (originalTx: Transaction, amount: number, accountId: number) => void;
     removeTransaction: (id: number) => void;
     updateTransaction: (id: number, updates: Partial<Transaction>) => void;
+    updateTransactionGroup: (oldText: string, oldContact: string | undefined, updates: { text?: string, contact?: string, amount?: number }, originalId: number) => void;
     projects: { id: number, name: string, color: string }[];
     accounts: { id: number, name: string, color: string, projectIds?: number[] }[];
     setAccounts: React.Dispatch<React.SetStateAction<{ id: number; name: string; color: string; projectIds?: number[] }[]>>;
 }
 
 export const FinanzasDashboard = ({ 
-    balance, todayNet, todayIncomeReal, todayExpenseReal,
-    totalIncomeReal, totalExpenseReal, totalNetReal, owe, owed, transactions,
-    monthlyBudget, updateMonthlyBudget, fixedExpenses, 
-    addFixedExpense, removeFixedExpense, toggleFixedExpense, updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid,
-    repayDebt, removeTransaction, updateTransaction, projects, accounts, setAccounts
+    balance, todayIncomeReal, todayExpenseReal, todayNet,
+    totalIncomeReal, totalExpenseReal, totalNetReal,
+    owe, owed, transactions,
+    monthlyBudget, updateMonthlyBudget,
+    fixedExpenses, addFixedExpense, removeFixedExpense, toggleFixedExpense, updateFixedExpense,
+    markFixedExpensePaid, unmarkFixedExpensePaid,
+    repayDebt, removeTransaction, updateTransaction, updateTransactionGroup,
+    projects, accounts, setAccounts,
 }: FinanzasProps) => {
     const currentMonthStr = useMemo(() => new Date().toLocaleDateString('en-CA').substring(0, 7), []);
 
@@ -674,7 +678,7 @@ export const FinanzasDashboard = ({
                         onClose={() => setShowDebtDetail(false)}
                         repayDebt={repayDebt}
                         removeTransaction={removeTransaction}
-                        updateTransaction={updateTransaction}
+                        updateTransactionGroup={updateTransactionGroup}
                     />
                 )}
             </AnimatePresence>
