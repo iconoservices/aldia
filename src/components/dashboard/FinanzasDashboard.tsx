@@ -51,11 +51,7 @@ export const FinanzasDashboard = ({
             .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
     }, [transactions, currentMonthStr]);
 
-    const realExpenseThisMonth = useMemo(() => {
-        return transactions
-            .filter(tx => tx.type === 'gasto' && !tx.isDebt && tx.fullDate.startsWith(currentMonthStr))
-            .reduce((sum, tx) => sum + Math.abs(Number(tx.amount) || 0), 0);
-    }, [transactions, currentMonthStr]);
+
 
     const totalFixedPending = useMemo(() => 
         fixedExpenses
@@ -63,12 +59,15 @@ export const FinanzasDashboard = ({
             .reduce((acc, e) => acc + e.amount, 0), 
     [fixedExpenses, currentMonthStr]);
 
-    const totalIncomeResource = monthlyBudget + realIncomeThisMonth;
-    const projectedSavings = totalIncomeResource - (totalFixedPending + realExpenseThisMonth + owe);
-
     const [isAccountsVisible, setIsAccountsVisible] = useState(false);
     const [accountViewMode, setAccountViewMode] = useState<'cuenta' | 'proyecto'>('cuenta');
     const [isBudgetFixed, setIsBudgetFixed] = useState(false);
+    const [includeDebts, setIncludeDebts] = useState(false);
+
+    const totalIncomeResource = isBudgetFixed ? balance : (balance + Math.max(0, monthlyBudget - realIncomeThisMonth));
+    const totalExpensesExpected = totalFixedPending + (includeDebts ? owe : 0);
+    const projectedSavings = totalIncomeResource - totalExpensesExpected;
+
     const [isAddingAccount, setIsAddingAccount] = useState(false);
     const [newAccountName, setNewAccountName] = useState('');
     const [newAccountColor, setNewAccountColor] = useState('#0055FF');
@@ -478,13 +477,32 @@ export const FinanzasDashboard = ({
 
             <div className="debts-grid" style={{ display: 'grid', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div 
-                    onClick={() => { setDebtMode('owe'); setShowDebtDetail(true); }}
-                    className="glass-card" style={{ padding: '0.8rem', borderTop: '3px solid #f87171', cursor: 'pointer' }}
+                    className="glass-card" style={{ padding: '0.8rem', borderTop: '3px solid #f87171', display: 'flex', flexDirection: 'column', position: 'relative' }}
                 >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', color: '#f87171' }}>
-                        <UserMinus size={14} /><span style={{ fontSize: '0.7rem', fontWeight: 800 }}>DEBO</span>
+                    {/* Botón para abrir modal de detalle */}
+                    <div onClick={() => { setDebtMode('owe'); setShowDebtDetail(true); }} style={{ cursor: 'pointer', flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', color: '#f87171' }}>
+                            <UserMinus size={14} /><span style={{ fontSize: '0.7rem', fontWeight: 800 }}>DEBO</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-carbon)' }}>${owe}</p>
                     </div>
-                    <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-carbon)' }}>${owe}</p>
+                    {/* Toggle de Inclusión en Proyectado */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIncludeDebts(!includeDebts); }}
+                        title={includeDebts ? 'Restando esta deuda del Ahorro Proyectado' : 'Esta deuda NO afecta tu Ahorro Proyectado (por ahora)'}
+                        style={{
+                            position: 'absolute', top: '0.8rem', right: '0.8rem',
+                            display: 'flex', alignItems: 'center', gap: '4px',
+                            background: includeDebts ? '#f87171' : '#F1F5F9',
+                            border: 'none', borderRadius: '8px',
+                            padding: '4px 8px', cursor: 'pointer',
+                            transition: 'all 0.2s', zIndex: 10
+                        }}
+                    >
+                        <span style={{ fontSize: '0.55rem', fontWeight: 900, color: includeDebts ? 'white' : '#94A3B8', whiteSpace: 'nowrap' }}>
+                            {includeDebts ? '✓ PAGARÉ HOY' : 'PAGAR LUEGO'}
+                        </span>
+                    </button>
                 </div>
                 <div 
                     onClick={() => { setDebtMode('owed'); setShowDebtDetail(true); }}
