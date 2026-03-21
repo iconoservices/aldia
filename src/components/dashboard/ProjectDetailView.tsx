@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Package, Plus, Trash2, Edit2, GripVertical, CheckCircle2, Circle, Zap, Wallet, X } from 'lucide-react';
+import { ArrowLeft, Package, Plus, Trash2, Edit2, GripVertical, CheckCircle2, Circle, Zap, Wallet, X } from 'lucide-react';
 import { GlassCard } from '../ui/GlassCard';
 import type { Project, Transaction, Routine } from '../../hooks/useAlDiaState';
 

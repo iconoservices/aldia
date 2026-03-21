@@ -92,9 +92,10 @@ export const useFinanzasState = () => {
         setFixedExpenses((prev: FixedExpense[]) => prev.map(e => e.id === id ? { ...e, lastPaidMonth: undefined } : e));
         
         // Find and remove the auto-generated transaction
+        // Note: gasto transactions are stored as negative, so compare with Math.abs
         setTransactions((prev: Transaction[]) => {
             const targetTxPrefix = `Pago: ${expense.text}`;
-            const idx = prev.findIndex(t => t.text === targetTxPrefix && t.fullDate.startsWith(monthStr) && t.amount === expense.amount);
+            const idx = prev.findIndex(t => t.text === targetTxPrefix && t.fullDate.startsWith(monthStr) && Math.abs(t.amount) === expense.amount);
             if (idx !== -1) {
                 const newTxs = [...prev];
                 newTxs.splice(idx, 1);

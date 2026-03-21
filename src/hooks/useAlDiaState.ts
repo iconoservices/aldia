@@ -293,7 +293,7 @@ export const useAlDiaState = () => {
 
             return () => clearTimeout(syncTimer);
         }
-    }, [misionesState, transactions, balance, habits, agenda, timeBlocks, notes, projects, rutinas, monthlyBudget, fixedExpenses, user, isInitialLoad, accounts]);
+    }, [misionesState, transactions, habits, agenda, timeBlocks, notes, projects, rutinas, monthlyBudget, fixedExpenses, user, isInitialLoad, accounts]);
 
     // 4. Migración y Recuperación de Datos (Post-Carga)
     useEffect(() => {
@@ -373,6 +373,7 @@ export const useAlDiaState = () => {
         setRutinas([]);
         setMonthlyBudget(0);
         setFixedExpenses([]);
+        setAccounts([]);
         localStorage.clear();
 
         if (user) {
@@ -387,6 +388,7 @@ export const useAlDiaState = () => {
                 rutinas: [],
                 monthlyBudget: 0,
                 fixedExpenses: [],
+                accounts: [],
                 lastSync: new Date().toISOString()
             });
         }

@@ -32,7 +32,7 @@ export const useCerebroState = () => {
             return {
                 ...n,
                 items: n.items.map(it => {
-                    if (it.id == itemId) {
+                    if (it.id === itemId) {
                         return { ...it, completed: !it.completed };
                     }
                     return it;
