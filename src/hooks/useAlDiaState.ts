@@ -176,8 +176,6 @@ export const useAlDiaState = () => {
             const sTransactions = localStorage.getItem(keys.transactions);
             if (sTransactions) setTransactions(JSON.parse(sTransactions));
 
-            if (sTransactions) setTransactions(JSON.parse(sTransactions));
-
             const sHabits = localStorage.getItem(keys.habits);
             if (sHabits) setHabits(JSON.parse(sHabits));
 
