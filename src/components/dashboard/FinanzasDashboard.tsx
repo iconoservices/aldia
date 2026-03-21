@@ -1,5 +1,10 @@
 import { useState, useMemo } from 'react';
-import { ArrowUpCircle, ArrowDownCircle, UserMinus, UserPlus, BarChart3, Plus, Trash2, Edit2, Check, X, Calculator, PiggyBank, Wallet } from 'lucide-react';
+import { 
+    Wallet, Plus, TrendingUp, TrendingDown, 
+    Trash2, Edit2, PieChart, 
+    UserMinus, UserPlus, Check, X, Calculator, PiggyBank, ArrowDownCircle 
+} from 'lucide-react';
+import { AnalyticsView } from './AnalyticsView';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../ui/GlassCard';
 import { ProjectDetailView } from './ProjectDetailView';
@@ -49,13 +54,15 @@ export const FinanzasDashboard = ({
     const [showDebtDetail, setShowDebtDetail] = useState(false);
     const [debtMode, setDebtMode] = useState<'owe' | 'owed'>('owe');
     const [selectedProject, setSelectedProject] = useState<any>(null);
+    const [chartPeriod, setChartPeriod] = useState<'7d' | '30d'>('7d');
+    const [showAnalytics, setShowAnalytics] = useState(false);
 
     // Cuentas con balance calculado (solo para esta vista)
     const accountsWithBalance = useMemo(() => {
         return accounts.map(acc => {
             const bal = transactions
                 .filter(tx => tx.accountId === acc.id && !tx.isCashless)
-                .reduce((sum, tx) => sum + tx.amount, 0);
+                .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
             return { ...acc, balance: bal };
         });
     }, [accounts, transactions]);
@@ -75,23 +82,34 @@ export const FinanzasDashboard = ({
         setIsAddingAccount(false);
     };
 
-    const weeklyHistory = useMemo(() => {
+    const historyData = useMemo(() => {
         const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         const result = [];
-        for (let i = 6; i >= 0; i--) {
+        const count = chartPeriod === '7d' ? 7 : 30;
+
+        for (let i = count - 1; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             const dateStr = d.toISOString().split('T')[0];
-            const dayName = i === 0 ? 'Hoy' : days[d.getDay()];
+            
+            let label = '';
+            if (chartPeriod === '7d') {
+                label = i === 0 ? 'Hoy' : days[d.getDay()];
+            } else {
+                // Para 30 días, mostramos el número del día o el nombre si es lunes
+                label = d.getDate().toString();
+                if (d.getDay() === 1) label = days[1]; 
+                if (i === 0) label = 'Hoy';
+            }
             
             const dayTxs = transactions.filter(tx => tx.fullDate === dateStr);
             const inc = dayTxs.filter(tx => tx.type === 'ingreso' && !tx.isDebt).reduce((s, t) => s + (Number(t.amount) || 0), 0);
             const exp = dayTxs.filter(tx => tx.type === 'gasto' && !tx.isDebt).reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
             
-            result.push({ day: dayName, inc, exp });
+            result.push({ day: label, inc, exp });
         }
         return result;
-    }, [transactions]);
+    }, [transactions, chartPeriod]);
 
     const handleDeleteAccount = (id: number) => {
         if (window.confirm('¿Eliminar esta cuenta? No se borrarán las transacciones, pero la cuenta ya no aparecerá.')) {
@@ -139,7 +157,7 @@ export const FinanzasDashboard = ({
                                 backdropFilter: 'blur(5px)',
                                 border: '1px solid rgba(255, 255, 255, 0.1)'
                             }}>
-                                <ArrowUpCircle size={12} color="#4ade80" />
+                                <TrendingUp size={12} color="#4ade80" />
                                 <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'white' }}>+{(income || 0).toLocaleString()}</span>
                             </div>
                             <div style={{ 
@@ -152,7 +170,7 @@ export const FinanzasDashboard = ({
                                 backdropFilter: 'blur(5px)',
                                 border: '1px solid rgba(255, 255, 255, 0.1)'
                             }}>
-                                <ArrowDownCircle size={12} color="#f87171" />
+                                <TrendingDown size={12} color="#f87171" />
                                 <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'white' }}>-{(expense || 0).toLocaleString()}</span>
                             </div>
                         </div>
@@ -354,22 +372,52 @@ export const FinanzasDashboard = ({
             </div>
 
             {/* 4. FLUJO SEMANAL Y DEUDAS */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900 }}>Flujo Semanal (7d)</h3>
-                <BarChart3 size={16} color="#888" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ padding: '8px', background: 'var(--domain-green)', borderRadius: '10px', color: 'white' }}>
+                        <Wallet size={16} />
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-carbon)' }}>FLUJO DE CAJA</h3>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button 
+                        onClick={() => setShowAnalytics(true)}
+                        style={{ background: 'white', border: '1px solid #EEE', borderRadius: '10px', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 900, color: 'var(--domain-purple)' }}
+                    >
+                        <PieChart size={12} /> VER ANÁLISIS
+                    </button>
+                    <div style={{ display: 'flex', background: '#F1F5F9', padding: '3px', borderRadius: '12px', gap: '2px' }}>
+                        {(['7d', '30d'] as const).map(p => (
+                            <button 
+                                key={p}
+                                onClick={() => setChartPeriod(p)}
+                                style={{ 
+                                    padding: '4px 8px', borderRadius: '10px', border: 'none',
+                                    background: chartPeriod === p ? 'white' : 'transparent',
+                                    color: chartPeriod === p ? 'var(--domain-green)' : '#64748B',
+                                    fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer',
+                                    boxShadow: chartPeriod === p ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                                }}
+                            >
+                                {p.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
-            <div className="glass-card" style={{ marginBottom: '1.5rem', padding: '1.2rem', height: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '100px', gap: '6px', paddingBottom: '8px' }}>
-                    {weeklyHistory.map((data, i) => {
-                        const maxVal = Math.max(...weeklyHistory.map(h => Math.max(h.inc, h.exp)), 100);
+            <div className="glass-card" style={{ marginBottom: '1.5rem', padding: '1.2rem', height: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflowX: chartPeriod === '30d' ? 'auto' : 'visible' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '100px', gap: chartPeriod === '7d' ? '6px' : '2px', paddingBottom: '8px', minWidth: chartPeriod === '30d' ? '500px' : 'auto' }}>
+                    {historyData.map((data, i) => {
+                        const maxVal = Math.max(...historyData.map(h => Math.max(h.inc, h.exp)), 100);
+                        const barWidth = chartPeriod === '7d' ? '6px' : '4px';
                         return (
                             <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', height: '100%', justifyContent: 'flex-end' }}>
                                 <div style={{ display: 'flex', gap: '1px', alignItems: 'flex-end', height: '100%', width: '100%', justifyContent: 'center' }}>
-                                    <motion.div initial={{ height: 0 }} animate={{ height: `${(data.inc / maxVal) * 100}%` }} style={{ width: '6px', background: 'var(--domain-green)', borderRadius: '2px 2px 0 0', opacity: 0.8 }} />
-                                    <motion.div initial={{ height: 0 }} animate={{ height: `${(data.exp / maxVal) * 100}%` }} style={{ width: '6px', background: '#f87171', borderRadius: '2px 2px 0 0', opacity: 0.8 }} />
+                                    <motion.div initial={{ height: 0 }} animate={{ height: `${(data.inc / maxVal) * 100}%` }} style={{ width: barWidth, background: 'var(--domain-green)', borderRadius: '2px 2px 0 0', opacity: 0.8 }} />
+                                    <motion.div initial={{ height: 0 }} animate={{ height: `${(data.exp / maxVal) * 100}%` }} style={{ width: barWidth, background: '#f87171', borderRadius: '2px 2px 0 0', opacity: 0.8 }} />
                                 </div>
-                                <span style={{ fontSize: '0.6rem', fontWeight: 800, color: i === 6 ? 'var(--domain-orange)' : '#AAA' }}>{data.day}</span>
+                                <span style={{ fontSize: chartPeriod === '7d' ? '0.6rem' : '0.5rem', fontWeight: 800, color: i === historyData.length - 1 ? 'var(--domain-orange)' : '#AAA' }}>{data.day}</span>
                             </div>
                         );
                     })}
@@ -425,7 +473,7 @@ export const FinanzasDashboard = ({
                     <div key={tx.id} className="glass-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.8rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div style={{ background: tx.type === 'ingreso' ? '#DCFCE7' : '#FEE2E2', padding: '6px', borderRadius: '10px' }}>
-                                {tx.type === 'ingreso' ? <ArrowUpCircle size={16} color="#4ade80" /> : <ArrowDownCircle size={16} color="#f87171" />}
+                                {tx.type === 'ingreso' ? <TrendingUp size={16} color="#4ade80" /> : <TrendingDown size={16} color="#f87171" />}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <p style={{ margin: 0, fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-carbon)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.text}</p>
@@ -476,6 +524,15 @@ export const FinanzasDashboard = ({
                         repayDebt={repayDebt}
                         removeTransaction={removeTransaction}
                         updateTransaction={updateTransaction}
+                    />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showAnalytics && (
+                    <AnalyticsView 
+                        transactions={transactions}
+                        onClose={() => setShowAnalytics(false)}
                     />
                 )}
             </AnimatePresence>

@@ -8,7 +8,7 @@ interface QuickActionPanelProps {
     onClose: () => void;
     actionType: string | null;
     addMission: (text: string, q?: string, repeat?: 'none' | 'daily' | 'weekly' | 'monthly', noteId?: number, labels?: string[], dueDate?: string, dueTime?: string, habitId?: number, projectId?: number, repeatDays?: number[]) => void;
-    addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean) => void;
+    addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string) => void;
     addHabit: (name: string) => void;
     addRoutineItem?: (routineId: number, text: string, time?: string) => void;
     addCalendarEvent?: (title: string, date: string, start: string, end: string, desc: string, projectId?: number) => void;
@@ -36,6 +36,7 @@ export const QuickActionPanel = ({
     const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(undefined);
     const [selectedAccountId, setSelectedAccountId] = useState<number | undefined>(undefined);
     const [repeatDays, setRepeatDays] = useState<number[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>('Otros');
     
     // Efecto para manejar el proyecto por defecto según cantidad
     useEffect(() => {
@@ -97,7 +98,7 @@ export const QuickActionPanel = ({
             }
             const isActuallyDebt = debtMode !== 'normal';
             const isCashless = debtMode === 'fiao';
-            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parseFloat(amount) || 0, actionType as any, isActuallyDebt, selectedProjectId, selectedAccountId, isCashless);
+            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parseFloat(amount) || 0, actionType as any, isActuallyDebt, selectedProjectId, selectedAccountId, isCashless, selectedCategory);
             confetti({
                 particleCount: 80,
                 spread: 70,
@@ -207,6 +208,7 @@ export const QuickActionPanel = ({
             setLabels('');
             setSelectedProjectId(undefined);
             setSelectedAccountId(undefined);
+            setSelectedCategory('Otros');
             onClose();
         }, 150);
     };
@@ -324,6 +326,33 @@ export const QuickActionPanel = ({
                                     }}
                                 />
                             </div>
+
+                            {/* SELECTOR DE CATEGORÍA */}
+                            {currentConfig.isFinancial && (
+                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
+                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Categoría</p>
+                                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                                        {(actionType === 'ingreso' 
+                                            ? ['Sueldo', 'Venta', 'Inversión', 'Otros']
+                                            : ['Comida', 'Transporte', 'Servicios', 'Suscripciones', 'Salud', 'Ocio', 'Otros']
+                                        ).map(cat => (
+                                            <button
+                                                key={cat}
+                                                type="button"
+                                                onClick={() => setSelectedCategory(cat)}
+                                                style={{
+                                                    padding: '6px 12px', borderRadius: '12px', border: `1px solid ${selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : '#EEE'}`,
+                                                    background: selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : 'white',
+                                                    color: selectedCategory === cat ? 'white' : '#333',
+                                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* SELECTOR DE PROYECTO (Para Tareas, Bloques, Agenda y Finanzas) */}
                             {(actionType === 'tarea' || actionType === 'bloque' || actionType === 'agenda' || currentConfig.isFinancial) && (

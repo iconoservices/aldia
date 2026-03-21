@@ -51,6 +51,7 @@ export interface Transaction {
     fullDate: string; // YYYY-MM-DD
     projectId?: number;
     accountId?: number;
+    category?: string;
 }
 
 export interface Account {
@@ -405,8 +406,8 @@ export const useAlDiaState = () => {
 
         // Finanzas
         transactions, 
-        addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean) => {
-            addTransaction(text, amount, type, isDebt, projectId, accountId, isCashless);
+        addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string) => {
+            addTransaction(text, amount, type, isDebt, projectId, accountId, isCashless, category);
             if (projectId && accountId) {
                 setAccounts(prev => prev.map(acc => {
                     if (acc.id === accountId && !acc.projectIds?.includes(projectId)) {
