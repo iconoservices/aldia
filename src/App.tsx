@@ -244,6 +244,7 @@ function App() {
             accounts={state.accounts}
             setAccounts={state.setAccounts}
             transactions={state.transactions}
+            addTransaction={state.addTransaction}
             addProjectTask={state.addProjectTask}
             toggleProjectTask={state.toggleProjectTask}
             removeProjectTask={state.removeProjectTask}

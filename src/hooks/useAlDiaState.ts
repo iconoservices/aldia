@@ -104,6 +104,8 @@ export interface Project {
     targetHoursPerWeek?: number;
     checklist?: { id: number; text: string; completed: boolean; linkedRoutineId?: number; linkedRoutineItemId?: number }[];
     inventoryItems?: { id: number; text: string; quantity: number }[];
+    incomeCategories?: string[];
+    expenseCategories?: string[];
 }
 
 export interface Note {
@@ -150,7 +152,8 @@ export const useAlDiaState = () => {
         addTimeBlock, removeTimeBlock,
         addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
         addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
-        updateRoutine, addRoutine, removeRoutine, updateProjectTask
+        updateRoutine, addRoutine, removeRoutine, updateProjectTask,
+        addProjectCategory, removeProjectCategory
     } = useProyectosState();
 
     const {
@@ -436,6 +439,7 @@ export const useAlDiaState = () => {
         timeBlocks, addTimeBlock, removeTimeBlock,
         rutinas, addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
         updateRoutine, addRoutine, removeRoutine,
+        addProjectCategory, removeProjectCategory,
 
         // Cerebro (Notas)
         notes, addNote, removeNote, toggleNoteItem, updateNote,

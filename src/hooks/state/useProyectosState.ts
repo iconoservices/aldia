@@ -248,6 +248,26 @@ export const useProyectosState = () => {
         setRutinas(prev => prev.filter(r => r.id !== id));
     };
 
+    const addProjectCategory = (projectId: number, type: 'ingreso' | 'gasto', categoryName: string) => {
+        setProjects(prev => prev.map(p => {
+            if (p.id !== projectId) return p;
+            const key = type === 'ingreso' ? 'incomeCategories' : 'expenseCategories';
+            const currentList = p[key] || [];
+            if (currentList.includes(categoryName)) return p;
+            return { ...p, [key]: [...currentList, categoryName] };
+        }));
+    };
+
+    const removeProjectCategory = (projectId: number, type: 'ingreso' | 'gasto', categoryName: string) => {
+        setProjects(prev => prev.map(p => {
+            if (p.id !== projectId) return p;
+            const key = type === 'ingreso' ? 'incomeCategories' : 'expenseCategories';
+            const currentList = p[key] || [];
+            return { ...p, [key]: currentList.filter(c => c !== categoryName) };
+        }));
+    };
+
+
     return {
         projects,
         setProjects,
@@ -273,6 +293,8 @@ export const useProyectosState = () => {
         removeRoutineItem,
         updateRoutine,
         updateProjectTask,
+        addProjectCategory,
+        removeProjectCategory,
         reorderProjectTasks: (projectId: number, newChecklist: { id: number; text: string; completed: boolean; linkedRoutineId?: number; linkedRoutineItemId?: number }[]) => {
             setProjects(prev => prev.map(p => p.id === projectId ? { ...p, checklist: newChecklist } : p));
         },

@@ -202,7 +202,7 @@ export const FinanzasDashboard = ({
                                     {/* Toggle Rápido de Inclusión */}
                                     <button
                                         onClick={() => setIncludeDebts(!includeDebts)}
-                                        title={includeDebts ? 'Se restará de tu Ahorro Proyectado (Pagarás hoy)' : 'No afecta tu Ahorro Proyectado (Pagarás luego)'}
+                                        title={includeDebts ? 'Se restará de tu Proyectado (Pagarás hoy)' : 'No afecta tu Proyectado (Pagarás luego)'}
                                         style={{
                                             background: includeDebts ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255,255,255,0.1)',
                                             border: '1px solid rgba(255,255,255,0.2)',
@@ -299,7 +299,7 @@ export const FinanzasDashboard = ({
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                             <PiggyBank size={14} color={projectedSavings < 0 ? '#EF4444' : 'var(--domain-orange)'} />
                             <span style={{ fontSize: '0.65rem', fontWeight: 800, color: projectedSavings < 0 ? '#EF4444' : '#888', textTransform: 'uppercase' }}>
-                                Ahorro Proyectado
+                                Proyectado
                             </span>
                         </div>
                         <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: projectedSavings < 0 ? '#EF4444' : 'var(--text-carbon)', marginBottom: '8px' }}>

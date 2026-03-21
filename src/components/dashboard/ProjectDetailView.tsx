@@ -18,6 +18,9 @@ interface ProjectDetailViewProps {
     promoteTaskToRoutine: (projectId: number, taskId: number, routineId: number) => void;
     removeRoutineItem?: (routineId: number, itemId: number) => void;
     rutinas: Routine[];
+    addTransaction?: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string) => void;
+    addProjectCategory?: (projectId: number, type: 'ingreso' | 'gasto', categoryName: string) => void;
+    removeProjectCategory?: (projectId: number, type: 'ingreso' | 'gasto', categoryName: string) => void;
     addInventoryItem?: (projectId: number, text: string, qty: number) => void;
     updateInventoryItemQuantity?: (projectId: number, itemId: number, delta: number) => void;
     removeInventoryItem?: (projectId: number, itemId: number) => void;
@@ -27,13 +30,21 @@ export const ProjectDetailView = ({
     project, onClose, accounts, setAccounts, transactions,
     addProjectTask, toggleProjectTask, removeProjectTask, 
     updateProjectTask, reorderProjectTasks, promoteTaskToRoutine, rutinas,
-    removeRoutineItem,
+    removeRoutineItem, addTransaction, addProjectCategory, removeProjectCategory,
     addInventoryItem, updateInventoryItemQuantity, removeInventoryItem
 }: ProjectDetailViewProps) => {
     const [newTaskText, setNewTaskText] = useState('');
     const [newItemText, setNewItemText] = useState('');
     const [newItemQty, setNewItemQty] = useState('0');
-    const [activeTab, setActiveTab] = useState<'checklist' | 'inventory'>('checklist');
+    const [activeTab, setActiveTab] = useState<'checklist' | 'inventory' | 'movimientos'>('checklist');
+    const [movFilter, setMovFilter] = useState<'all' | 'ingreso' | 'gasto'>('all');
+
+    // New transaction form state
+    const [newTxType, setNewTxType] = useState<'ingreso' | 'gasto'>('ingreso');
+    const [newTxAmount, setNewTxAmount] = useState('');
+    const [newTxConcept, setNewTxConcept] = useState('');
+    const [newTxCategory, setNewTxCategory] = useState('');
+    const [newTxAccountId, setNewTxAccountId] = useState<number | ''>('');
 
     const projectAccounts = useMemo(() => {
         // Cuentas vinculadas explícitamente o que tienen transacciones para este proyecto
@@ -50,6 +61,38 @@ export const ProjectDetailView = ({
     }, [accounts, project.id, transactions]);
 
     const totalBalance = useMemo(() => projectAccounts.reduce((sum, acc) => sum + acc.balance, 0), [projectAccounts]);
+
+    const currentCategories = newTxType === 'ingreso' 
+        ? (project.incomeCategories || []) 
+        : (project.expenseCategories || []);
+
+    const handleAddTx = () => {
+        if (!addTransaction || !newTxAmount || !newTxConcept) return;
+        const amount = parseFloat(newTxAmount);
+        if (isNaN(amount) || amount <= 0) return;
+        
+        const accId = newTxAccountId || (projectAccounts.length > 0 ? projectAccounts[0].id : accounts[0]?.id);
+        
+        const finalCategory = newTxCategory || (newTxType === 'ingreso' ? 'Ingreso General' : 'Gasto General');
+        if (addProjectCategory && newTxCategory && !currentCategories.includes(newTxCategory)) {
+            addProjectCategory(project.id, newTxType, newTxCategory);
+        }
+        
+        addTransaction(
+            newTxConcept,
+            amount,
+            newTxType,
+            false,
+            project.id,
+            accId ? Number(accId) : undefined,
+            false,
+            finalCategory
+        );
+
+        setNewTxAmount('');
+        setNewTxConcept('');
+        setNewTxCategory('');
+    };
 
     const handleAddTask = () => {
         if (newTaskText.trim()) {
@@ -184,8 +227,8 @@ export const ProjectDetailView = ({
 
             {/* Tabs: Checklist / Inventario */}
             <section style={{ flex: 1 }}>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem', background: '#F1F5F9', padding: '4px', borderRadius: '14px' }}>
-                    {(['checklist', 'inventory'] as const).map(tab => (
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '1rem', background: '#F1F5F9', padding: '4px', borderRadius: '14px' }}>
+                    {(['checklist', 'inventory', 'movimientos'] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -197,12 +240,120 @@ export const ProjectDetailView = ({
                                 boxShadow: activeTab === tab ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
                             }}
                         >
-                            {tab === 'checklist' ? '📝 Checklist' : '📦 Inventario'}
+                            {tab === 'checklist' ? '📝 Checklist' : tab === 'inventory' ? '📦 Inventario' : '💸 Movs'}
                         </button>
                     ))}
                 </div>
 
-                {activeTab === 'checklist' ? (
+                {activeTab === 'movimientos' ? (
+                    <div className="glass-card" style={{ padding: '1rem', background: 'white' }}>
+                        {/* Filtros de tipo */}
+                        <div style={{ display: 'flex', gap: '6px', marginBottom: '1rem' }}>
+                            {(['all', 'ingreso', 'gasto'] as const).map(f => (
+                                <button
+                                    key={f}
+                                    onClick={() => setMovFilter(f)}
+                                    style={{
+                                        flex: 1, padding: '6px', borderRadius: '10px', border: 'none',
+                                        background: movFilter === f ? (f === 'ingreso' ? '#DCFCE7' : f === 'gasto' ? '#FEE2E2' : project.color) : '#F1F5F9',
+                                        color: movFilter === f ? (f === 'ingreso' ? '#16a34a' : f === 'gasto' ? '#dc2626' : 'white') : '#64748B',
+                                        fontWeight: 900, fontSize: '0.65rem', cursor: 'pointer', textTransform: 'uppercase'
+                                    }}
+                                >
+                                    {f === 'all' ? 'Todo' : f === 'ingreso' ? '↑ Ingresos' : '↓ Egresos'}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Agregar nuevo movimiento (Form) */}
+                        <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '16px', marginBottom: '1.5rem', border: '1px solid #E2E8F0' }}>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                                <button onClick={() => setNewTxType('ingreso')} style={{ flex: 1, padding: '6px', borderRadius: '8px', border: 'none', background: newTxType === 'ingreso' ? '#16a34a' : '#E2E8F0', color: newTxType === 'ingreso' ? 'white' : '#64748B', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer' }}>+ INGRESO</button>
+                                <button onClick={() => setNewTxType('gasto')} style={{ flex: 1, padding: '6px', borderRadius: '8px', border: 'none', background: newTxType === 'gasto' ? '#dc2626' : '#E2E8F0', color: newTxType === 'gasto' ? 'white' : '#64748B', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer' }}>- GASTO</button>
+                            </div>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '8px', marginBottom: '8px' }}>
+                                <input type="number" placeholder="S/. Monto" value={newTxAmount} onChange={e => setNewTxAmount(e.target.value)} style={{ padding: '8px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none' }} />
+                                <input placeholder="Concepto (ej: Venta zapatos)" value={newTxConcept} onChange={e => setNewTxConcept(e.target.value)} style={{ padding: '8px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none' }} />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1 }}>
+                                    <input placeholder="Categoría (escribe o elige 👉)" value={newTxCategory} onChange={e => setNewTxCategory(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }} />
+                                    {currentCategories.length > 0 && (
+                                        <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', marginTop: '6px', paddingBottom: '4px' }}>
+                                            {currentCategories.map(cat => (
+                                                <div key={cat} style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #CBD5E1', borderRadius: '12px', padding: '2px 4px 2px 8px' }}>
+                                                    <span onClick={() => setNewTxCategory(cat)} style={{ fontSize: '0.65rem', cursor: 'pointer', whiteSpace: 'nowrap', color: '#475569', fontWeight: 700 }}>{cat}</span>
+                                                    {removeProjectCategory && (
+                                                        <button onClick={(e) => { e.stopPropagation(); removeProjectCategory(project.id, newTxType, cat); }} style={{ background: 'transparent', border: 'none', marginLeft: '4px', cursor: 'pointer', padding: 0, color: '#f87171', display: 'flex' }}><X size={10} /></button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <select value={newTxAccountId} onChange={e => setNewTxAccountId(e.target.value ? Number(e.target.value) : '')} style={{ padding: '8px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.75rem', outline: 'none', maxWidth: '100px', cursor: 'pointer' }}>
+                                    <option value="">Cuenta...</option>
+                                    {(projectAccounts.length > 0 ? projectAccounts : accounts).map(acc => (
+                                        <option key={acc.id} value={acc.id}>{acc.name}</option>
+                                    ))}
+                                </select>
+                                
+                                <button onClick={handleAddTx} style={{ background: project.color, color: 'white', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Plus size={18} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Agrupado por categoría */}
+                        {(() => {
+                            const filtered = transactions
+                                .filter(tx => tx.projectId === project.id && (movFilter === 'all' || tx.type === movFilter));
+                            
+                            // Group by category
+                            const byCategory: Record<string, { txs: typeof filtered, total: number, type: string }> = {};
+                            filtered.forEach(tx => {
+                                const cat = tx.category || (tx.type === 'ingreso' ? 'Ingreso General' : 'Gasto General');
+                                if (!byCategory[cat]) byCategory[cat] = { txs: [], total: 0, type: tx.type };
+                                byCategory[cat].txs.push(tx);
+                                byCategory[cat].total += tx.type === 'ingreso' ? tx.amount : -tx.amount;
+                            });
+
+                            const cats = Object.entries(byCategory).sort((a, b) => Math.abs(b[1].total) - Math.abs(a[1].total));
+
+                            if (cats.length === 0) return (
+                                <div style={{ textAlign: 'center', padding: '2rem', color: '#CBD5E1' }}>
+                                    <p style={{ fontSize: '0.8rem', fontWeight: 600 }}>Sin movimientos en este proyecto.</p>
+                                </div>
+                            );
+
+                            return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    {cats.map(([cat, data]) => (
+                                        <div key={cat} style={{ background: '#F8FAFC', borderRadius: '12px', padding: '10px 14px', borderLeft: `4px solid ${data.total >= 0 ? '#4ade80' : '#f87171'}` }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569' }}>{cat}</span>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: data.total >= 0 ? '#16a34a' : '#dc2626' }}>
+                                                    {data.total >= 0 ? '+' : ''}${data.total.toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                                {data.txs.slice(0, 5).map(tx => (
+                                                    <span key={tx.id} style={{ fontSize: '0.6rem', background: tx.type === 'ingreso' ? '#DCFCE7' : '#FEE2E2', color: tx.type === 'ingreso' ? '#16a34a' : '#dc2626', padding: '2px 6px', borderRadius: '6px', fontWeight: 700 }}>
+                                                        {tx.text}: ${Math.abs(tx.amount).toLocaleString()}
+                                                    </span>
+                                                ))}
+                                                {data.txs.length > 5 && <span style={{ fontSize: '0.6rem', color: '#94A3B8', fontWeight: 700 }}>+{data.txs.length - 5} más</span>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                ) : activeTab === 'checklist' ? (
                     <div className="glass-card" style={{ padding: '1rem', background: 'white' }}>
                         <Reorder.Group 
                             axis="y" 
