@@ -156,6 +156,7 @@ function App() {
                 removeTransaction={state.removeTransaction}
                 updateTransaction={state.updateTransaction}
                 markFixedExpensePaid={state.markFixedExpensePaid}
+                unmarkFixedExpensePaid={state.unmarkFixedExpensePaid}
                 projects={state.projects}
                 accounts={state.accounts}
                 setAccounts={state.setAccounts}
@@ -246,6 +247,9 @@ function App() {
             reorderProjectTasks={state.reorderProjectTasks}
             promoteTaskToRoutine={state.promoteTaskToRoutine}
             rutinas={state.rutinas}
+            addInventoryItem={state.addInventoryItem}
+            updateInventoryItemQuantity={state.updateInventoryItemQuantity}
+            removeInventoryItem={state.removeInventoryItem}
           />
         )}
       </AnimatePresence>

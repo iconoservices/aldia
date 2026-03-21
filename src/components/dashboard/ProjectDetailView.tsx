@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { ArrowLeft, Plus, Trash2, Edit2, GripVertical, CheckCircle2, Circle, Zap, Wallet, X } from 'lucide-react';
+import { Package, Plus, Trash2, Edit2, GripVertical, CheckCircle2, Circle, Zap, Wallet, X } from 'lucide-react';
 import { GlassCard } from '../ui/GlassCard';
 import type { Project, Transaction, Routine } from '../../hooks/useAlDiaState';
 
@@ -17,14 +17,21 @@ interface ProjectDetailViewProps {
     reorderProjectTasks?: (projectId: number, newTasks: any[]) => void;
     promoteTaskToRoutine: (projectId: number, taskId: number, routineId: number) => void;
     rutinas: Routine[];
+    addInventoryItem?: (projectId: number, text: string, qty: number) => void;
+    updateInventoryItemQuantity?: (projectId: number, itemId: number, delta: number) => void;
+    removeInventoryItem?: (projectId: number, itemId: number) => void;
 }
 
 export const ProjectDetailView = ({ 
     project, onClose, accounts, setAccounts, transactions,
     addProjectTask, toggleProjectTask, removeProjectTask, 
-    updateProjectTask, reorderProjectTasks, promoteTaskToRoutine, rutinas
+    updateProjectTask, reorderProjectTasks, promoteTaskToRoutine, rutinas,
+    addInventoryItem, updateInventoryItemQuantity, removeInventoryItem
 }: ProjectDetailViewProps) => {
     const [newTaskText, setNewTaskText] = useState('');
+    const [newItemText, setNewItemText] = useState('');
+    const [newItemQty, setNewItemQty] = useState('0');
+    const [activeTab, setActiveTab] = useState<'checklist' | 'inventory'>('checklist');
 
     const projectAccounts = useMemo(() => {
         // Cuentas vinculadas explícitamente o que tienen transacciones para este proyecto
@@ -173,45 +180,127 @@ export const ProjectDetailView = ({
                 </div>
             </section>
 
-            {/* Checklist Section (Moved here) */}
+            {/* Tabs: Checklist / Inventario */}
             <section style={{ flex: 1 }}>
-                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 900 }}>📝 Checklist del Proyecto</h3>
-                <div className="glass-card" style={{ padding: '1rem', background: 'white' }}>
-                    <Reorder.Group 
-                        axis="y" 
-                        values={project.checklist || []} 
-                        onReorder={(newOrder: any) => reorderProjectTasks && reorderProjectTasks(project.id, newOrder)}
-                        style={{ display: 'flex', flexDirection: 'column', gap: '8px', listStyle: 'none', padding: 0 }}
-                    >
-                        {(project.checklist || []).map((task: any) => (
-                            <Reorder.Item key={task.id} value={task} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F8FAFC', padding: '8px 12px', borderRadius: '12px', border: '1px solid #F1F5F9' }}>
-                                <GripVertical size={14} color="#CBD5E1" style={{ cursor: 'grab' }} />
-                                <div onClick={() => toggleProjectTask(project.id, task.id)} style={{ cursor: 'pointer', display: 'flex' }}>
-                                    {task.completed ? <CheckCircle2 size={18} color="var(--domain-green)" /> : <Circle size={18} color="#CBD5E1" />}
-                                </div>
-                                <span style={{ fontSize: '0.8rem', fontWeight: 600, flex: 1, textDecoration: task.completed ? 'line-through' : 'none', color: task.completed ? '#94A3B8' : '#1E293B' }}>{task.text}</span>
-                                <div style={{ display: 'flex', gap: '4px' }}>
-                                    <button onClick={() => { const t = prompt('Editar tarea:', task.text); if(t) updateProjectTask(project.id, task.id, { text: t }); }} style={{ background: 'transparent', border: 'none', color: '#CBD5E1', cursor: 'pointer' }}><Edit2 size={12} /></button>
-                                    <button onClick={() => { const rid = rutinas[0]?.id || Date.now(); promoteTaskToRoutine(project.id, task.id, rid); }} style={{ background: 'transparent', border: 'none', color: '#CBD5E1', cursor: 'pointer' }}><Zap size={12} /></button>
-                                    <button onClick={() => removeProjectTask(project.id, task.id)} style={{ background: 'transparent', border: 'none', color: '#CBD5E1', cursor: 'pointer' }}><Trash2 size={12} /></button>
-                                </div>
-                            </Reorder.Item>
-                        ))}
-                    </Reorder.Group>
-
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '1rem' }}>
-                        <input 
-                            placeholder="Nueva tarea del proyecto..."
-                            value={newTaskText}
-                            onChange={(e) => setNewTaskText(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
-                            style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px 12px', fontSize: '0.8rem', outline: 'none' }}
-                        />
-                        <button onClick={handleAddTask} style={{ background: project.color, color: 'white', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer' }}>
-                            <Plus size={18} />
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem', background: '#F1F5F9', padding: '4px', borderRadius: '14px' }}>
+                    {(['checklist', 'inventory'] as const).map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            style={{
+                                flex: 1, padding: '8px', borderRadius: '10px', border: 'none',
+                                background: activeTab === tab ? 'white' : 'transparent',
+                                color: activeTab === tab ? project.color : '#64748B',
+                                fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer',
+                                boxShadow: activeTab === tab ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                            }}
+                        >
+                            {tab === 'checklist' ? '📝 Checklist' : '📦 Inventario'}
                         </button>
-                    </div>
+                    ))}
                 </div>
+
+                {activeTab === 'checklist' ? (
+                    <div className="glass-card" style={{ padding: '1rem', background: 'white' }}>
+                        <Reorder.Group 
+                            axis="y" 
+                            values={project.checklist || []} 
+                            onReorder={(newOrder: any) => reorderProjectTasks && reorderProjectTasks(project.id, newOrder)}
+                            style={{ display: 'flex', flexDirection: 'column', gap: '8px', listStyle: 'none', padding: 0 }}
+                        >
+                            {(project.checklist || []).map((task: any) => (
+                                <Reorder.Item key={task.id} value={task} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F8FAFC', padding: '8px 12px', borderRadius: '12px', border: '1px solid #F1F5F9' }}>
+                                    <GripVertical size={14} color="#CBD5E1" style={{ cursor: 'grab' }} />
+                                    <div onClick={() => toggleProjectTask(project.id, task.id)} style={{ cursor: 'pointer', display: 'flex' }}>
+                                        {task.completed ? <CheckCircle2 size={18} color="var(--domain-green)" /> : <Circle size={18} color="#CBD5E1" />}
+                                    </div>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, flex: 1, textDecoration: task.completed ? 'line-through' : 'none', color: task.completed ? '#94A3B8' : '#1E293B' }}>{task.text}</span>
+                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                        <button onClick={() => { const t = prompt('Editar tarea:', task.text); if(t) updateProjectTask(project.id, task.id, { text: t }); }} style={{ background: 'transparent', border: 'none', color: '#CBD5E1', cursor: 'pointer' }}><Edit2 size={12} /></button>
+                                        <button onClick={() => { const rid = rutinas[0]?.id || Date.now(); promoteTaskToRoutine(project.id, task.id, rid); }} style={{ background: 'transparent', border: 'none', color: '#CBD5E1', cursor: 'pointer' }}><Zap size={12} /></button>
+                                        <button onClick={() => removeProjectTask(project.id, task.id)} style={{ background: 'transparent', border: 'none', color: '#CBD5E1', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                                    </div>
+                                </Reorder.Item>
+                            ))}
+                        </Reorder.Group>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '1rem' }}>
+                            <input 
+                                placeholder="Nueva tarea del proyecto..."
+                                value={newTaskText}
+                                onChange={(e) => setNewTaskText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
+                                style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px 12px', fontSize: '0.8rem', outline: 'none' }}
+                            />
+                            <button onClick={handleAddTask} style={{ background: project.color, color: 'white', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer' }}>
+                                <Plus size={18} />
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    /* INVENTARIO LIGERO */
+                    <div className="glass-card" style={{ padding: '1rem', background: 'white' }}>
+                        {(project.inventoryItems || []).length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '2rem', color: '#CBD5E1' }}>
+                                <Package size={40} style={{ marginBottom: '8px' }} />
+                                <p style={{ fontSize: '0.8rem', fontWeight: 600 }}>No hay productos aún. ¡Agrega el primero!</p>
+                            </div>
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1rem' }}>
+                            {(project.inventoryItems || []).map((item: any) => (
+                                <div key={item.id} style={{
+                                    display: 'flex', alignItems: 'center', gap: '10px',
+                                    background: '#F8FAFC', padding: '10px 12px', borderRadius: '14px',
+                                    border: `1px solid ${item.quantity === 0 ? '#FECACA' : '#F1F5F9'}`
+                                }}>
+                                    <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 700, color: item.quantity === 0 ? '#EF4444' : '#1E293B' }}>
+                                        {item.quantity === 0 ? '⚠️ ' : ''}{item.text}
+                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <button
+                                            onClick={() => updateInventoryItemQuantity && updateInventoryItemQuantity(project.id, item.id, -1)}
+                                            style={{ width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #E2E8F0', background: 'white', cursor: 'pointer', fontWeight: 900, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        >−</button>
+                                        <span style={{ minWidth: '32px', textAlign: 'center', fontWeight: 900, fontSize: '1rem', color: item.quantity === 0 ? '#EF4444' : project.color }}>{item.quantity}</span>
+                                        <button
+                                            onClick={() => updateInventoryItemQuantity && updateInventoryItemQuantity(project.id, item.id, 1)}
+                                            style={{ width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #E2E8F0', background: 'white', cursor: 'pointer', fontWeight: 900, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        >+</button>
+                                        <button
+                                            onClick={() => removeInventoryItem && removeInventoryItem(project.id, item.id)}
+                                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
+                                        ><Trash2 size={12} color="#f87171" opacity={0.5} /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {/* Add new item form */}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px', paddingTop: '12px', borderTop: '1px dashed #EEE', alignItems: 'center' }}>
+                            <input
+                                placeholder="Producto (ej: Perlas azules)"
+                                value={newItemText}
+                                onChange={e => setNewItemText(e.target.value)}
+                                style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px 12px', fontSize: '0.8rem', outline: 'none' }}
+                            />
+                            <input
+                                type="number" min="0"
+                                placeholder="Qty"
+                                value={newItemQty}
+                                onChange={e => setNewItemQty(e.target.value)}
+                                style={{ width: '60px', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px', fontSize: '0.8rem', outline: 'none', textAlign: 'center' }}
+                            />
+                            <button
+                                onClick={() => {
+                                    if (newItemText.trim() && addInventoryItem) {
+                                        addInventoryItem(project.id, newItemText.trim(), parseInt(newItemQty) || 0);
+                                        setNewItemText('');
+                                        setNewItemQty('0');
+                                    }
+                                }}
+                                style={{ background: project.color, color: 'white', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer' }}
+                            ><Plus size={18} /></button>
+                        </div>
+                    </div>
+                )}
             </section>
         </motion.div>
     );

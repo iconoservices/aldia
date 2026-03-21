@@ -27,6 +27,7 @@ interface FinanzasProps {
     toggleFixedExpense: (id: number) => void;
     updateFixedExpense: (id: number, updates: Partial<FixedExpense>) => void;
     markFixedExpensePaid: (id: number, monthStr: string, accountId?: number) => void;
+    unmarkFixedExpensePaid: (id: number, monthStr: string) => void;
     repayDebt: (originalTx: Transaction, amount: number, accountId: number) => void;
     removeTransaction: (id: number) => void;
     updateTransaction: (id: number, updates: Partial<Transaction>) => void;
@@ -38,7 +39,7 @@ interface FinanzasProps {
 export const FinanzasDashboard = ({ 
     balance, income, expense, owe, owed, transactions,
     monthlyBudget, updateMonthlyBudget, fixedExpenses, 
-    addFixedExpense, removeFixedExpense, toggleFixedExpense, updateFixedExpense, markFixedExpensePaid,
+    addFixedExpense, removeFixedExpense, toggleFixedExpense, updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid,
     repayDebt, removeTransaction, updateTransaction, projects, accounts, setAccounts
 }: FinanzasProps) => {
     const netOperation = useMemo(() => income - expense, [income, expense]);
@@ -224,10 +225,12 @@ export const FinanzasDashboard = ({
                         }}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                            <PiggyBank size={14} color="var(--domain-orange)" />
-                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#888', textTransform: 'uppercase' }}>Ahorro (En Vivo)</span>
+                            <PiggyBank size={14} color={projectedSavings < 0 ? '#EF4444' : 'var(--domain-orange)'} />
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: projectedSavings < 0 ? '#EF4444' : '#888', textTransform: 'uppercase' }}>
+                                {projectedSavings < 0 ? 'Ahorro (Déficit)' : 'Ahorro (En Vivo)'}
+                            </span>
                         </div>
-                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-carbon)', marginBottom: '8px' }}>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: projectedSavings < 0 ? '#EF4444' : 'var(--text-carbon)', marginBottom: '8px' }}>
                             ${projectedSavings.toLocaleString()}
                         </h3>
                         
@@ -344,31 +347,39 @@ export const FinanzasDashboard = ({
                                                 ))}
                                             </>
                                         ) : (
-                                            /* Vista por Proyecto */
-                                            projects.map(project => {
-                                                const projectAccs = accountsWithBalance.filter(acc => acc.projectIds?.includes(project.id));
-                                                if (projectAccs.length === 0) return null;
-                                                return (
-                                                    <div key={project.id} style={{ gridColumn: '1 / -1', marginBottom: '4px' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', paddingLeft: '4px' }}>
-                                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: project.color }} />
-                                                            <span style={{ fontSize: '0.6rem', fontWeight: 900, color: '#64748B', textTransform: 'uppercase' }}>{project.name}</span>
+                                            /* Vista por Proyecto (Columnas apiladas horizontalmente) */
+                                            <div style={{ gridColumn: '1 / -1', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
+                                                {projects.map(project => {
+                                                    const projectAccs = accountsWithBalance.filter(acc => acc.projectIds?.includes(project.id));
+                                                    if (projectAccs.length === 0) return null;
+                                                    return (
+                                                        <div key={project.id} style={{ flex: '1 1 30%', minWidth: '95px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px', paddingLeft: '4px' }}>
+                                                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: project.color }} />
+                                                                <span style={{ fontSize: '0.55rem', fontWeight: 900, color: '#64748B', textTransform: 'uppercase' }}>{project.name}</span>
+                                                            </div>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                                {projectAccs.map(acc => (
+                                                                    <div key={acc.id} style={{ 
+                                                                        background: 'white', border: '1px solid #EEE', borderTop: `3px solid ${acc.color}`, 
+                                                                        borderRadius: '12px', padding: '6px', display: 'flex', flexDirection: 'column', 
+                                                                        alignItems: 'center', textAlign: 'center', position: 'relative', boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                                                                    }}>
+                                                                        <button 
+                                                                            onClick={() => handleDeleteAccount(acc.id)} 
+                                                                            style={{ position: 'absolute', top: '2px', right: '2px', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px' }}
+                                                                        >
+                                                                            <Trash2 size={8} color="#f87171" opacity={0.3} />
+                                                                        </button>
+                                                                        <span style={{ fontSize: '0.5rem', fontWeight: 700, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{acc.name}</span>
+                                                                        <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#333' }}>${acc.balance.toLocaleString()}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                                                            {projectAccs.map(acc => (
-                                                                <div key={acc.id} style={{ 
-                                                                    background: 'white', border: '1px solid #EEE',
-                                                                    borderTop: `3px solid ${acc.color}`, borderRadius: '12px', padding: '6px',
-                                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'
-                                                                }}>
-                                                                    <span style={{ fontSize: '0.5rem', fontWeight: 700, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{acc.name}</span>
-                                                                    <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#333' }}>${acc.balance.toLocaleString()}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })
+                                                    );
+                                                })}
+                                            </div>
                                         )}
                                     </div>
 
@@ -504,6 +515,7 @@ export const FinanzasDashboard = ({
                                 removeFixedExpense={removeFixedExpense} 
                                 updateFixedExpense={updateFixedExpense} 
                                 markFixedExpensePaid={markFixedExpensePaid}
+                                unmarkFixedExpensePaid={unmarkFixedExpensePaid}
                                 projects={projects} 
                             />
                         ))}
@@ -539,7 +551,19 @@ export const FinanzasDashboard = ({
                                 </div>
                             </div>
                         </div>
-                        <span style={{ fontWeight: 900, fontSize: '0.9rem', color: tx.type === 'ingreso' ? '#10B981' : 'var(--text-carbon)' }}>{tx.type === 'ingreso' ? '+' : '-'}${Math.abs(tx.amount).toLocaleString()}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontWeight: 900, fontSize: '0.9rem', color: tx.type === 'ingreso' ? '#10B981' : 'var(--text-carbon)' }}>{tx.type === 'ingreso' ? '+' : '-'}${Math.abs(tx.amount).toLocaleString()}</span>
+                            <button 
+                                onClick={() => {
+                                    if (window.confirm('⚠️ ¿Seguro que deseas eliminar este movimiento? Su valor será devuelto a tu balance inmediatamente.')) {
+                                        removeTransaction(tx.id);
+                                    }
+                                }}
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex' }}
+                            >
+                                <Trash2 size={14} color="#f87171" opacity={0.5} />
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -589,12 +613,13 @@ export const FinanzasDashboard = ({
 
 // --- SUB-COMPONENTES AUXILIARES ---
 
-const FixedExpenseItem = ({ expense, toggleFixedExpense, removeFixedExpense, updateFixedExpense, markFixedExpensePaid, projects }: { 
+const FixedExpenseItem = ({ expense, toggleFixedExpense, removeFixedExpense, updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid, projects }: { 
     expense: FixedExpense, 
     toggleFixedExpense: (id: number) => void, 
     removeFixedExpense: (id: number) => void,
     updateFixedExpense: (id: number, updates: Partial<FixedExpense>) => void,
     markFixedExpensePaid: (id: number, monthStr: string) => void,
+    unmarkFixedExpensePaid: (id: number, monthStr: string) => void,
     projects: { id: number, name: string, color: string }[] 
 }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -673,7 +698,12 @@ const FixedExpenseItem = ({ expense, toggleFixedExpense, removeFixedExpense, upd
                 {/* Checkmark de Pago */}
                 <button
                     onClick={() => {
-                        if (expense.active && !isPaid) {
+                        if (!expense.active) return;
+                        if (isPaid) {
+                            if (window.confirm('¿Estás seguro de que quieres desmarcar este gasto? Se eliminará la transacción generada de tus pagos.')) {
+                                unmarkFixedExpensePaid(expense.id, currentMonthStr);
+                            }
+                        } else {
                             markFixedExpensePaid(expense.id, currentMonthStr);
                         }
                     }}

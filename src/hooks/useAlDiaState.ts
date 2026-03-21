@@ -103,6 +103,7 @@ export interface Project {
     status: 'activo' | 'pausado' | 'completado';
     targetHoursPerWeek?: number;
     checklist?: { id: number; text: string; completed: boolean }[];
+    inventoryItems?: { id: number; text: string; quantity: number }[];
 }
 
 export interface Note {
@@ -127,7 +128,7 @@ export const useAlDiaState = () => {
         transactions, setTransactions, balance, 
         monthlyBudget, setMonthlyBudget, fixedExpenses, setFixedExpenses,
         addTransaction, addFixedExpense, removeFixedExpense, toggleFixedExpense, 
-        updateFixedExpense, markFixedExpensePaid, repayDebt: repayDebtBase, todayIncome, todayExpense, debtsOwe, debtsOwed,
+        updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid, repayDebt: repayDebtBase, todayIncome, todayExpense, debtsOwe, debtsOwed,
         removeTransaction, updateTransaction
     } = useFinanzasState();
 
@@ -145,6 +146,7 @@ export const useAlDiaState = () => {
         addProject, addProjectTask, toggleProjectTask, removeProjectTask,
         promoteTaskToRoutine, updateProject, deleteProject, reorderProjectTasks,
         addTimeBlock, removeTimeBlock,
+        addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
         addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
         updateRoutine, addRoutine, removeRoutine, updateProjectTask
     } = useProyectosState();
@@ -420,7 +422,7 @@ export const useAlDiaState = () => {
         balance,
         todayIncome, todayExpense, debtsOwe, debtsOwed,
         monthlyBudget, updateMonthlyBudget: (amount: number) => setMonthlyBudget(amount),
-        fixedExpenses, addFixedExpense, removeFixedExpense, toggleFixedExpense, updateFixedExpense, markFixedExpensePaid,
+        fixedExpenses, addFixedExpense, removeFixedExpense, toggleFixedExpense, updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid,
         repayDebt: repayDebtBase,
         removeTransaction,
         updateTransaction,
@@ -428,6 +430,7 @@ export const useAlDiaState = () => {
         // Proyectos & Rutinas
         projects, addProject, addProjectTask, toggleProjectTask, removeProjectTask, reorderProjectTasks,
         promoteTaskToRoutine, updateProject, deleteProject, updateProjectTask,
+        addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
         timeBlocks, addTimeBlock, removeTimeBlock,
         rutinas, addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
         updateRoutine, addRoutine, removeRoutine,

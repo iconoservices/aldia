@@ -13,9 +13,50 @@ export const useProyectosState = () => {
             color, 
             status: 'activo',
             targetHoursPerWeek,
-            checklist: []
+            checklist: [],
+            inventoryItems: []
         };
         setProjects(prev => [newProject, ...prev]);
+    };
+
+    const addInventoryItem = (projectId: number, text: string, initialQuantity: number = 0) => {
+        setProjects(prev => {
+            if (!Array.isArray(prev)) return [];
+            return prev.map(p => {
+                if (p.id !== projectId) return p;
+                const newItem = { id: Date.now() + Math.random(), text, quantity: initialQuantity };
+                const currentInventory = Array.isArray(p.inventoryItems) ? p.inventoryItems : [];
+                return { ...p, inventoryItems: [...currentInventory, newItem] };
+            });
+        });
+    };
+
+    const updateInventoryItemQuantity = (projectId: number, itemId: number, delta: number) => {
+        setProjects(prev => {
+            if (!Array.isArray(prev)) return [];
+            return prev.map(p => {
+                if (p.id !== projectId) return p;
+                const currentInventory = Array.isArray(p.inventoryItems) ? p.inventoryItems : [];
+                return {
+                    ...p,
+                    inventoryItems: currentInventory.map(i => i.id === itemId ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i)
+                };
+            });
+        });
+    };
+
+    const removeInventoryItem = (projectId: number, itemId: number) => {
+        setProjects(prev => {
+            if (!Array.isArray(prev)) return [];
+            return prev.map(p => {
+                if (p.id !== projectId) return p;
+                const currentInventory = Array.isArray(p.inventoryItems) ? p.inventoryItems : [];
+                return {
+                    ...p,
+                    inventoryItems: currentInventory.filter(i => i.id !== itemId)
+                };
+            });
+        });
     };
 
     const addProjectTask = (projectId: number, text: string) => {
@@ -193,6 +234,9 @@ export const useProyectosState = () => {
         deleteProject,
         addTimeBlock,
         removeTimeBlock,
+        addInventoryItem,
+        updateInventoryItemQuantity,
+        removeInventoryItem,
         addRoutineItem,
         updateRoutineItem,
         toggleRoutineItem,
