@@ -306,6 +306,80 @@ export const QuickActionPanel = ({
                                 </div>
                             )}
 
+                            {/* SELECTOR DE PROYECTO (Para Tareas, Bloques, Agenda y Finanzas) */}
+                            {(actionType === 'tarea' || actionType === 'bloque' || actionType === 'agenda' || currentConfig.isFinancial) && (
+                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                        <p style={{ margin: '0 0 0 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Proyecto (Opcional)</p>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setIsCreatingProject(!isCreatingProject)}
+                                            style={{ background: isCreatingProject ? 'var(--domain-orange)' : '#EEE', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                        >
+                                            {isCreatingProject ? <X size={12} color="white" /> : <Plus size={12} color="#888" />}
+                                        </button>
+                                    </div>
+
+                                    {isCreatingProject ? (
+                                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Nombre del proyecto..." 
+                                                value={quickProjectName}
+                                                onChange={(e) => setQuickProjectName(e.target.value)}
+                                                style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', border: '1px solid #DDD', fontSize: '0.8rem', fontWeight: 600 }}
+                                            />
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', gap: '6px' }}>
+                                                    {['#ff8c42', '#3b82f6', '#10B911', '#8b5cf6', '#EC4899'].map(c => (
+                                                        <button 
+                                                            key={c} type="button" onClick={() => setQuickProjectColor(c)}
+                                                            style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, border: quickProjectColor === c ? '2px solid #333' : 'none', cursor: 'pointer' }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {
+                                                        if (quickProjectName && addProject) {
+                                                            const newId = Date.now() + Math.random();
+                                                            addProject(quickProjectName, quickProjectColor);
+                                                            setSelectedProjectId(newId);
+                                                            setIsCreatingProject(false);
+                                                            setQuickProjectName('');
+                                                        }
+                                                    }}
+                                                    style={{ background: 'var(--domain-green)', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer' }}
+                                                >
+                                                    CREAR
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '4px' }}>
+                                            {projects.map(p => (
+                                                <button
+                                                    key={p.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedProjectId(p.id);
+                                                        setSelectedAccountId(undefined);
+                                                    }}
+                                                    style={{
+                                                        padding: '6px 12px', borderRadius: '12px', border: `1px solid ${p.id === selectedProjectId ? p.color : '#EEE'}`,
+                                                        background: selectedProjectId === p.id ? p.color : 'white',
+                                                        color: selectedProjectId === p.id ? 'white' : '#333',
+                                                        fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    {p.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             {/* INPUT PRINCIPAL */}
                             <div style={{ position: 'relative' }}>
                                 <label style={{ fontSize: '0.65rem', fontWeight: 800, color: '#AAA', position: 'absolute', top: '10px', left: '16px', textTransform: 'uppercase' }}>
@@ -361,81 +435,6 @@ export const QuickActionPanel = ({
                                             ));
                                         })()}
                                     </div>
-                                </div>
-                            )}
-
-                            {/* SELECTOR DE PROYECTO (Para Tareas, Bloques, Agenda y Finanzas) */}
-                            {(actionType === 'tarea' || actionType === 'bloque' || actionType === 'agenda' || currentConfig.isFinancial) && (
-                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                        <p style={{ margin: '0 0 0 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Proyecto (Opcional)</p>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => setIsCreatingProject(!isCreatingProject)}
-                                            style={{ background: isCreatingProject ? 'var(--domain-orange)' : '#EEE', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                        >
-                                            {isCreatingProject ? <X size={12} color="white" /> : <Plus size={12} color="#888" />}
-                                        </button>
-                                    </div>
-
-                                    {isCreatingProject ? (
-                                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <input 
-                                                type="text" 
-                                                placeholder="Nombre del proyecto..." 
-                                                value={quickProjectName}
-                                                onChange={(e) => setQuickProjectName(e.target.value)}
-                                                style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', border: '1px solid #DDD', fontSize: '0.8rem', fontWeight: 600 }}
-                                            />
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div style={{ display: 'flex', gap: '6px' }}>
-                                                    {['#ff8c42', '#3b82f6', '#10B911', '#8b5cf6', '#EC4899'].map(c => (
-                                                        <button 
-                                                            key={c} type="button" onClick={() => setQuickProjectColor(c)}
-                                                            style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, border: quickProjectColor === c ? '2px solid #333' : 'none', cursor: 'pointer' }}
-                                                        />
-                                                    ))}
-                                                </div>
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => {
-                                                        if (quickProjectName && addProject) {
-                                                            const newId = Date.now() + Math.random();
-                                                            addProject(quickProjectName, quickProjectColor);
-                                                            setSelectedProjectId(newId);
-                                                            setIsCreatingProject(false);
-                                                            setQuickProjectName('');
-                                                        }
-                                                    }}
-                                                    style={{ background: 'var(--domain-green)', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer' }}
-                                                >
-                                                    CREAR
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    ) : (
-                                        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '4px' }}>
-                                            {/* Eliminado "Sin Proyecto" por solicitud del usuario */}
-                                            {projects.map(p => (
-                                                <button
-                                                    key={p.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setSelectedProjectId(p.id);
-                                                        setSelectedAccountId(undefined);
-                                                    }}
-                                                    style={{
-                                                        padding: '6px 12px', borderRadius: '12px', border: `1px solid ${p.id === selectedProjectId ? p.color : '#EEE'}`,
-                                                        background: selectedProjectId === p.id ? p.color : 'white',
-                                                        color: selectedProjectId === p.id ? 'white' : '#333',
-                                                        fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
-                                                    }}
-                                                >
-                                                    {p.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
                             )}
 
