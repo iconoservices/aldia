@@ -52,6 +52,7 @@ export interface Transaction {
     projectId?: number;
     accountId?: number;
     category?: string;
+    contact?: string;
 }
 
 export interface Account {

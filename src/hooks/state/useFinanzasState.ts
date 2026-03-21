@@ -16,7 +16,7 @@ export const useFinanzasState = () => {
             .reduce((acc, t) => acc + (Number(t?.amount) || 0), 0);
     }, [txArr]);
 
-    const addTransaction = (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string) => {
+    const addTransaction = (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string, contact?: string) => {
         const value = Math.abs(amount);
 
         const newTx: Transaction = {
@@ -30,7 +30,8 @@ export const useFinanzasState = () => {
             fullDate: new Date().toLocaleDateString('en-CA'),
             projectId,
             accountId,
-            category
+            category,
+            contact
         };
         setTransactions(prev => [newTx, ...prev]);
     };
@@ -49,7 +50,9 @@ export const useFinanzasState = () => {
             date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             fullDate: new Date().toLocaleDateString('en-CA'),
             projectId: originalTx.projectId,
-            accountId
+            accountId,
+            category: originalTx.category,
+            contact: originalTx.contact
         };
         setTransactions(prev => [repaymentTx, ...prev]);
     };

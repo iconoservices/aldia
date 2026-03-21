@@ -5,7 +5,7 @@ import { QuickActionPanel } from './QuickActionPanel';
 
 interface SuperFabProps {
     addMission: (text: string, q?: string, repeat?: 'none' | 'daily' | 'weekly' | 'monthly', noteId?: number, labels?: string[], dueDate?: string, dueTime?: string, habitId?: number, projectId?: number) => void;
-    addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string) => void;
+    addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string, contact?: string) => void;
     addHabit: (name: string) => void;
     addRoutineItem?: (routineId: number, text: string) => void;
     addCalendarEvent: (title: string, date: string, start: string, end: string, desc: string) => void;

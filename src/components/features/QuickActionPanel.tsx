@@ -9,7 +9,7 @@ interface QuickActionPanelProps {
     onClose: () => void;
     actionType: string | null;
     addMission: (text: string, q?: string, repeat?: 'none' | 'daily' | 'weekly' | 'monthly', noteId?: number, labels?: string[], dueDate?: string, dueTime?: string, habitId?: number, projectId?: number, repeatDays?: number[]) => void;
-    addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string) => void;
+    addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projectId?: number, accountId?: number, isCashless?: boolean, category?: string, contact?: string) => void;
     addHabit: (name: string) => void;
     addRoutineItem?: (routineId: number, text: string, time?: string) => void;
     addCalendarEvent?: (title: string, date: string, start: string, end: string, desc: string, projectId?: number) => void;
@@ -38,6 +38,7 @@ export const QuickActionPanel = ({
     const [selectedAccountId, setSelectedAccountId] = useState<number | undefined>(undefined);
     const [repeatDays, setRepeatDays] = useState<number[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>('Otros');
+    const [contactName, setContactName] = useState('');
     
     // Efecto para manejar el proyecto por defecto según cantidad
     useEffect(() => {
@@ -99,7 +100,7 @@ export const QuickActionPanel = ({
             }
             const isActuallyDebt = debtMode !== 'normal';
             const isCashless = debtMode === 'fiao';
-            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parseFloat(amount) || 0, actionType as any, isActuallyDebt, selectedProjectId, selectedAccountId, isCashless, selectedCategory);
+            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parseFloat(amount) || 0, actionType as any, isActuallyDebt, selectedProjectId, selectedAccountId, isCashless, selectedCategory, contactName);
             confetti({
                 particleCount: 80,
                 spread: 70,
@@ -210,6 +211,7 @@ export const QuickActionPanel = ({
             setSelectedProjectId(undefined);
             setSelectedAccountId(undefined);
             setSelectedCategory('Otros');
+            setContactName('');
             onClose();
         }, 150);
     };
@@ -694,6 +696,26 @@ export const QuickActionPanel = ({
                                         {debtMode === 'prestamo' && '⚠ Mueve efectivo y registra la deuda.'}
                                     </p>
                                 </div>
+                            )}
+
+                            {/* CAMPO DE CONTACTO (SOLO SI NO ES NORMAL) */}
+                            {currentConfig.isFinancial && debtMode !== 'normal' && (
+                                <motion.div 
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    style={{ background: '#F9F9F9', padding: '16px', borderRadius: '24px', border: `2px solid ${debtMode === 'fiao' ? 'var(--domain-orange)' : 'var(--domain-blue)'}30` }}
+                                >
+                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.65rem', color: '#666', textTransform: 'uppercase' }}>
+                                        {actionType === 'ingreso' ? '👤 ¿Quién te debe? (Cliente)' : '👤 ¿A quién le debes?'}
+                                    </p>
+                                    <input 
+                                        type="text"
+                                        placeholder="Nombre o entidad..."
+                                        value={contactName}
+                                        onChange={(e) => setContactName(e.target.value)}
+                                        style={{ width: '100%', padding: '12px', borderRadius: '16px', border: '1px solid #EEE', outline: 'none', fontSize: '1rem', fontWeight: 700, background: 'white' }}
+                                    />
+                                </motion.div>
                             )}
 
                             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" style={{ background: currentConfig.color, color: 'white', border: 'none', padding: '18px', borderRadius: '20px', fontSize: '1.1rem', fontWeight: 900, marginTop: '1rem', cursor: 'pointer', boxShadow: `0 10px 25px ${currentConfig.color}40` }}>

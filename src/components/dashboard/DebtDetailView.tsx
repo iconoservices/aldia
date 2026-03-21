@@ -23,6 +23,7 @@ export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, r
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editName, setEditName] = useState('');
     const [editAmount, setEditAmount] = useState('');
+    const [editContact, setEditContact] = useState('');
 
     const debtList = useMemo(() => {
         // Obtenemos todas las deudas del tipo seleccionado
@@ -39,10 +40,12 @@ export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, r
         const groups: Record<string, { total: number, originalTxs: Transaction[] }> = {};
         
         relevant.forEach(tx => {
-            const key = tx.text.startsWith('Pago: ') ? tx.text.replace('Pago: ', '') : tx.text;
+            const baseText = tx.text.startsWith('Pago: ') ? tx.text.replace('Pago: ', '') : tx.text;
+            const contact = tx.contact || '';
+            const key = contact ? `${contact}::${baseText}` : `::${baseText}`;
+            
             if (!groups[key]) groups[key] = { total: 0, originalTxs: [] };
             
-            // Si es el original, suma al total. Si es un pago, resta.
             if (tx.text.startsWith('Pago: ')) {
                 groups[key].total -= Math.abs(tx.amount);
             } else {
@@ -52,12 +55,16 @@ export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, r
         });
 
         return Object.entries(groups)
-            .filter(([_, data]) => data.total > 0.01) // Solo deudas pendientes
-            .map(([name, data]) => ({
-                name,
-                amount: data.total,
-                originalTx: data.originalTxs[0] // Usamos la más reciente para referencia
-            }));
+            .filter(([_, data]) => data.total > 0.01)
+            .map(([key, data]) => {
+                const [contact, text] = key.split('::');
+                return {
+                    name: text,
+                    contact: contact,
+                    amount: data.total,
+                    originalTx: data.originalTxs[0]
+                };
+            });
     }, [transactions, mode]);
 
     const totalAmount = useMemo(() => debtList.reduce((sum, item) => sum + item.amount, 0), [debtList]);
@@ -82,7 +89,8 @@ export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, r
     const handleUpdate = (txId: number) => {
         updateTransaction(txId, {
             text: editName,
-            amount: parseFloat(editAmount) || 0
+            amount: parseFloat(editAmount) || 0,
+            contact: editContact
         });
         setEditingId(null);
     };
@@ -168,6 +176,12 @@ export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, r
                                     {editingId === idx ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                             <input 
+                                                value={editContact}
+                                                onChange={(e) => setEditContact(e.target.value)}
+                                                placeholder="Nombre / Cliente"
+                                                style={{ padding: '6px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.8rem', fontWeight: 800, background: '#F8FAFC' }}
+                                            />
+                                            <input 
                                                 value={editName}
                                                 onChange={(e) => setEditName(e.target.value)}
                                                 style={{ padding: '6px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.85rem', fontWeight: 900 }}
@@ -185,6 +199,11 @@ export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, r
                                         </div>
                                     ) : (
                                         <>
+                                            {item.contact && (
+                                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: mode === 'owe' ? '#ef4444' : '#10b981', background: mode === 'owe' ? '#fee2e2' : '#dcfce7', padding: '2px 8px', borderRadius: '6px', marginBottom: '4px', display: 'inline-block' }}>
+                                                    👤 {item.contact.toUpperCase()}
+                                                </span>
+                                            )}
                                             <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-carbon)' }}>{item.name}</h4>
                                             <span style={{ fontSize: '0.65rem', color: '#AAA', fontWeight: 600 }}>{item.originalTx.date} - {item.originalTx.fullDate}</span>
                                         </>
@@ -196,7 +215,12 @@ export const DebtDetailView = ({ transactions, accounts, initialMode, onClose, r
                                     </span>
                                     <div style={{ display: 'flex', gap: '8px' }}>
                                         <button 
-                                            onClick={() => { setEditingId(idx); setEditName(item.name); setEditAmount(item.originalTx.amount.toString()); }}
+                                            onClick={() => { 
+                                                setEditingId(idx); 
+                                                setEditName(item.name); 
+                                                setEditAmount(item.originalTx.amount.toString()); 
+                                                setEditContact(item.contact || '');
+                                            }}
                                             style={{ background: 'transparent', border: 'none', color: '#CBD5E1', cursor: 'pointer', padding: '4px' }}
                                         >
                                             <Edit2 size={12} />

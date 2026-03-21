@@ -606,11 +606,16 @@ export const FinanzasDashboard = ({
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <p style={{ margin: 0, fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-carbon)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.text}</p>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
                                     <span style={{ fontSize: '0.6rem', color: '#AAA' }}>{tx.date}</span>
                                     {tx.category && (
                                         <span style={{ fontSize: '0.55rem', fontWeight: 900, background: '#F1F5F9', color: '#475569', padding: '2px 6px', borderRadius: '6px' }}>
                                             {tx.category.toUpperCase()}
+                                        </span>
+                                    )}
+                                    {tx.contact && (
+                                        <span style={{ fontSize: '0.55rem', fontWeight: 900, background: tx.type === 'ingreso' ? '#DCFCE7' : '#FEE2E2', color: tx.type === 'ingreso' ? '#10B981' : '#EF4444', padding: '2px 6px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                            👤 {tx.contact.toUpperCase()}
                                         </span>
                                     )}
                                     {projects.find(p => p.id === tx.projectId) && (
