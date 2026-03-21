@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Clock, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { DEFAULT_INCOME_CATEGORIES, DEFAULT_EXPENSE_CATEGORIES } from '../../hooks/useAlDiaState';
 
 interface QuickActionPanelProps {
     isOpen: boolean;
@@ -15,7 +16,7 @@ interface QuickActionPanelProps {
     addNote: (title: string, content: string, type: 'text' | 'checklist', items: { text: string; completed: boolean }[], q: string, color: string) => void;
     addTimeBlock: (label: string, start: string, end: string, color: string, projectId?: number) => void;
     addProject?: (name: string, color: string, targetHoursPerWeek?: number) => void;
-    projects?: { id: number, name: string, color: string }[];
+    projects?: { id: number, name: string, color: string, incomeCategories?: string[], expenseCategories?: string[] }[];
     accounts?: { id: number, name: string, color: string, projectIds?: number[] }[];
     rutinas?: { id: number, title: string, color: string }[];
 }
@@ -332,24 +333,34 @@ export const QuickActionPanel = ({
                                 <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
                                     <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Categoría</p>
                                     <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                                        {(actionType === 'ingreso' 
-                                            ? ['Sueldo', 'Venta', 'Inversión', 'Otros']
-                                            : ['Comida', 'Transporte', 'Servicios', 'Suscripciones', 'Salud', 'Ocio', 'Otros']
-                                        ).map(cat => (
-                                            <button
-                                                key={cat}
-                                                type="button"
-                                                onClick={() => setSelectedCategory(cat)}
-                                                style={{
-                                                    padding: '6px 12px', borderRadius: '12px', border: `1px solid ${selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : '#EEE'}`,
-                                                    background: selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : 'white',
-                                                    color: selectedCategory === cat ? 'white' : '#333',
-                                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
-                                                }}
-                                            >
-                                                {cat}
-                                            </button>
-                                        ))}
+                                        {(() => {
+                                            const project = projects.find(p => p.id === selectedProjectId);
+                                            const defaults = actionType === 'ingreso' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
+                                            const categories = actionType === 'ingreso' 
+                                                ? (project?.incomeCategories ?? defaults)
+                                                : (project?.expenseCategories ?? defaults);
+                                            
+                                            // Si la categoría seleccionada no está en la nueva lista, la reseteamos a la primera
+                                            if (isOpen && categories.length > 0 && !categories.includes(selectedCategory) && selectedCategory !== 'Otros') {
+                                                // setSelectedCategory(categories[0]); // Evitar loops infinitos de renderizado
+                                            }
+
+                                            return categories.map(cat => (
+                                                <button
+                                                    key={cat}
+                                                    type="button"
+                                                    onClick={() => setSelectedCategory(cat)}
+                                                    style={{
+                                                        padding: '6px 12px', borderRadius: '12px', border: `1px solid ${selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : '#EEE'}`,
+                                                        background: selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : 'white',
+                                                        color: selectedCategory === cat ? 'white' : '#333',
+                                                        fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    {cat}
+                                                </button>
+                                            ));
+                                        })()}
                                     </div>
                                 </div>
                             )}

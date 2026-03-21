@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Project, TimeBlock, Routine } from '../useAlDiaState';
+import { DEFAULT_INCOME_CATEGORIES, DEFAULT_EXPENSE_CATEGORIES } from '../useAlDiaState';
 
 export const useProyectosState = () => {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -252,7 +253,8 @@ export const useProyectosState = () => {
         setProjects(prev => prev.map(p => {
             if (p.id !== projectId) return p;
             const key = type === 'ingreso' ? 'incomeCategories' : 'expenseCategories';
-            const currentList = p[key] || [];
+            const defaults = type === 'ingreso' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
+            const currentList = p[key] ?? defaults;
             if (currentList.includes(categoryName)) return p;
             return { ...p, [key]: [...currentList, categoryName] };
         }));
@@ -262,7 +264,8 @@ export const useProyectosState = () => {
         setProjects(prev => prev.map(p => {
             if (p.id !== projectId) return p;
             const key = type === 'ingreso' ? 'incomeCategories' : 'expenseCategories';
-            const currentList = p[key] || [];
+            const defaults = type === 'ingreso' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
+            const currentList = p[key] ?? defaults;
             return { ...p, [key]: currentList.filter(c => c !== categoryName) };
         }));
     };

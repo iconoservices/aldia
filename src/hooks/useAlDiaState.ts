@@ -108,6 +108,9 @@ export interface Project {
     expenseCategories?: string[];
 }
 
+export const DEFAULT_INCOME_CATEGORIES = ['Sueldo', 'Venta', 'Inversión', 'Otros'];
+export const DEFAULT_EXPENSE_CATEGORIES = ['Comida', 'Transporte', 'Servicios', 'Suscripciones', 'Salud', 'Ocio', 'Otros'];
+
 export interface Note {
     id: number;
     title: string;

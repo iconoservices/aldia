@@ -244,7 +244,6 @@ function App() {
             accounts={state.accounts}
             setAccounts={state.setAccounts}
             transactions={state.transactions}
-            addTransaction={state.addTransaction}
             addProjectTask={state.addProjectTask}
             toggleProjectTask={state.toggleProjectTask}
             removeProjectTask={state.removeProjectTask}
@@ -253,6 +252,8 @@ function App() {
             promoteTaskToRoutine={state.promoteTaskToRoutine}
             removeRoutineItem={state.removeRoutineItem}
             rutinas={state.rutinas}
+            addProjectCategory={state.addProjectCategory}
+            removeProjectCategory={state.removeProjectCategory}
             addInventoryItem={state.addInventoryItem}
             updateInventoryItemQuantity={state.updateInventoryItemQuantity}
             removeInventoryItem={state.removeInventoryItem}
