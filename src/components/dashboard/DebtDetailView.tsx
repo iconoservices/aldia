@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, UserMinus, UserPlus, Check, X, Wallet, History, CreditCard } from 'lucide-react';
+import { ArrowLeft, UserMinus, UserPlus, Wallet, History, CreditCard } from 'lucide-react';
 import { GlassCard } from '../ui/GlassCard';
 import type { Transaction, Account } from '../../hooks/useAlDiaState';
 
