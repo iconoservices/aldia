@@ -88,14 +88,13 @@ function App() {
                     toggleRoutineItem={state.toggleRoutineItem}
                     onOpenNote={setViewingNoteId}
                     onEditMission={setEditingMission}
-                    removeMission={(id: number) => {
-                        const mission = state.todayMissions.find((m: Mission) => m.id === id);
-                        if (mission?.isRoutine) {
-                            state.removeRoutineItem(mission.routineId!, id);
-                        } else if (mission?.isHabit) {
-                            state.removeHabit(id);
+                    removeMission={(mission: Mission) => {
+                        if (mission.isRoutine) {
+                            state.removeRoutineItem(mission.routineId!, mission.id);
+                        } else if (mission.isHabit) {
+                            state.removeHabit(mission.id);
                         } else {
-                            state.removeMission(id);
+                            state.removeMission(mission.id);
                         }
                     }}
                     reorderMissions={state.reorderMissions}

@@ -43,7 +43,7 @@ export const useMisionesState = () => {
     };
 
     const removeMission = (id: number) => {
-        setMissions(prev => prev.filter(m => m.id !== id));
+        setMissions(prev => prev.filter(m => m.id != id));
     };
 
     const addMission = (text: string, q: string = 'Q2', repeat: 'none' | 'daily' | 'weekly' | 'monthly' = 'none', noteId?: number, labels: string[] = [], dueDate?: string, dueTime?: string, habitId?: number, projectId?: number, repeatDays?: number[]) => {

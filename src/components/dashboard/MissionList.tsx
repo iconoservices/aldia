@@ -13,7 +13,7 @@ interface MissionListProps {
     toggleRoutineItem?: (routineId: number, itemId: number) => void;
     onOpenNote?: (id: number) => void;
     onEditMission?: (mission: Mission) => void;
-    removeMission?: (id: number) => void;
+    removeMission?: (mission: Mission) => void;
     title?: string;
     showTimeBlock?: boolean;
     showMatrixLinks?: boolean;
@@ -177,7 +177,7 @@ export const MissionList = ({
                                                     )}
                                                     {removeMission && (
                                                         <button
-                                                            onClick={(e) => { e.stopPropagation(); removeMission(mission.id); }}
+                                                            onClick={(e) => { e.stopPropagation(); removeMission(mission); }}
                                                             style={{ background: 'transparent', border: 'none', color: isPinnedQ1 ? 'white' : '#CCC', cursor: 'pointer', padding: '2px', display: 'flex' }}
                                                         >
                                                             <Trash2 size={12} />
