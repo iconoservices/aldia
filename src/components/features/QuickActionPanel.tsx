@@ -50,12 +50,11 @@ export const QuickActionPanel = ({
     }, [isOpen, projects]);
     
     // Cuentas: Todas disponibles, pero priorizamos las del proyecto seleccionado
-    const { projectAccounts, otherAccounts } = useMemo(() => {
-        if (!selectedProjectId) return { projectAccounts: [], otherAccounts: accounts };
+    const { projectAccounts } = useMemo(() => {
+        if (!selectedProjectId) return { projectAccounts: [] };
         
         const projectAccs = accounts.filter(acc => acc.projectIds?.includes(selectedProjectId));
-        const otherAccs = accounts.filter(acc => !acc.projectIds?.includes(selectedProjectId));
-        return { projectAccounts: projectAccs, otherAccounts: otherAccs };
+        return { projectAccounts: projectAccs };
     }, [accounts, selectedProjectId]);
 
     // Quick Project Creation
