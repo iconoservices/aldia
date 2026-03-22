@@ -737,22 +737,25 @@ const FixedExpenseItem = ({ expense, toggleFixedExpense, removeFixedExpense, upd
                         placeholder="$" 
                         style={{ flex: 1, padding: '6px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.8rem', fontWeight: 600 }}
                     />
-                    <input 
-                        type="number" value={editDueDay || ''} onChange={(e) => setEditDueDay(e.target.value ? Number(e.target.value) : undefined)}
-                        placeholder="Día (1-31)" 
-                        min="1" max="31"
-                        style={{ width: '60px', padding: '6px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.8rem', fontWeight: 600 }}
-                    />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <select 
-                        value={editProjectId || ''} 
-                        onChange={(e) => setEditProjectId(e.target.value ? Number(e.target.value) : undefined)}
-                        style={{ padding: '4px', borderRadius: '6px', border: '1px solid #DDD', fontSize: '0.7rem', fontWeight: 700, background: 'white' }}
-                    >
-                        <option value="">Sin Proyecto</option>
-                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
+                        <select 
+                            value={editProjectId || ''} 
+                            onChange={(e) => setEditProjectId(e.target.value ? Number(e.target.value) : undefined)}
+                            style={{ flex: 1, padding: '4px', borderRadius: '6px', border: '1px solid #DDD', fontSize: '0.7rem', fontWeight: 700, background: 'white' }}
+                        >
+                            <option value="">Sin Proyecto</option>
+                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+                        <input 
+                            type="number" value={editDueDay || ''} onChange={(e) => setEditDueDay(e.target.value ? Number(e.target.value) : undefined)}
+                            placeholder="Día" 
+                            min="1" max="31"
+                            title="Día de cobro mensual"
+                            style={{ width: '50px', padding: '4px', borderRadius: '6px', border: '1px solid #DDD', fontSize: '0.75rem', fontWeight: 800, background: '#FFFDF0', textAlign: 'center' }}
+                        />
+                    </div>
                     <div style={{ display: 'flex', gap: '4px' }}>
                         <button onClick={() => setIsEditing(false)} style={{ background: '#EEE', border: 'none', borderRadius: '6px', padding: '4px', cursor: 'pointer' }}><X size={14} color="#888" /></button>
                         <button onClick={handleSave} style={{ background: 'var(--domain-green)', border: 'none', borderRadius: '6px', padding: '4px', cursor: 'pointer' }}><Check size={14} color="white" /></button>
@@ -878,22 +881,25 @@ const NewFixedExpenseForm = ({ addFixedExpense, projects }: { addFixedExpense: (
                     value={amount} onChange={(e) => setAmount(e.target.value)}
                     style={{ flex: 1, padding: '6px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.8rem' }}
                 />
-                <input 
-                    type="number" placeholder="Día" 
-                    value={dueDay || ''} onChange={(e) => setDueDay(e.target.value ? Number(e.target.value) : undefined)}
-                    min="1" max="31"
-                    style={{ width: '45px', padding: '6px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '0.8rem' }}
-                />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <select 
-                    value={projectId || ''} 
-                    onChange={(e) => setProjectId(e.target.value ? Number(e.target.value) : undefined)}
-                    style={{ padding: '4px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.7rem', fontWeight: 700, background: 'white' }}
-                >
-                    <option value="">Proyecto?</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
+                    <select 
+                        value={projectId || ''} 
+                        onChange={(e) => setProjectId(e.target.value ? Number(e.target.value) : undefined)}
+                        style={{ flex: 1, padding: '4px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.7rem', fontWeight: 700, background: 'white' }}
+                    >
+                        <option value="">Proyecto?</option>
+                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                    <input 
+                        type="number" placeholder="Día" 
+                        value={dueDay || ''} onChange={(e) => setDueDay(e.target.value ? Number(e.target.value) : undefined)}
+                        min="1" max="31"
+                        title="Día de cobro mensual"
+                        style={{ width: '45px', padding: '4px', borderRadius: '6px', border: '1px solid #DDD', fontSize: '0.7rem', fontWeight: 800, background: '#FFFDF0', textAlign: 'center' }}
+                    />
+                </div>
                 <div style={{ display: 'flex', gap: '4px' }}>
                     <button onClick={() => setIsExpanded(false)} style={{ padding: '4px 8px', borderRadius: '6px', border: 'none', background: '#E2E8F0', color: '#475569', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer' }}>X</button>
                     <button onClick={handleSubmit} style={{ padding: '4px 10px', borderRadius: '6px', border: 'none', background: 'var(--domain-blue)', color: 'white', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer' }}>OK</button>

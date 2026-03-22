@@ -10,7 +10,8 @@ interface ActionBannerProps {
 
 export const ActionBanner = (_props: ActionBannerProps) => {
     // --- LÓGICA POMODORO ---
-    const [timeLeft, setTimeLeft] = useState(12 * 60);
+    const POMO_TIME = 12 * 60;
+    const [timeLeft, setTimeLeft] = useState(POMO_TIME);
     const [isActive, setIsActive] = useState(false);
 
     useEffect(() => {
@@ -19,14 +20,15 @@ export const ActionBanner = (_props: ActionBannerProps) => {
             interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
         } else if (timeLeft === 0) {
             setIsActive(false);
-            // Sonido simple si es posible
             if (typeof Audio !== 'undefined') {
-                const context = new (window.AudioContext || (window as any).webkitAudioContext)();
-                if (context.state === 'suspended') context.resume();
-                const osc = context.createOscillator();
-                osc.connect(context.destination);
-                osc.start();
-                osc.stop(context.currentTime + 0.3);
+                try {
+                    const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+                    if (context.state === 'suspended') context.resume();
+                    const osc = context.createOscillator();
+                    osc.connect(context.destination);
+                    osc.start();
+                    osc.stop(context.currentTime + 0.3);
+                } catch (e) { console.error("Audio error", e); }
             }
         }
         return () => clearInterval(interval);
@@ -49,13 +51,14 @@ export const ActionBanner = (_props: ActionBannerProps) => {
     return (
         <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', 
-            gap: '12px', 
-            marginBottom: '1rem' 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
+            gap: '8px', 
+            marginBottom: '1rem',
+            width: '100%'
         }}>
-            {/* STREAK CARD */}
+            {/* RACHA */}
             <GlassCard style={{ 
-                padding: '0.8rem', 
+                padding: '0.6rem', 
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center', 
@@ -63,66 +66,77 @@ export const ActionBanner = (_props: ActionBannerProps) => {
                 background: 'linear-gradient(135deg, #FF8C42 0%, #FF5F2E 100%)', 
                 color: 'white', 
                 border: 'none',
-                minHeight: '100px'
+                minHeight: '75px',
+                position: 'relative',
+                overflow: 'hidden'
             }}>
-                <Flame size={28} fill="white" />
-                <span style={{ fontSize: '0.7rem', fontWeight: 900, marginTop: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Racha</span>
-                <span style={{ fontSize: '1.2rem', fontWeight: 900 }}>¡EN FUEGO!</span>
+                <motion.div
+                    animate={{ scale: [1, 1.1, 1], opacity: [0.6, 0.9, 0.6] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                >
+                    <Flame size={20} fill="white" />
+                </motion.div>
+                <span style={{ fontSize: '0.5rem', fontWeight: 900, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>RACHA</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 900 }}>Fuego!</span>
             </GlassCard>
 
-            {/* POMODORO CARD */}
+            {/* POMODORO COMPACTO */}
             <GlassCard style={{ 
-                padding: '0.8rem', 
+                padding: '0.6rem', 
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center', 
-                justifyContent: 'center',
-                gap: '6px',
-                minHeight: '100px'
+                justifyContent: 'center', 
+                minHeight: '75px',
+                gap: '2px'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-carbon)', fontVariantNumeric: 'tabular-nums' }}>
-                        {formatTime(timeLeft)}
-                    </span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <button 
-                            onClick={() => setIsActive(!isActive)} 
-                            style={{ background: 'transparent', border: 'none', color: 'var(--domain-orange)', cursor: 'pointer', padding: 0, display: 'flex' }}
-                        >
-                            {isActive ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
-                        </button>
-                        <RotateCcw 
-                            size={14} 
-                            color="#CCC" 
-                            style={{ cursor: 'pointer' }} 
-                            onClick={() => { setTimeLeft(12 * 60); setIsActive(false); }} 
-                        />
-                    </div>
+                <span style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-carbon)', fontVariantNumeric: 'tabular-nums' }}>
+                    {formatTime(timeLeft)}
+                </span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button 
+                        onClick={() => setIsActive(!isActive)} 
+                        style={{ background: 'transparent', border: 'none', color: 'var(--domain-orange)', cursor: 'pointer', padding: 0, display: 'flex' }}
+                    >
+                        {isActive ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
+                    </button>
+                    <button 
+                        onClick={() => { setTimeLeft(POMO_TIME); setIsActive(false); }}
+                        style={{ background: 'transparent', border: 'none', color: '#CCC', cursor: 'pointer', padding: 0, display: 'flex' }}
+                    >
+                        <RotateCcw size={12} />
+                    </button>
                 </div>
-                <div style={{ width: '100%', height: '4px', background: '#F5F5F5', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ width: '80%', height: '2px', background: '#F0F0F0', borderRadius: '1px', marginTop: '4px', overflow: 'hidden' }}>
                     <motion.div 
                         initial={{ width: 0 }}
-                        animate={{ width: `${((12*60)-timeLeft)/(12*60)*100}%` }}
+                        animate={{ width: `${(POMO_TIME - timeLeft) / POMO_TIME * 100}%` }}
                         style={{ height: '100%', background: 'var(--domain-orange)' }}
                     />
                 </div>
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#AAA', textTransform: 'uppercase' }}>Focus 12m</span>
             </GlassCard>
 
-            {/* YEAR PROGRESS CARD */}
+            {/* PROGRESO AÑO */}
             <GlassCard style={{ 
-                padding: '0.8rem', 
+                padding: '0.6rem', 
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 background: 'var(--text-carbon)', 
                 color: 'white',
-                minHeight: '100px'
+                minHeight: '75px',
+                border: 'none'
             }}>
-                <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--domain-green)' }}>{yearProgress}%</span>
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, opacity: 0.8, textTransform: 'uppercase' }}>Año {now.getFullYear()}</span>
-                <span style={{ fontSize: '0.55rem', opacity: 0.5, marginTop: '2px' }}>Día {dayOfYear} / 365</span>
+                <span style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--domain-green)' }}>{yearProgress}%</span>
+                <span style={{ fontSize: '0.5rem', fontWeight: 900, opacity: 0.8, textTransform: 'uppercase' }}>AÑO {now.getFullYear()}</span>
+                <div style={{ width: '80%', height: '2px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px', marginTop: '4px', overflow: 'hidden' }}>
+                    <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${yearProgress}%` }}
+                        style={{ height: '100%', background: 'var(--domain-green)' }}
+                    />
+                </div>
             </GlassCard>
         </div>
     );
