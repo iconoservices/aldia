@@ -29,48 +29,70 @@ export const ProyectosDashboard = ({
     
     return (
         <div style={{ paddingBottom: '5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-carbon)' }}>Proyectos</h2>
-                    <span style={{ background: showArchived ? '#64748b' : 'var(--domain-blue)', color: 'white', fontSize: '0.7rem', fontWeight: 900, padding: '2px 8px', borderRadius: '10px' }}>
-                        {displayedProjects.length} {showArchived ? 'ARCHIVADOS' : 'ACTIVOS'}
-                    </span>
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '12px',
+                marginBottom: '1.5rem' 
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: 'var(--text-carbon)' }}>Proyectos</h2>
+                        <span style={{ background: showArchived ? '#64748b' : 'var(--domain-blue)', color: 'white', fontSize: '0.6rem', fontWeight: 900, padding: '2px 8px', borderRadius: '10px' }}>
+                            {displayedProjects.length} {showArchived ? 'ARCH' : 'ACT'}
+                        </span>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+
+                <div style={{ 
+                    display: 'flex', 
+                    gap: '6px', 
+                    overflowX: 'auto', 
+                    paddingBottom: '4px',
+                    scrollbarWidth: 'none',
+                    WebkitOverflowScrolling: 'touch'
+                }}>
                     <button 
                         onClick={() => setIsDetailedView(!isDetailedView)}
                         style={{ 
                             background: isDetailedView ? '#F0EBE6' : 'white', 
-                            color: isDetailedView ? 'var(--domain-purple)' : '#888', border: '1px solid #EEE', borderRadius: '12px', padding: '8px 12px', 
-                            display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', 
-                            fontWeight: 900, fontSize: '0.75rem', transition: 'all 0.2s' 
+                            color: isDetailedView ? 'var(--domain-purple)' : '#888', border: '1px solid #EEE', borderRadius: '12px', padding: '6px 10px', 
+                            display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', 
+                            fontWeight: 900, fontSize: '0.65rem', transition: 'all 0.2s',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
                         }}
                     >
-                        <ListTodo size={14} /> 
-                        {isDetailedView ? 'VISTA AGRUPADA' : 'VER TODO (PLANO)'}
+                        <ListTodo size={12} /> 
+                        {isDetailedView ? 'AGRUPADA' : 'PLANA'}
                     </button>
                     <button 
                         onClick={() => setShowArchived(!showArchived)}
                         style={{ 
                             background: showArchived ? '#F0EBE6' : 'white', 
-                            color: showArchived ? 'var(--text-carbon)' : '#888', border: '1px solid #EEE', borderRadius: '12px', padding: '8px 12px', 
-                            display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', 
-                            fontWeight: 900, fontSize: '0.75rem', transition: 'all 0.2s' 
+                            color: showArchived ? 'var(--text-carbon)' : '#888', border: '1px solid #EEE', borderRadius: '12px', padding: '6px 10px', 
+                            display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', 
+                            fontWeight: 900, fontSize: '0.65rem', transition: 'all 0.2s',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
                         }}
                     >
-                        {showArchived ? <Play size={14} /> : <Archive size={14} />} 
-                        {showArchived ? 'VER ACTIVOS' : 'VER ARCHIVADOS'}
+                        {showArchived ? <Play size={12} /> : <Archive size={12} />} 
+                        {showArchived ? 'ACTIVOS' : 'ARCHIVOS'}
                     </button>
                     <button 
                         onClick={onAddProject}
                         style={{ 
                             background: 'linear-gradient(135deg, var(--domain-blue) 0%, #003399 100%)', 
-                            color: 'white', border: 'none', borderRadius: '12px', padding: '8px 16px', 
-                            display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', 
-                            fontWeight: 900, fontSize: '0.8rem', boxShadow: '0 4px 12px rgba(0, 85, 255, 0.2)' 
+                            color: 'white', border: 'none', borderRadius: '12px', padding: '6px 12px', 
+                            display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', 
+                            fontWeight: 900, fontSize: '0.65rem', boxShadow: '0 4px 12px rgba(0, 85, 255, 0.2)',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            marginLeft: 'auto'
                         }}
                     >
-                        <Plus size={18} /> NUEVO PROYECTO
+                        <Plus size={14} /> NUEVO
                     </button>
                 </div>
             </div>
