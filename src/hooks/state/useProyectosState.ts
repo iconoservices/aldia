@@ -249,6 +249,10 @@ export const useProyectosState = () => {
         setRutinas(prev => prev.filter(r => r.id !== id));
     };
 
+    const reorderRoutineItems = (routineId: number, newItems: any[]) => {
+        setRutinas(prev => prev.map(r => r.id === routineId ? { ...r, items: newItems } : r));
+    };
+
     const addProjectCategory = (projectId: number, type: 'ingreso' | 'gasto', categoryName: string) => {
         setProjects(prev => prev.map(p => {
             if (p.id !== projectId) return p;
@@ -302,6 +306,7 @@ export const useProyectosState = () => {
             setProjects(prev => prev.map(p => p.id === projectId ? { ...p, checklist: newChecklist } : p));
         },
         addRoutine,
-        removeRoutine
+        removeRoutine,
+        reorderRoutineItems
     };
 };

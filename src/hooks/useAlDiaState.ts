@@ -97,6 +97,14 @@ export interface TimeBlock {
     projectId?: number;
 }
 
+export interface UserPreferences {
+    isBudgetFixed: boolean;
+}
+
+export const DEFAULT_PREFERENCES: UserPreferences = {
+    isBudgetFixed: false
+};
+
 export interface Project {
     id: number;
     name: string;
@@ -156,7 +164,7 @@ export const useAlDiaState = () => {
         addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
         addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
         updateRoutine, addRoutine, removeRoutine, updateProjectTask,
-        addProjectCategory, removeProjectCategory
+        addProjectCategory, removeProjectCategory, reorderRoutineItems
     } = useProyectosState();
 
     const {
@@ -164,6 +172,7 @@ export const useAlDiaState = () => {
     } = useCerebroState();
 
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
     const [hasLoadedFromCloud, setHasLoadedFromCloud] = useState(false);
 
 
@@ -182,7 +191,8 @@ export const useAlDiaState = () => {
                 rutinas: JSON.parse(localStorage.getItem('aldia_rutinas') || '[]'),
                 budget: parseFloat(localStorage.getItem('aldia_monthly_budget') || '0'),
                 fixed: JSON.parse(localStorage.getItem('aldia_fixed_expenses') || '[]'),
-                accounts: JSON.parse(localStorage.getItem('aldia_accounts') || '[]')
+                accounts: JSON.parse(localStorage.getItem('aldia_accounts') || '[]'),
+                preferences: JSON.parse(localStorage.getItem('aldia_preferences') || JSON.stringify(DEFAULT_PREFERENCES))
             };
             setMisionesDirect(data.missions);
             setTransactions(data.transactions);
@@ -195,6 +205,7 @@ export const useAlDiaState = () => {
             setMonthlyBudget(data.budget);
             setFixedExpenses(data.fixed);
             setAccounts(data.accounts);
+            setPreferences(data.preferences);
         } catch (e) { console.error("Error inicial local:", e); }
     }, []); // Una sola vez al montar
 
@@ -245,6 +256,7 @@ export const useAlDiaState = () => {
                 sync(cloud.fixedExpenses, setFixedExpenses);
                 sync(cloud.timeBlocks, setTimeBlocks);
                 sync(cloud.accounts, setAccounts);
+                sync(cloud.preferences, setPreferences);
                 if (cloud.monthlyBudget !== undefined) {
                     setMonthlyBudget(prev => Math.abs(cloud.monthlyBudget - prev) > 0.01 ? Number(cloud.monthlyBudget) : prev);
                 }
@@ -280,6 +292,7 @@ export const useAlDiaState = () => {
         localStorage.setItem('aldia_monthly_budget', JSON.stringify(monthlyBudget));
         localStorage.setItem('aldia_fixed_expenses', JSON.stringify(fixedExpenses));
         localStorage.setItem('aldia_accounts', JSON.stringify(accounts));
+        localStorage.setItem('aldia_preferences', JSON.stringify(preferences));
 
         // Guardado Cloud debounced
         if (user) {
@@ -299,6 +312,7 @@ export const useAlDiaState = () => {
                     monthlyBudget,
                     fixedExpenses,
                     accounts,
+                    preferences,
                     lastSync: new Date().toISOString()
                 }));
 
@@ -310,7 +324,7 @@ export const useAlDiaState = () => {
 
             return () => clearTimeout(timer);
         }
-    }, [user, isInitialLoad, hasLoadedFromCloud, misionesState, transactions, habits, agenda, notes, projects, rutinas, fixedExpenses, timeBlocks, monthlyBudget, accounts]);
+    }, [user, isInitialLoad, hasLoadedFromCloud, misionesState, transactions, habits, agenda, notes, projects, rutinas, fixedExpenses, timeBlocks, monthlyBudget, accounts, preferences]);
 
     // 4. Migraciones y Lógica Derivada
     useEffect(() => {
@@ -408,9 +422,11 @@ export const useAlDiaState = () => {
         timeBlocks, addTimeBlock, removeTimeBlock,
         rutinas, addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
         updateRoutine, addRoutine, removeRoutine, addProjectCategory, removeProjectCategory,
+        reorderRoutineItems,
         // Otros
         notes, addNote, removeNote, toggleNoteItem, updateNote,
         accounts, setAccounts,
+        preferences, updatePreference: (key: keyof UserPreferences, value: any) => setPreferences(prev => ({ ...prev, [key]: value })),
         user, isInitialLoad, clearAllData
     };
 };

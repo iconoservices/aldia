@@ -10,7 +10,7 @@ import { GlassCard } from '../ui/GlassCard';
 import { ProjectDetailView } from './ProjectDetailView';
 import { DebtDetailView } from './DebtDetailView';
 import { DomainIcon } from '../ui/DomainIcon';
-import type { Transaction, FixedExpense, Project, Routine } from '../../hooks/useAlDiaState';
+import type { Transaction, FixedExpense, Project, Routine, UserPreferences } from '../../hooks/useAlDiaState';
 
 interface FinanzasProps {
     balance: number;
@@ -53,6 +53,8 @@ interface FinanzasProps {
     removeInventoryItem?: (projectId: number, itemId: number) => void;
     updateProject: (id: number, updates: Partial<Project>) => void;
     setSelectedProjectDetailId?: (id: number | null) => void;
+    preferences: UserPreferences;
+    updatePreference: (key: keyof UserPreferences, value: any) => void;
 }
 
 export const FinanzasDashboard = ({ 
@@ -68,7 +70,8 @@ export const FinanzasDashboard = ({
     reorderProjectTasks, promoteTaskToRoutine, rutinas,
     addProjectCategory, removeProjectCategory,
     addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
-    updateProject, setSelectedProjectDetailId
+    updateProject, setSelectedProjectDetailId,
+    preferences, updatePreference
 }: FinanzasProps) => {
     const currentMonthStr = useMemo(() => new Date().toLocaleDateString('en-CA').substring(0, 7), []);
 
@@ -88,7 +91,7 @@ export const FinanzasDashboard = ({
 
     const [isAccountsVisible, setIsAccountsVisible] = useState(false);
     const [accountViewMode, setAccountViewMode] = useState<'cuenta' | 'proyecto'>('cuenta');
-    const [isBudgetFixed, setIsBudgetFixed] = useState(false);
+    const isBudgetFixed = !!preferences.isBudgetFixed;
     const [includeDebts, setIncludeDebts] = useState(false);
 
     // Lógica dinámica: 
@@ -577,21 +580,29 @@ export const FinanzasDashboard = ({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-carbon)' }}>📊 Planificador Mensual</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <button
-                            onClick={() => setIsBudgetFixed(!isBudgetFixed)}
-                            title={isBudgetFixed ? 'Ingreso Fijo: ya existe este dinero' : 'Marcar como ingreso fijo'}
+                        <div 
+                            onClick={() => {
+                                if (!isBudgetFixed) {
+                                    if (confirm("¿Activar modo FIJO?\n\nSe guardará como tu configuración permanente para el balance mensual.")) {
+                                        updatePreference('isBudgetFixed', true);
+                                    }
+                                } else {
+                                    updatePreference('isBudgetFixed', false);
+                                }
+                            }}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: '4px',
                                 background: isBudgetFixed ? 'var(--domain-green)' : '#E2E8F0',
                                 border: 'none', borderRadius: '8px',
                                 padding: '4px 8px', cursor: 'pointer',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s',
+                                ...(isBudgetFixed ? { boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' } : {})
                             }}
                         >
                             <span style={{ fontSize: '0.55rem', fontWeight: 900, color: isBudgetFixed ? 'white' : '#64748B', whiteSpace: 'nowrap' }}>
                                 {isBudgetFixed ? '✓ FIJO' : 'FIJO?'}
                             </span>
-                        </button>
+                        </div>
                         <div style={{ background: '#F0EBE6', padding: '4px 8px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '0.6rem', fontWeight: 900, color: '#888' }}>BASE</span>
                             <input type="number" value={monthlyBudget || ''} onChange={(e) => updateMonthlyBudget(e.target.value === '' ? 0 : Number(e.target.value))} style={{ border: 'none', background: 'transparent', width: '50px', fontSize: '0.75rem', fontWeight: 900, outline: 'none', color: 'var(--domain-blue)' }} />

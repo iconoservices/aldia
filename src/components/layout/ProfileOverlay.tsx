@@ -1,20 +1,25 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, LogOut, Download, Share, Camera, User, RefreshCw, Settings, Grid, Shield } from 'lucide-react';
+import { X, LogOut, Download, Share, Camera, User, RefreshCw, Settings, Grid, Shield, ChevronLeft } from 'lucide-react';
 import { usePWA } from '../../hooks/usePWA';
 import { useAuth } from '../../hooks/useAuth';
+
+import type { UserPreferences } from '../../hooks/useAlDiaState';
 
 interface ProfileOverlayProps {
     isOpen: boolean;
     onClose: () => void;
     clearAllData?: () => Promise<void>;
+    preferences: UserPreferences;
+    updatePreference: (key: keyof UserPreferences, value: any) => void;
 }
 
-export const ProfileOverlay = ({ isOpen, onClose, clearAllData }: ProfileOverlayProps) => {
+export const ProfileOverlay = ({ isOpen, onClose, clearAllData, preferences, updatePreference }: ProfileOverlayProps) => {
     const { user, loginWithGoogle, logout, updateProfile, loading: authLoading } = useAuth();
     const { isInstalled, install, canInstall } = usePWA();
     const [showIOSGuide, setShowIOSGuide] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [view, setView] = useState<'main' | 'prefs'>('main');
 
     // Syncing local identity for guest users (simplified)
     const [guestName, setGuestName] = useState(() => localStorage.getItem('aldia_user_name') || 'Usuario AlDía');
@@ -95,94 +100,137 @@ export const ProfileOverlay = ({ isOpen, onClose, clearAllData }: ProfileOverlay
                         <button onClick={onClose} style={closeButtonStyle}><X size={20} /></button>
 
                         <div style={{ padding: '2rem 1.5rem' }}>
-                            {/* Profile Section */}
-                            <div style={profileHeaderStyle}>
-                                <div style={avatarWrapperStyle}>
-                                    <div style={{ ...avatarStyle, backgroundImage: photoURL ? `url(${photoURL})` : 'none' }}>
-                                        {!photoURL && <User size={40} color="#AAA" />}
-                                        {(authLoading || isUpdating) && (
-                                            <div style={avatarOverlayStyle}><RefreshCw size={24} className="spin-slow" color="white" /></div>
-                                        )}
+                            {view === 'main' && (
+                                <div>
+                                    {/* Profile Section */}
+                                    <div style={profileHeaderStyle}>
+                                        <div style={avatarWrapperStyle}>
+                                            <div style={{ ...avatarStyle, backgroundImage: photoURL ? `url(${photoURL})` : 'none' }}>
+                                                {!photoURL && <User size={40} color="#AAA" />}
+                                                {(authLoading || isUpdating) && (
+                                                    <div style={avatarOverlayStyle}><RefreshCw size={24} className="spin-slow" color="white" /></div>
+                                                )}
+                                            </div>
+                                            <label style={cameraButtonStyle}>
+                                                <Camera size={16} />
+                                                <input type="file" hidden accept="image/*" onChange={handleFileChange} />
+                                            </label>
+                                        </div>
+
+                                        <h2 onClick={handleUpdateName} style={nameStyle}>{displayName}</h2>
+                                        <p style={versionStyle}>Mi Mente Digital v1.1.0</p>
                                     </div>
-                                    <label style={cameraButtonStyle}>
-                                        <Camera size={16} />
-                                        <input type="file" hidden accept="image/*" onChange={handleFileChange} />
-                                    </label>
-                                </div>
 
-                                <h2 onClick={handleUpdateName} style={nameStyle}>{displayName}</h2>
-                                <p style={versionStyle}>Mi Mente Digital v1.1.0</p>
-                            </div>
-
-                            {/* Action Cards */}
-                            <div style={actionGridStyle}>
-                                <div onClick={handleUpdateName} style={actionCardStyle}>
-                                    <Grid size={20} color="var(--domain-orange)" />
-                                    <span>Editar Perfil</span>
-                                </div>
-                                <div onClick={() => alert('Próximamente...')} style={actionCardStyle}>
-                                    <Shield size={20} color="var(--domain-purple)" />
-                                    <span>Seguridad</span>
-                                </div>
-                            </div>
-
-                            {/* Settings List */}
-                            <div style={settingsListStyle}>
-                                {canInstall && !isInstalled && (
-                                    <button onClick={handleInstallClick} style={settingButtonStyle}>
-                                        <div style={settingIconWrapper(true)}><Download size={18} /></div>
-                                        <span style={{ flex: 1, textAlign: 'left' }}>Instalar App Nativa</span>
-                                        <div style={badgeStyle}>NUEVO</div>
-                                    </button>
-                                )}
-
-                                {!user ? (
-                                    <button onClick={loginWithGoogle} style={settingButtonStyle}>
-                                        <div style={settingIconWrapper()}><User size={18} /></div>
-                                        <span style={{ flex: 1, textAlign: 'left' }}>Conectar Google Cloud</span>
-                                    </button>
-                                ) : (
-                                    <div style={activeSessionStyle}>
-                                        <div style={settingIconWrapper(false, true)}><Shield size={18} /></div>
-                                        <div style={{ flex: 1 }}>
-                                            <p style={sessionTitleStyle}>Google Sync Activo</p>
-                                            <p style={sessionEmailStyle}>{user.email}</p>
+                                    {/* Action Cards */}
+                                    <div style={actionGridStyle}>
+                                        <div onClick={handleUpdateName} style={actionCardStyle}>
+                                            <Grid size={20} color="var(--domain-orange)" />
+                                            <span>Editar Perfil</span>
+                                        </div>
+                                        <div onClick={() => alert('Próximamente...')} style={actionCardStyle}>
+                                            <Shield size={20} color="var(--domain-purple)" />
+                                            <span>Seguridad</span>
                                         </div>
                                     </div>
-                                )}
 
-                                <button onClick={() => alert('Próximamente')} style={settingButtonStyle}>
-                                    <div style={settingIconWrapper()}><Settings size={18} /></div>
-                                    <span style={{ flex: 1, textAlign: 'left' }}>Preferencias</span>
-                                </button>
+                                    {/* Settings List */}
+                                    <div style={settingsListStyle}>
+                                        {canInstall && !isInstalled && (
+                                            <button onClick={handleInstallClick} style={settingButtonStyle}>
+                                                <div style={settingIconWrapper(true)}><Download size={18} /></div>
+                                                <span style={{ flex: 1, textAlign: 'left' }}>Instalar App Nativa</span>
+                                                <div style={badgeStyle}>NUEVO</div>
+                                            </button>
+                                        )}
 
-                                <div style={{ marginTop: '1rem', borderTop: '1px solid #EEE', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    {user && (
-                                        <button onClick={async () => {
-                                            if (confirm("🚨 ¿BORRAR TODO? Esto eliminará permanentemente tus datos de la nube y del dispositivo. No hay marcha atrás.")) {
-                                                if (clearAllData) {
-                                                    await clearAllData();
-                                                    alert("Datos eliminados. Reiniciando...");
+                                        {!user ? (
+                                            <button onClick={loginWithGoogle} style={settingButtonStyle}>
+                                                <div style={settingIconWrapper()}><User size={18} /></div>
+                                                <span style={{ flex: 1, textAlign: 'left' }}>Conectar Google Cloud</span>
+                                            </button>
+                                        ) : (
+                                            <div style={activeSessionStyle}>
+                                                <div style={settingIconWrapper(false, true)}><Shield size={18} /></div>
+                                                <div style={{ flex: 1 }}>
+                                                    <p style={sessionTitleStyle}>Google Sync Activo</p>
+                                                    <p style={sessionEmailStyle}>{user.email}</p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <button onClick={() => setView('prefs')} style={settingButtonStyle}>
+                                            <div style={settingIconWrapper()}><Settings size={18} /></div>
+                                            <span style={{ flex: 1, textAlign: 'left' }}>Preferencias</span>
+                                        </button>
+
+                                        <div style={{ marginTop: '1rem', borderTop: '1px solid #EEE', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            {user && (
+                                                <button onClick={async () => {
+                                                    if (confirm("🚨 ¿BORRAR TODO? Esto eliminará permanentemente tus datos de la nube y del dispositivo. No hay marcha atrás.")) {
+                                                        if (clearAllData) {
+                                                            await clearAllData();
+                                                            alert("Datos eliminados. Reiniciando...");
+                                                            window.location.reload();
+                                                        }
+                                                    }
+                                                }} style={{ ...settingButtonStyle, color: '#f87171' }}>
+                                                    <div style={{ ...settingIconWrapper(), background: '#FEF2F2', color: '#f87171' }}><RefreshCw size={18} /></div>
+                                                    <span style={{ flex: 1, textAlign: 'left' }}>Reiniciar Cuenta (Full Clear)</span>
+                                                </button>
+                                            )}
+
+                                            <button onClick={user ? logout : () => {
+                                                if (confirm("¿Borrar caché local?")) {
+                                                    localStorage.clear();
                                                     window.location.reload();
                                                 }
-                                            }
-                                        }} style={{ ...settingButtonStyle, color: '#f87171' }}>
-                                            <div style={{ ...settingIconWrapper(), background: '#FEF2F2', color: '#f87171' }}><RefreshCw size={18} /></div>
-                                            <span style={{ flex: 1, textAlign: 'left' }}>Reiniciar Cuenta (Full Clear)</span>
-                                        </button>
-                                    )}
-
-                                    <button onClick={user ? logout : () => {
-                                        if (confirm("¿Borrar caché local?")) {
-                                            localStorage.clear();
-                                            window.location.reload();
-                                        }
-                                    }} style={{ ...settingButtonStyle, color: '#f87171', opacity: user ? 0.6 : 1 }}>
-                                        <div style={{ ...settingIconWrapper(), background: '#FEF2F2', color: '#f87171' }}><LogOut size={18} /></div>
-                                        <span style={{ flex: 1, textAlign: 'left' }}>{user ? 'Cerrar Sesión' : 'Limpiar Datos Locales'}</span>
-                                    </button>
+                                            }} style={{ ...settingButtonStyle, color: '#f87171', opacity: user ? 0.6 : 1 }}>
+                                                <div style={{ ...settingIconWrapper(), background: '#FEF2F2', color: '#f87171' }}><LogOut size={18} /></div>
+                                                <span style={{ flex: 1, textAlign: 'left' }}>{user ? 'Cerrar Sesión' : 'Limpiar Datos Locales'}</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {view === 'prefs' && (
+                                <div style={{ padding: '0.5rem 0' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                                        <button onClick={() => setView('main')} style={{ border: 'none', background: '#F5F5F5', padding: '8px', borderRadius: '50%', cursor: 'pointer', display: 'flex' }}>
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900 }}>Preferencias</h3>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem', background: '#F9F9F9', borderRadius: '24px', border: '1px solid #EEE' }}>
+                                            <div style={{ flex: 1, paddingRight: '1rem' }}>
+                                                <p style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-carbon)' }}>Modo Presupuesto Fijo</p>
+                                                <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#888', fontWeight: 600, lineHeight: 1.4 }}>Diferencia entre el ingreso base esperado y los gastos del mes.</p>
+                                            </div>
+                                            <div 
+                                                onClick={() => updatePreference('isBudgetFixed', !preferences.isBudgetFixed)}
+                                                style={{ 
+                                                    width: '44px', height: '24px', borderRadius: '12px', 
+                                                    background: preferences.isBudgetFixed ? 'var(--domain-green)' : '#D1D5DB', 
+                                                    position: 'relative', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                    boxShadow: preferences.isBudgetFixed ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none'
+                                                }}
+                                            >
+                                                <motion.div 
+                                                    animate={{ x: preferences.isBudgetFixed ? 22 : 2 }}
+                                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                                    style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'white', position: 'absolute', top: '2px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <p style={{ fontSize: '0.7rem', color: '#AAA', textAlign: 'center', marginTop: '1rem', fontWeight: 600 }}>
+                                            Estas preferencias se sincronizan automáticamente con tu cuenta.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 </div>

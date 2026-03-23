@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Reorder } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { JoyMatrixModal } from '../features/JoyMatrixModal';
-import { Repeat, Calendar, Clock, Edit2, Trash2, GripVertical, Zap } from 'lucide-react';
+import { Calendar, Clock, Edit2, Trash2, GripVertical, Zap } from 'lucide-react';
 import type { Mission, Project, Routine } from '../../hooks/useAlDiaState';
 
 interface MissionListProps {

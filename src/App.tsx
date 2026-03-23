@@ -125,6 +125,7 @@ function App() {
                 updateRoutineItem={state.updateRoutineItem}
                 addRoutine={state.addRoutine}
                 removeRoutine={state.removeRoutine}
+                reorderRoutineItems={state.reorderRoutineItems}
               />
             ) : activeTab === 'Cerebro' ? (
               <CerebroDashboard 
@@ -157,6 +158,8 @@ function App() {
                 updateTransactionGroup={state.updateTransactionGroup}
                 markFixedExpensePaid={state.markFixedExpensePaid}
                 unmarkFixedExpensePaid={state.unmarkFixedExpensePaid}
+                preferences={state.preferences}
+                updatePreference={state.updatePreference}
                 projects={state.projects}
                 accounts={state.accounts}
                 setAccounts={state.setAccounts}
@@ -279,6 +282,8 @@ function App() {
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         clearAllData={state.clearAllData}
+        preferences={state.preferences}
+        updatePreference={state.updatePreference}
       />
 
       <AnimatePresence>

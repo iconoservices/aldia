@@ -1,6 +1,6 @@
-import { Plus, Check, Trash2, Calendar, LayoutGrid, Clock, Edit2 } from 'lucide-react';
+import { Plus, Check, Trash2, Calendar, LayoutGrid, Clock, Edit2, GripVertical } from 'lucide-react';
 import type { Habit, Routine } from '../../hooks/useAlDiaState';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useState } from 'react';
 import { RoutineEditOverlay } from '../features/RoutineEditOverlay';
 
@@ -17,12 +17,13 @@ interface VidaProps {
     updateRoutineItem: (routineId: number, itemId: number, updates: Partial<{ text: string, completed: boolean, time: string }>) => void;
     addRoutine: (title: string) => void;
     removeRoutine: (id: number) => void;
+    reorderRoutineItems: (routineId: number, newItems: any[]) => void;
 }
 
 export const VidaDashboard = ({ 
     habits, toggleHabit, addHabit, removeHabit,
     rutinas, addRoutineItem, toggleRoutineItem, removeRoutineItem, updateRoutine,
-    updateRoutineItem, addRoutine, removeRoutine
+    updateRoutineItem, addRoutine, removeRoutine, reorderRoutineItems
 }: VidaProps) => {
     const [viewMode, setViewMode] = useState<'hoy' | 'semana'>('hoy');
     const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
@@ -309,85 +310,100 @@ export const VidaDashboard = ({
                                         </div>
                                     </div>
 
-                                    {rutina.isActive && (
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px', marginTop: '12px' }}>
-                                            {rutina.items.map(item => {
-                                                const isDone = item.completed;
-                                                return (
-                                                    <div 
-                                                        key={item.id}
-                                                        onClick={() => toggleRoutineItem(rutina.id, item.id)}
-                                                        style={{ 
-                                                            display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', 
-                                                            background: isDone ? '#F9F9F9' : 'transparent', borderRadius: '12px', 
-                                                            cursor: 'pointer', border: '1px solid #EEE'
-                                                        }}
-                                                    >
-                                                        <div style={{ 
-                                                            width: '16px', height: '16px', borderRadius: '5px', 
-                                                            border: `2px solid ${isDone ? 'var(--domain-green)' : '#DDD'}`,
-                                                            background: isDone ? 'var(--domain-green)' : 'transparent',
-                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                                                        }}>
-                                                            {isDone && <Check size={10} color="white" />}
-                                                        </div>
-                                                        <input 
-                                                            value={item.text}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            onChange={(e) => updateRoutineItem(rutina.id, item.id, { text: e.target.value })}
+                                        {rutina.isActive && (
+                                            <Reorder.Group 
+                                                axis="y" 
+                                                values={rutina.items} 
+                                                onReorder={(newItems: any[]) => reorderRoutineItems(rutina.id, newItems)}
+                                                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px', marginTop: '12px', listStyle: 'none', padding: 0 }}
+                                            >
+                                                {rutina.items.map(item => {
+                                                    const isDone = item.completed;
+                                                    return (
+                                                        <Reorder.Item 
+                                                            key={item.id}
+                                                            value={item}
                                                             style={{ 
-                                                                fontSize: '0.75rem', 
-                                                                fontWeight: 800, 
-                                                                color: isDone ? '#CCC' : 'var(--text-carbon)', 
-                                                                textDecoration: isDone ? 'line-through' : 'none', 
-                                                                flex: 1,
-                                                                background: 'transparent',
-                                                                border: 'none',
-                                                                outline: 'none',
-                                                                padding: '0'
+                                                                display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', 
+                                                                background: isDone ? '#F9F9F9' : 'transparent', borderRadius: '12px', 
+                                                                cursor: 'default', border: '1px solid #EEE',
+                                                                listStyle: 'none'
                                                             }}
-                                                        />
-                                                        
-                                                        {/* Item Time */}
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#F0F0F0', padding: '2px 6px', borderRadius: '6px' }}>
-                                                            <Clock size={10} color="#888" />
-                                                            <input 
-                                                                type="time" 
-                                                                value={item.time || ''} 
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                onChange={(e) => updateRoutineItem(rutina.id, item.id, { time: e.target.value })}
-                                                                style={{ border: 'none', background: 'transparent', fontSize: '0.65rem', fontWeight: 850, color: '#555', outline: 'none', width: '45px' }}
-                                                            />
-                                                        </div>
-
-                                                        <button 
-                                                            onClick={(e) => { e.stopPropagation(); removeRoutineItem(rutina.id, item.id); }}
-                                                            style={{ background: 'transparent', border: 'none', color: '#EEE', cursor: 'pointer', padding: '4px', opacity: 0.1 }}
-                                                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                                                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0.1'}
                                                         >
-                                                            <Trash2 size={10} color="#f87171" />
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })}
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 12px', border: '1px dashed #DDD', borderRadius: '12px' }}>
-                                                <Plus size={12} color="#CCC" />
-                                                <input 
-                                                    placeholder="Añadir..."
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter' && e.currentTarget.value) {
-                                                            addRoutineItem(rutina.id, e.currentTarget.value);
-                                                            e.currentTarget.value = '';
-                                                        }
-                                                    }}
-                                                    style={{ border: 'none', background: 'transparent', fontSize: '0.75rem', fontWeight: 600, outline: 'none', width: '100%' }}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))})()}
+                                                            <div style={{ cursor: 'grab', color: '#DDD', display: 'flex', alignItems: 'center' }}>
+                                                                <GripVertical size={14} />
+                                                            </div>
+
+                                                            <div 
+                                                                onClick={() => toggleRoutineItem(rutina.id, item.id)}
+                                                                style={{ 
+                                                                    width: '16px', height: '16px', borderRadius: '5px', 
+                                                                    border: `2px solid ${isDone ? 'var(--domain-green)' : '#DDD'}`,
+                                                                    background: isDone ? 'var(--domain-green)' : 'transparent',
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                            >
+                                                                {isDone && <Check size={10} color="white" />}
+                                                            </div>
+                                                            <input 
+                                                                value={item.text}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) => updateRoutineItem(rutina.id, item.id, { text: e.target.value })}
+                                                                style={{ 
+                                                                    fontSize: '0.75rem', 
+                                                                    fontWeight: 800, 
+                                                                    color: isDone ? '#CCC' : 'var(--text-carbon)', 
+                                                                    textDecoration: isDone ? 'line-through' : 'none', 
+                                                                    flex: 1,
+                                                                    background: 'transparent',
+                                                                    border: 'none',
+                                                                    outline: 'none',
+                                                                    padding: '0'
+                                                                }}
+                                                            />
+                                                            
+                                                            {/* Item Time */}
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#F0F0F0', padding: '2px 6px', borderRadius: '6px' }}>
+                                                                <Clock size={10} color="#888" />
+                                                                <input 
+                                                                    type="time" 
+                                                                    value={item.time || ''} 
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onChange={(e) => updateRoutineItem(rutina.id, item.id, { time: e.target.value })}
+                                                                    style={{ border: 'none', background: 'transparent', fontSize: '0.65rem', fontWeight: 850, color: '#555', outline: 'none', width: '45px' }}
+                                                                />
+                                                            </div>
+
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); removeRoutineItem(rutina.id, item.id); }}
+                                                                style={{ background: 'transparent', border: 'none', color: '#EEE', cursor: 'pointer', padding: '4px', opacity: 0.1 }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.opacity = '0.1'}
+                                                            >
+                                                                <Trash2 size={10} color="#f87171" />
+                                                            </button>
+                                                        </Reorder.Item>
+                                                    );
+                                                })}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', border: '1px dashed #DDD', borderRadius: '12px' }}>
+                                                    <Plus size={12} color="#CCC" />
+                                                    <input 
+                                                        placeholder="Añadir..."
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' && e.currentTarget.value) {
+                                                                addRoutineItem(rutina.id, e.currentTarget.value);
+                                                                e.currentTarget.value = '';
+                                                            }
+                                                        }}
+                                                        style={{ border: 'none', background: 'transparent', fontSize: '0.75rem', fontWeight: 600, outline: 'none', width: '100%' }}
+                                                    />
+                                                </div>
+                                            </Reorder.Group>
+                                        )}
+                                    </div>
+                                ));
+                            })()}
                         </motion.div>
                     ) : (
                         <motion.div 
