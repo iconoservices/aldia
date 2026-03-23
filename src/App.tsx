@@ -252,6 +252,9 @@ function App() {
             addInventoryItem={state.addInventoryItem}
             updateInventoryItemQuantity={state.updateInventoryItemQuantity}
             removeInventoryItem={state.removeInventoryItem}
+            projects={state.projects}
+            updateProject={state.updateProject}
+            onOpenSubProject={(id: number) => setSelectedProjectDetailId(id)}
           />
         )}
       </AnimatePresence>

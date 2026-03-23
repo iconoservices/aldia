@@ -18,8 +18,14 @@ export const ProyectosDashboard = ({
 }: ProyectosProps) => {
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [showArchived, setShowArchived] = useState(false);
+    const [isDetailedView, setIsDetailedView] = useState(false);
 
-    const displayedProjects = projects.filter(p => showArchived ? p.status === 'pausado' : (p.status === 'activo' || !p.status));
+    const displayedProjects = projects.filter(p => {
+        const matchesStatus = showArchived ? p.status === 'pausado' : (p.status === 'activo' || !p.status);
+        if (!matchesStatus) return false;
+        if (isDetailedView) return true;
+        return !p.parentId;
+    });
     
     return (
         <div style={{ paddingBottom: '5rem' }}>
@@ -31,6 +37,18 @@ export const ProyectosDashboard = ({
                     </span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                        onClick={() => setIsDetailedView(!isDetailedView)}
+                        style={{ 
+                            background: isDetailedView ? '#F0EBE6' : 'white', 
+                            color: isDetailedView ? 'var(--domain-purple)' : '#888', border: '1px solid #EEE', borderRadius: '12px', padding: '8px 12px', 
+                            display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', 
+                            fontWeight: 900, fontSize: '0.75rem', transition: 'all 0.2s' 
+                        }}
+                    >
+                        <ListTodo size={14} /> 
+                        {isDetailedView ? 'VISTA AGRUPADA' : 'VER TODO (PLANO)'}
+                    </button>
                     <button 
                         onClick={() => setShowArchived(!showArchived)}
                         style={{ 
@@ -67,6 +85,7 @@ export const ProyectosDashboard = ({
                     <ProjectCard 
                         key={project.id} 
                         project={project} 
+                        allProjects={projects}
                         deleteProject={deleteProject}
                         onEdit={() => setEditingProject(project)}
                         onOpenDetail={onOpenDetail}
@@ -85,6 +104,7 @@ export const ProyectosDashboard = ({
                 isOpen={!!editingProject}
                 onClose={() => setEditingProject(null)}
                 project={editingProject}
+                projects={projects}
                 updateProject={updateProject}
             />
         </div>
@@ -92,15 +112,26 @@ export const ProyectosDashboard = ({
 };
 
 const ProjectCard = ({ 
-    project, deleteProject, onEdit, onOpenDetail
+    project, allProjects, deleteProject, onEdit, onOpenDetail
 }: { 
     project: Project, 
+    allProjects: Project[],
     deleteProject: (id: number) => void,
     onEdit: () => void,
     onOpenDetail: (pid: number) => void
 }) => {
-    const completedCount = project.checklist?.filter((t: any) => t.completed).length || 0;
-    const totalCount = project.checklist?.length || 0;
+    const subProjects = allProjects.filter(p => p.parentId === project.id);
+    const hasSubProjects = subProjects.length > 0;
+    
+    // Calcular progreso consolidado (incluyendo hijos)
+    const getProjectTasks = (p: Project) => p.checklist || [];
+    const allNestedTasks = [
+        ...getProjectTasks(project),
+        ...subProjects.flatMap(sp => getProjectTasks(sp))
+    ];
+    
+    const completedCount = allNestedTasks.filter(t => t.completed).length;
+    const totalCount = allNestedTasks.length;
     const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
     return (
@@ -120,9 +151,21 @@ const ProjectCard = ({
             >
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-carbon)', lineHeight: 1.2, flex: 1 }}>
-                            {project.name}
-                        </h4>
+                        <div style={{ flex: 1 }}>
+                            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-carbon)', lineHeight: 1.2 }}>
+                                {project.name}
+                            </h4>
+                            {hasSubProjects && (
+                                <span style={{ fontSize: '0.6rem', fontWeight: 900, color: project.color, background: `${project.color}15`, padding: '1px 6px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>
+                                    📁 {subProjects.length} SUB-PROYECTOS
+                                </span>
+                            )}
+                            {project.parentId && (
+                                <span style={{ fontSize: '0.55rem', fontWeight: 800, color: '#AAA', display: 'block', marginTop: '2px' }}>
+                                    Dentro de: {allProjects.find(p => p.id === project.parentId)?.name || '...'}
+                                </span>
+                            )}
+                        </div>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button 
                                 onClick={(e) => { 

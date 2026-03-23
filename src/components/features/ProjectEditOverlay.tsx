@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Archive, Play, Palette, Tag } from 'lucide-react';
+import { X, Check, Archive, Play, Palette, Tag, FolderTree } from 'lucide-react';
 import type { Project } from '../../hooks/useAlDiaState';
 
 interface ProjectEditOverlayProps {
     isOpen: boolean;
     onClose: () => void;
     project: Project | null;
+    projects: Project[];
     updateProject: (id: number, updates: Partial<Project>) => void;
 }
 
@@ -22,16 +23,18 @@ const PREDEFINED_COLORS = [
     '#64748b'  // Slate
 ];
 
-export const ProjectEditOverlay = ({ isOpen, onClose, project, updateProject }: ProjectEditOverlayProps) => {
+export const ProjectEditOverlay = ({ isOpen, onClose, project, projects, updateProject }: ProjectEditOverlayProps) => {
     const [name, setName] = useState('');
     const [color, setColor] = useState('#3b82f6');
     const [status, setStatus] = useState<'activo' | 'pausado' | 'completado'>('activo');
+    const [parentId, setParentId] = useState<number | undefined>(undefined);
 
     useEffect(() => {
         if (project) {
             setName(project.name);
             setColor(project.color);
             setStatus(project.status || 'activo');
+            setParentId(project.parentId);
         }
     }, [project]);
 
@@ -40,7 +43,8 @@ export const ProjectEditOverlay = ({ isOpen, onClose, project, updateProject }: 
         updateProject(project.id, {
             name,
             color,
-            status
+            status,
+            parentId: parentId || undefined
         });
         onClose();
     };
@@ -181,6 +185,39 @@ export const ProjectEditOverlay = ({ isOpen, onClose, project, updateProject }: 
                                         Los proyectos en pausa se ocultan de tu vista principal.
                                     </p>
                                 )}
+                            </div>
+
+                            {/* PARENT PROJECT SELECTOR */}
+                            <div style={{ background: '#F9F9F9', padding: '1rem', borderRadius: '20px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.65rem', fontWeight: 900, color: '#BBB', textTransform: 'uppercase', marginBottom: '8px' }}>
+                                    <FolderTree size={12} /> Ubicación (Pertenece a)
+                                </label>
+                                <select
+                                    value={parentId || ''}
+                                    onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : undefined)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        borderRadius: '12px',
+                                        border: '1px solid #EEE',
+                                        background: 'white',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 700,
+                                        color: 'var(--text-carbon)',
+                                        outline: 'none',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="">Ninguno (Proyecto Principal)</option>
+                                    {projects
+                                        .filter(p => p.id !== project?.id && p.parentId !== project?.id) // Evitar autoreferencia y ciclos simples
+                                        .map(p => (
+                                            <option key={p.id} value={p.id}>
+                                                📁 {p.name}
+                                            </option>
+                                        ))
+                                    }
+                                </select>
                             </div>
                         </div>
 

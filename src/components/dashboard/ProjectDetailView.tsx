@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { ArrowLeft, Package, Plus, Trash2, Edit2, GripVertical, CheckCircle2, Circle, Zap, Wallet, X } from 'lucide-react';
+import { ArrowLeft, Package, Plus, Trash2, Edit2, GripVertical, CheckCircle2, Circle, Zap, Wallet, X, FolderTree, Link } from 'lucide-react';
 import { GlassCard } from '../ui/GlassCard';
 import type { Project, Transaction, Routine } from '../../hooks/useAlDiaState';
 import { DEFAULT_INCOME_CATEGORIES, DEFAULT_EXPENSE_CATEGORIES } from '../../hooks/useAlDiaState';
@@ -24,6 +24,9 @@ interface ProjectDetailViewProps {
     addInventoryItem?: (projectId: number, text: string, qty: number) => void;
     updateInventoryItemQuantity?: (projectId: number, itemId: number, delta: number) => void;
     removeInventoryItem?: (projectId: number, itemId: number) => void;
+    projects: Project[];
+    updateProject: (id: number, updates: Partial<Project>) => void;
+    onOpenSubProject?: (id: number) => void;
 }
 
 export const ProjectDetailView = ({ 
@@ -31,12 +34,13 @@ export const ProjectDetailView = ({
     addProjectTask, toggleProjectTask, removeProjectTask, 
     updateProjectTask, reorderProjectTasks, promoteTaskToRoutine, rutinas,
     removeRoutineItem, addProjectCategory, removeProjectCategory,
-    addInventoryItem, updateInventoryItemQuantity, removeInventoryItem
+    addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
+    projects, updateProject, onOpenSubProject
 }: ProjectDetailViewProps) => {
     const [newTaskText, setNewTaskText] = useState('');
     const [newItemText, setNewItemText] = useState('');
     const [newItemQty, setNewItemQty] = useState('0');
-    const [activeTab, setActiveTab] = useState<'checklist' | 'inventory' | 'categorias'>('checklist');
+    const [activeTab, setActiveTab] = useState<'checklist' | 'inventory' | 'categorias' | 'subprojects'>('checklist');
     const [categoryType, setCategoryType] = useState<'ingreso' | 'gasto'>('ingreso');
     const [newCategoryName, setNewCategoryName] = useState('');
 
@@ -140,6 +144,20 @@ export const ProjectDetailView = ({
                 </div>
             </GlassCard>
 
+            {/* PARENT LINK IF EXISTS */}
+            {project.parentId && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#F1F5F9', padding: '8px 12px', borderRadius: '12px' }}>
+                    <FolderTree size={14} color="#64748B" />
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B' }}>
+                        Sub-proyecto de: <span style={{ color: 'var(--text-carbon)' }}>{projects.find(p => p.id === project.parentId)?.name || '...'}</span>
+                    </span>
+                    <button 
+                        onClick={() => updateProject(project.id, { parentId: undefined })}
+                        style={{ marginLeft: 'auto', background: 'white', border: '1px solid #EEE', borderRadius: '6px', padding: '2px 8px', fontSize: '0.6rem', fontWeight: 900, cursor: 'pointer' }}
+                    >X DESVINCULAR</button>
+                </div>
+            )}
+
             {/* Accounts/Containers Section */}
             <section>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -189,8 +207,8 @@ export const ProjectDetailView = ({
 
             {/* Tabs: Checklist / Inventario */}
             <section style={{ flex: 1 }}>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '1rem', background: '#F1F5F9', padding: '4px', borderRadius: '14px' }}>
-                    {(['checklist', 'inventory', 'categorias'] as const).map(tab => (
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '1rem', background: '#F1F5F9', padding: '4px', borderRadius: '14px', overflowX: 'auto' }}>
+                    {(['checklist', 'inventory', 'subprojects', 'categorias'] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -202,7 +220,7 @@ export const ProjectDetailView = ({
                                 boxShadow: activeTab === tab ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
                             }}
                         >
-                            {tab === 'checklist' ? '📝 Checklist' : tab === 'inventory' ? '📦 Inventario' : '🏷️ Categorías'}
+                            {tab === 'checklist' ? '📝 Checklist' : tab === 'inventory' ? '📦 Inventario' : tab === 'subprojects' ? '📂 Sub-proyectos' : '🏷️ Categorías'}
                         </button>
                     ))}
                 </div>
@@ -361,6 +379,56 @@ export const ProjectDetailView = ({
                             <button onClick={handleAddTask} style={{ background: project.color, color: 'white', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer' }}>
                                 <Plus size={18} />
                             </button>
+                        </div>
+                    </div>
+                ) : activeTab === 'subprojects' ? (
+                    <div className="glass-card" style={{ padding: '1rem', background: 'white' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900 }}>Proyectos que pertenecen a {project.name}</h4>
+                            <button 
+                                onClick={() => {
+                                    const available = projects.filter(p => !p.parentId && p.id !== project.id);
+                                    if (available.length === 0) { alert('No hay proyectos raíz disponibles para absorber.'); return; }
+                                    const list = available.map((p, i) => `${i+1}. ${p.name}`).join('\n');
+                                    const idxStr = prompt(`Selecciona proyecto para ABSORBER:\n${list}`);
+                                    const idx = parseInt(idxStr || '0') - 1;
+                                    if (available[idx]) updateProject(available[idx].id, { parentId: project.id });
+                                }}
+                                style={{ background: 'white', border: '1px solid #EEE', borderRadius: '8px', padding: '6px 10px', fontSize: '0.65rem', fontWeight: 900, color: project.color, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                                <Link size={12} /> ABSORBER EXISTENTE
+                            </button>
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {projects.filter(p => p.parentId === project.id).map(sp => (
+                                <div 
+                                    key={sp.id} 
+                                    onClick={() => onOpenSubProject && onOpenSubProject(sp.id)}
+                                    style={{ 
+                                        display: 'flex', alignItems: 'center', gap: '12px', 
+                                        padding: '12px', borderRadius: '16px', background: '#F8FAFC', 
+                                        border: '1px solid #F1F5F9', cursor: 'pointer', transition: 'all 0.2s' 
+                                    }}
+                                >
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: sp.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                                        <FolderTree size={16} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <h5 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-carbon)' }}>{sp.name}</h5>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#AAA' }}>{sp.checklist?.length || 0} tareas</span>
+                                    </div>
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); updateProject(sp.id, { parentId: undefined }); }}
+                                        style={{ background: 'white', border: '1px solid #EEE', borderRadius: '8px', padding: '4px 8px', fontSize: '0.6rem', fontWeight: 900, color: '#AAA', cursor: 'pointer' }}
+                                    >SOLTAR</button>
+                                </div>
+                            ))}
+                            {projects.filter(p => p.parentId === project.id).length === 0 && (
+                                <div style={{ textAlign: 'center', padding: '2rem', background: '#FAFAFA', borderRadius: '16px', border: '2px dashed #EEE' }}>
+                                    <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: '#AAA' }}>Este proyecto no tiene sub-proyectos.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ) : (

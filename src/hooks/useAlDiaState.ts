@@ -102,6 +102,7 @@ export interface Project {
     name: string;
     color: string;
     status: 'activo' | 'pausado' | 'completado';
+    parentId?: number;
     targetHoursPerWeek?: number;
     checklist?: { id: number; text: string; completed: boolean; linkedRoutineId?: number; linkedRoutineItemId?: number }[];
     inventoryItems?: { id: number; text: string; quantity: number }[];
