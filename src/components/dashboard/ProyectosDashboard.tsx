@@ -20,6 +20,9 @@ export const ProyectosDashboard = ({
     const [showArchived, setShowArchived] = useState(false);
     const [isDetailedView, setIsDetailedView] = useState(false);
 
+    const activeItems = projects.filter(p => (p.status === 'activo' || !p.status) && !p.parentId);
+    const archivedItems = projects.filter(p => p.status === 'pausado' && !p.parentId);
+
     const displayedProjects = projects.filter(p => {
         const matchesStatus = showArchived ? p.status === 'pausado' : (p.status === 'activo' || !p.status);
         if (!matchesStatus) return false;
@@ -36,11 +39,16 @@ export const ProyectosDashboard = ({
                 marginBottom: '1.5rem' 
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: 'var(--text-carbon)' }}>Proyectos</h2>
-                        <span style={{ background: showArchived ? '#64748b' : 'var(--domain-blue)', color: 'white', fontSize: '0.6rem', fontWeight: 900, padding: '2px 8px', borderRadius: '10px' }}>
-                            {displayedProjects.length} {showArchived ? 'ARCH' : 'ACT'}
-                        </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-carbon)' }}>Proyectos</h2>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            <span style={{ background: 'var(--domain-blue)', color: 'white', fontSize: '0.6rem', fontWeight: 900, padding: '2px 8px', borderRadius: '10px' }}>
+                                {activeItems.length} ACT
+                            </span>
+                            <span style={{ background: '#F1F5F9', color: '#94A3B8', fontSize: '0.6rem', fontWeight: 900, padding: '2px 8px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                                {archivedItems.length} ARCH
+                            </span>
+                        </div>
                     </div>
                 </div>
 
