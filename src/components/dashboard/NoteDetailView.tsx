@@ -28,41 +28,44 @@ export const NoteDetailView = ({
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toLocaleDateString('en-CA'));
     
     // Internal state for fluid editing
+    const [title, setTitle] = useState(note.title);
     const [content, setContent] = useState(note.content);
     const [items, setItems] = useState(note.items || []);
 
     // Sync internal state when note prop changes (e.g. if updated elsewhere)
     useEffect(() => {
+        setTitle(note.title);
         setContent(note.content);
         setItems(note.items || []);
     }, [note.id]);
 
+    const handleTitleChange = (newTitle: string) => {
+        setTitle(newTitle);
+        updateNote(note.id, { title: newTitle });
+    };
+
     const handleContentChange = (newContent: string) => {
         setContent(newContent);
-        const autoTitle = newContent.split('\n')[0].substring(0, 50).trim() || 'Nota sin título';
-        updateNote(note.id, { content: newContent, title: autoTitle });
+        updateNote(note.id, { content: newContent });
     };
 
     const handleUpdateItemText = (itemId: number, text: string) => {
         const newItems = items.map(it => it.id === itemId ? { ...it, text } : it);
         setItems(newItems);
-        const autoTitle = newItems[0]?.text.substring(0, 50).trim() || 'Lista sin título';
-        updateNote(note.id, { items: newItems, title: autoTitle });
+        updateNote(note.id, { items: newItems });
     };
 
     const handleAddItem = () => {
         const newItem = { id: Date.now(), text: '', completed: false };
         const newItems = [...items, newItem];
         setItems(newItems);
-        const autoTitle = newItems[0]?.text.substring(0, 50).trim() || 'Lista sin título';
-        updateNote(note.id, { items: newItems, title: autoTitle });
+        updateNote(note.id, { items: newItems });
     };
 
     const handleRemoveItem = (itemId: number) => {
         const newItems = items.filter(it => it.id !== itemId);
         setItems(newItems);
-        const autoTitle = newItems[0]?.text.substring(0, 50).trim() || 'Lista sin título';
-        updateNote(note.id, { items: newItems, title: autoTitle });
+        updateNote(note.id, { items: newItems });
     };
 
     const handlePromoteToMission = (itemText: string, date: string) => {
@@ -146,11 +149,29 @@ export const NoteDetailView = ({
                 padding: '1.2rem 1rem',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem',
+                gap: '0.8rem', // Reducido para que el título esté más pegado
                 maxWidth: '800px',
                 width: '100%',
                 margin: '0 auto'
             }}>
+                {/* Minimalist Title Field */}
+                <input 
+                    value={title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    placeholder="Título (opcional)"
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        fontSize: '1.5rem',
+                        fontWeight: 900,
+                        color: 'var(--text-carbon)',
+                        outline: 'none',
+                        width: '100%',
+                        padding: '0 0 0.5rem 0',
+                        opacity: title ? 1 : 0.4,
+                        transition: 'opacity 0.2s ease'
+                    }}
+                />
 
                 {note.type === 'text' ? (
                     <textarea 

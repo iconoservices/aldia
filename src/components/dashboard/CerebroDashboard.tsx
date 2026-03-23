@@ -61,7 +61,9 @@ export const CerebroDashboard = ({ notes, removeNote, toggleNoteItem, onOpenNote
                             </div>
                         </div>
 
-                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#1A1A1A' }}>{note.title}</h4>
+                        {note.title && (
+                            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#1A1A1A' }}>{note.title}</h4>
+                        )}
                         
                         {note.type === 'text' ? (
                             <p style={{ 
@@ -70,18 +72,16 @@ export const CerebroDashboard = ({ notes, removeNote, toggleNoteItem, onOpenNote
                                 color: '#555', 
                                 lineHeight: 1.4,
                                 display: '-webkit-box',
-                                WebkitLineClamp: 5,
+                                WebkitLineClamp: note.title ? 5 : 8,
                                 WebkitBoxOrient: 'vertical',
                                 overflow: 'hidden',
-                                // Si el título es la primera línea, saltamos la primera línea en el preview
-                                // Pero por simplicidad ahora mostramos todo con opacidad suave
-                                opacity: 0.8
+                                opacity: 0.9
                             }}>
-                                {note.content.split('\n').slice(1).join('\n') || note.content}
+                                {note.content}
                             </p>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                {note.items.slice(1, 6).map((item) => (
+                                {note.items.slice(0, 7).map((item) => (
                                     <div 
                                         key={item.id} 
                                         onClick={(e) => {
@@ -107,9 +107,9 @@ export const CerebroDashboard = ({ notes, removeNote, toggleNoteItem, onOpenNote
                                         </span>
                                     </div>
                                 ))}
-                                {note.items.length > 6 && (
+                                {note.items.length > 7 && (
                                     <span style={{ fontSize: '0.65rem', color: '#AAA', fontWeight: 700 }}>
-                                        + {note.items.length - 6} más...
+                                        + {note.items.length - 7} más...
                                     </span>
                                 )}
                             </div>
