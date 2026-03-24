@@ -69,9 +69,16 @@ export const QuickActionPanel = ({
     
     // Estados para Agenda/Tiempo
     const [date, setDate] = useState(new Date().toLocaleDateString('en-CA'));
-    const [startTime, setStartTime] = useState('09:00');
-    const [endTime, setEndTime] = useState('10:00');
-    const [hasTime, setHasTime] = useState(false);
+    const [startTime, setStartTime] = useState(() => {
+        const now = new Date();
+        return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    });
+    const [endTime, setEndTime] = useState(() => {
+        const now = new Date();
+        const nextHour = (now.getHours() + 1) % 24;
+        return `${String(nextHour).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    });
+    const [hasTime, setHasTime] = useState(true);
 
     // Estados para Notas (Cerebro)
     const [noteType, setNoteType] = useState<'text' | 'checklist'>('text');
@@ -209,9 +216,16 @@ export const QuickActionPanel = ({
             setConcept('');
             setDebtMode('normal');
             setDate(new Date().toLocaleDateString('en-CA'));
-            setStartTime('09:00');
-            setEndTime('10:00');
-            setHasTime(false);
+            setStartTime(() => {
+                const now = new Date();
+                return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            });
+            setEndTime(() => {
+                const now = new Date();
+                const nextHour = (now.getHours() + 1) % 24;
+                return `${String(nextHour).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            });
+            setHasTime(true);
             setAsHabit(false);
             setAsRoutine(false);
             setRoutineId(1);
