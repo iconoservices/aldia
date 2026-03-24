@@ -201,6 +201,10 @@ export const useProyectosState = () => {
         setTimeBlocks(prev => prev.filter(b => b.id !== id));
     };
 
+    const updateTimeBlock = (id: number, updates: Partial<TimeBlock>) => {
+        setTimeBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+    };
+
     const addRoutineItem = (routineId: number, text: string, time?: string) => {
         setRutinas(prev => prev.map(r => {
             if (r.id !== routineId) return r;
@@ -361,6 +365,7 @@ export const useProyectosState = () => {
         deleteProject,
         addTimeBlock,
         removeTimeBlock,
+        updateTimeBlock,
         addInventoryItem,
         updateInventoryItemQuantity,
         removeInventoryItem,

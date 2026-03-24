@@ -39,14 +39,14 @@ function App() {
 
   if (state.isInitialLoad) {
     return (
-      <div style={{ 
-        height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', 
-        alignItems: 'center', justifyContent: 'center', background: '#FDF8F5', gap: '1.5rem' 
+      <div style={{
+        height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', background: '#FDF8F5', gap: '1.5rem'
       }}>
         <motion.div
-            animate={{ scale: [1, 1.1, 1], rotate: [0, 10, -10, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            style={{ fontSize: '4rem' }}
+          animate={{ scale: [1, 1.1, 1], rotate: [0, 10, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          style={{ fontSize: '4rem' }}
         >
           🧠
         </motion.div>
@@ -74,10 +74,10 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            style={{ 
+            style={{
               width: '100%',
-              ...(activeTab === 'Calendario' && { 
-                height: 'calc(100dvh - 120px)', 
+              ...(activeTab === 'Calendario' && {
+                height: 'calc(100dvh - 120px)',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column'
@@ -89,7 +89,7 @@ function App() {
                 <ActionBanner performanceScore={state.performanceScore} missions={state.missions} />
                 <div className="dashboard-grid-layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
                   <UpcomingList agenda={state.agenda} title="Agenda del Día" />
-                  <MissionList 
+                  <MissionList
                     missions={state.todayMissions}
                     toggleMission={state.toggleMission}
                     toggleHabit={state.toggleHabit}
@@ -97,13 +97,13 @@ function App() {
                     onOpenNote={setViewingNoteId}
                     onEditMission={setEditingMission}
                     removeMission={(mission: Mission) => {
-                        if (mission.isRoutine) {
-                            state.removeRoutineItem(mission.routineId!, mission.id);
-                        } else if (mission.isHabit) {
-                            state.removeHabit(mission.id);
-                        } else {
-                            state.removeMission(mission.id);
-                        }
+                      if (mission.isRoutine) {
+                        state.removeRoutineItem(mission.routineId!, mission.id);
+                      } else if (mission.isHabit) {
+                        state.removeHabit(mission.id);
+                      } else {
+                        state.removeMission(mission.id);
+                      }
                     }}
                     reorderMissions={state.reorderMissions}
                     projects={state.projects}
@@ -114,12 +114,17 @@ function App() {
                 </div>
               </div>
             ) : activeTab === 'Calendario' ? (
-              <TimelineAgendaView 
+              <TimelineAgendaView
                 calendarEvents={state.agenda}
                 projects={state.projects}
                 rutinas={state.rutinas}
                 timeBlocks={state.timeBlocks}
                 onRemoveEvent={state.removeCalendarEvent}
+                onUpdateEvent={state.updateCalendarEvent}
+                onRemoveRoutine={state.removeRoutine}
+                onUpdateRoutine={state.updateRoutine}
+                onRemoveTimeBlock={state.removeTimeBlock}
+                onUpdateTimeBlock={state.updateTimeBlock}
               />
             ) : activeTab === 'Vida' ? (
               <VidaDashboard
@@ -138,9 +143,9 @@ function App() {
                 reorderRoutineItems={state.reorderRoutineItems}
               />
             ) : activeTab === 'Cerebro' ? (
-              <CerebroDashboard 
-                notes={state.notes} 
-                removeNote={state.removeNote} 
+              <CerebroDashboard
+                notes={state.notes}
+                removeNote={state.removeNote}
                 toggleNoteItem={state.toggleNoteItem}
                 onOpenNote={setViewingNoteId}
               />
@@ -217,7 +222,7 @@ function App() {
 
 
 
-      <MissionEditOverlay 
+      <MissionEditOverlay
         isOpen={editingMission !== null}
         onClose={() => setEditingMission(null)}
         mission={editingMission}
@@ -254,7 +259,7 @@ function App() {
 
       <AnimatePresence>
         {selectedProjectDetailId && selectedProjectDetail && (
-          <ProjectDetailView 
+          <ProjectDetailView
             project={selectedProjectDetail}
             onClose={() => setSelectedProjectDetailId(null)}
             accounts={state.accounts}
@@ -289,7 +294,7 @@ function App() {
 
       <AnimatePresence>
         {viewingNoteId !== null && viewingNote && (
-          <NoteDetailView 
+          <NoteDetailView
             note={viewingNote}
             onClose={() => setViewingNoteId(null)}
             removeNote={state.removeNote}

@@ -8,16 +8,47 @@ interface TimelineAgendaViewProps {
     rutinas?: any[];
     timeBlocks?: any[];
     onRemoveEvent?: (id: number) => void;
+    onUpdateEvent?: (id: number, updates: any) => void;
+    onRemoveRoutine?: (id: number) => void;
+    onUpdateRoutine?: (id: number, updates: any) => void;
+    onRemoveTimeBlock?: (id: number) => void;
+    onUpdateTimeBlock?: (id: number, updates: any) => void;
 }
 
-export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], timeBlocks = [], onRemoveEvent }: TimelineAgendaViewProps) => {
+export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], timeBlocks = [], onRemoveEvent, onUpdateEvent, onRemoveRoutine, onUpdateRoutine, onRemoveTimeBlock, onUpdateTimeBlock }: TimelineAgendaViewProps) => {
     const [viewMode, setViewMode] = useState<'timeline' | 'month' | 'appointments'>('timeline');
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [editingEvent, setEditingEvent] = useState<any>(null);
-    const scrollRef = useRef<HTMLDivElement>(null);
+    const [editingItem, setEditingItem] = useState<{ type: 'calendar' | 'routine' | 'timeblock', data: any } | null>(null);
     
-    const todayStr = selectedDate.toISOString().split('T')[0];
-    const isActualToday = todayStr === new Date().toISOString().split('T')[0];
+    // Estado para edición
+    const [editTitle, setEditTitle] = useState('');
+    const [editStart, setEditStart] = useState('');
+    const [editEnd, setEditEnd] = useState('');
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Sincronizar estado de edición al abrir el modal
+    useEffect(() => {
+        if (editingItem) {
+            const { type, data } = editingItem;
+            if (type === 'calendar') {
+                setEditTitle(data.title || '');
+                setEditStart(data.startTime || '');
+                setEditEnd(data.endTime || '');
+            } else if (type === 'routine') {
+                setEditTitle(data.title || '');
+                setEditStart(data.startTime || '');
+                setEditEnd(data.endTime || '');
+            } else if (type === 'timeblock') {
+                setEditTitle(data.label || '');
+                setEditStart(data.start || '');
+                setEditEnd(data.end || '');
+            }
+        }
+    }, [editingItem]);
+    
+    // Formato YYYY-MM-DD local para comparación con eventos
+    const todayStr = selectedDate.toLocaleDateString('en-CA');
+    const isActualToday = todayStr === new Date().toLocaleDateString('en-CA');
     const hours = Array.from({ length: 24 }, (_, i) => i);
 
     // 1. Auto-scroll al momento actual — dispara en mount y al cambiar de vista
@@ -132,15 +163,15 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                 </div>
 
                 {/* View Switcher */}
-                <div style={{ display: 'flex', gap: '8px', background: '#F1F5F9', padding: '4px', borderRadius: '14px', marginBottom: '1rem' }}>
-                    <button onClick={() => setViewMode('timeline')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', border: 'none', borderRadius: '10px', background: viewMode === 'timeline' ? 'white' : 'transparent', fontSize: '0.7rem', fontWeight: 800, color: viewMode === 'timeline' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'timeline' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>
-                        <Clock size={14} /> TIMELINE
+                <div style={{ display: 'flex', gap: '8px', background: '#F1F5F9', padding: '4px', borderRadius: '14px', marginBottom: '1.2rem' }}>
+                    <button onClick={() => setViewMode('timeline')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', border: 'none', borderRadius: '10px', background: viewMode === 'timeline' ? 'white' : 'transparent', fontSize: '0.75rem', fontWeight: 900, color: viewMode === 'timeline' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'timeline' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}>
+                        <Clock size={16} /> TIMELINE
                     </button>
-                    <button onClick={() => setViewMode('month')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', border: 'none', borderRadius: '10px', background: viewMode === 'month' ? 'white' : 'transparent', fontSize: '0.7rem', fontWeight: 800, color: viewMode === 'month' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'month' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>
-                        <CalendarDays size={14} /> MES
+                    <button onClick={() => setViewMode('month')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', border: 'none', borderRadius: '10px', background: viewMode === 'month' ? 'white' : 'transparent', fontSize: '0.75rem', fontWeight: 900, color: viewMode === 'month' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'month' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}>
+                        <CalendarDays size={16} /> MES
                     </button>
-                    <button onClick={() => setViewMode('appointments')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', border: 'none', borderRadius: '10px', background: viewMode === 'appointments' ? 'white' : 'transparent', fontSize: '0.7rem', fontWeight: 800, color: viewMode === 'appointments' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'appointments' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>
-                        <Filter size={14} /> CITAS
+                    <button onClick={() => setViewMode('appointments')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', border: 'none', borderRadius: '10px', background: viewMode === 'appointments' ? 'white' : 'transparent', fontSize: '0.75rem', fontWeight: 900, color: viewMode === 'appointments' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'appointments' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}>
+                        <Filter size={16} /> CITAS
                     </button>
                 </div>
 
@@ -185,7 +216,11 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                             if (startPx < 0 || endPx <= startPx) return null;
                             const h = endPx - startPx;
                             return (
-                                <div key={`rtbg-${r.id}`} style={{ position: 'absolute', top: startPx, left: 60, right: 0, height: h, background: `${r.color}10`, borderLeft: `4px solid ${r.color}50`, pointerEvents: 'none', zIndex: 1, display: 'flex', alignItems: 'flex-start', paddingLeft: '10px', paddingTop: '6px', overflow: 'hidden' }}>
+                                <div 
+                                    key={`rtbg-${r.id}`} 
+                                    onClick={() => setEditingItem({ type: 'routine', data: r })}
+                                    style={{ position: 'absolute', top: startPx, left: 60, right: 0, height: h, background: `${r.color}10`, borderLeft: `4px solid ${r.color}50`, zIndex: 1, display: 'flex', alignItems: 'flex-start', paddingLeft: '10px', paddingTop: '6px', overflow: 'hidden', cursor: 'pointer' }}
+                                >
                                     <span style={{ fontSize: '0.65rem', fontWeight: 800, color: r.color, opacity: 0.7 }}>{r.title} · {r.startTime}–{r.endTime}</span>
                                 </div>
                             );
@@ -198,7 +233,11 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                             if (startPx < 0 || endPx <= startPx) return null;
                             const h = endPx - startPx;
                             return (
-                                <div key={`blkbg-${b.id}`} style={{ position: 'absolute', top: startPx, left: 60, right: 0, height: h, background: `${b.color}06`, borderLeft: `2px dashed ${b.color}40`, pointerEvents: 'none', zIndex: 1, display: 'flex', alignItems: 'flex-end', paddingLeft: '10px', paddingBottom: '4px', overflow: 'hidden' }}>
+                                <div 
+                                    key={`blkbg-${b.id}`} 
+                                    onClick={() => setEditingItem({ type: 'timeblock', data: b })}
+                                    style={{ position: 'absolute', top: startPx, left: 60, right: 0, height: h, background: `${b.color}06`, borderLeft: `2px dashed ${b.color}40`, zIndex: 1, display: 'flex', alignItems: 'flex-end', paddingLeft: '10px', paddingBottom: '4px', overflow: 'hidden', cursor: 'pointer' }}
+                                >
                                     <span style={{ fontSize: '0.6rem', fontWeight: 700, color: b.color, opacity: 0.5 }}>{b.label}</span>
                                 </div>
                             );
@@ -216,13 +255,26 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     style={{ position: 'absolute', top: startPx, left: 64, right: 6, height: evH, background: item.color || '#6366F1', borderRadius: '12px', padding: '6px 10px', color: 'white', zIndex: 5, boxShadow: '0 4px 12px rgba(0,0,0,0.12)', display: 'flex', flexDirection: 'column', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden' }}
-                                    onClick={() => setEditingEvent(item)}
+                                    onClick={() => setEditingItem({ type: 'calendar', data: item })}
                                 >
-                                    <div style={{ fontSize: '0.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        <Clock size={11} />
-                                        {item.title}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '4px' }}>
+                                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                                            <div style={{ fontSize: '0.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                <Clock size={11} />
+                                                {item.title}
+                                            </div>
+                                            <div style={{ fontSize: '0.6rem', opacity: 0.85 }}>{item.startTime} - {item.endTime || '...'}</div>
+                                        </div>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (onRemoveEvent) onRemoveEvent(item.id);
+                                            }}
+                                            style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '6px', padding: '4px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
                                     </div>
-                                    <div style={{ fontSize: '0.6rem', opacity: 0.85 }}>{item.startTime} - {item.endTime || '...'}</div>
                                 </motion.div>
                             );
                         })}
@@ -247,14 +299,26 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                                 {dayEvents.length > 0 ? dayEvents.map((e: any) => (
                                     <div 
                                         key={e.id} 
-                                        onClick={() => setEditingEvent(e)}
-                                        style={{ background: 'white', padding: '16px', borderRadius: '18px', borderLeft: `6px solid ${e.color}`, boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                                        onClick={() => setEditingItem({ type: 'calendar', data: e })}
+                                        style={{ background: 'white', padding: '16px', borderRadius: '18px', borderLeft: `6px solid ${e.color}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', position: 'relative' }}
                                     >
-                                        <div>
-                                            <div style={{ fontSize: '0.9rem', fontWeight: 900 }}>{e.title}</div>
-                                            <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700 }}>{e.startTime} - {e.endTime}</div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-carbon)' }}>{e.title}</div>
+                                            <div style={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Clock size={12} /> {e.startTime} - {e.endTime}
+                                            </div>
                                         </div>
-                                        <Clock size={18} color={e.color} />
+                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                            <button 
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    if (onRemoveEvent) onRemoveEvent(e.id);
+                                                }}
+                                                style={{ background: '#FEF2F2', border: 'none', borderRadius: '10px', padding: '8px', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                 )) : (
                                     <div style={{ padding: '2rem', textAlign: 'center', color: '#CBD5E1', fontSize: '0.8rem', fontWeight: 700 }}>No hay citas para este día</div>
@@ -307,41 +371,94 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                 )}
             </div>
 
-            {/* Modal de acción de cita */}
+            {/* Polymorphic Action Modal */}
             <AnimatePresence>
-                {editingEvent && (
+                {editingItem && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'flex-end', padding: '1rem' }}
-                        onClick={() => setEditingEvent(null)}
+                        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}
+                        onClick={() => setEditingItem(null)}
                     >
                         <motion.div
-                            initial={{ y: 60, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: 60, opacity: 0 }}
-                            transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-                            style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            style={{ background: 'white', borderRadius: '28px', padding: '1.8rem', width: '100%', maxWidth: '380px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}
                             onClick={e => e.stopPropagation()}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                                <div>
-                                    <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-carbon)' }}>{editingEvent.title}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, marginTop: '2px' }}>{editingEvent.startTime} – {editingEvent.endTime || '...'} · {editingEvent.date}</div>
-                                    {editingEvent.description && <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '6px' }}>{editingEvent.description}</div>}
-                                </div>
-                                <button onClick={() => setEditingEvent(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#94A3B8' }}><X size={20} /></button>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-carbon)' }}>
+                                    {editingItem.type === 'calendar' ? 'Editar Cita' : editingItem.type === 'routine' ? 'Editar Rutina' : 'Editar Bloque'}
+                                </h3>
+                                <button onClick={() => setEditingItem(null)} style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', cursor: 'pointer', padding: '8px', color: '#64748B', display: 'flex' }}><X size={18} /></button>
                             </div>
-                            <div style={{ display: 'flex', gap: '10px' }}>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                                {/* Título/Label */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase' }}>{editingItem.type === 'timeblock' ? 'Nombre del Bloque' : 'Título'}</label>
+                                    <input 
+                                        type="text" 
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        placeholder="Nombre..."
+                                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '2px solid #F1F5F9', fontSize: '0.9rem', fontWeight: 700, outline: 'none' }}
+                                    />
+                                </div>
+
+                                {/* Horario */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase' }}>Inicio</label>
+                                        <input 
+                                            type="time" 
+                                            value={editStart}
+                                            onChange={(e) => setEditStart(e.target.value)}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '2px solid #F1F5F9', fontSize: '0.85rem', fontWeight: 700, outline: 'none' }}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase' }}>Fin</label>
+                                        <input 
+                                            type="time" 
+                                            value={editEnd}
+                                            onChange={(e) => setEditEnd(e.target.value)}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '2px solid #F1F5F9', fontSize: '0.85rem', fontWeight: 700, outline: 'none' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <button
                                     onClick={() => {
-                                        if (onRemoveEvent) onRemoveEvent(editingEvent.id);
-                                        setEditingEvent(null);
+                                        const { type, data } = editingItem;
+                                        if (type === 'calendar' && onUpdateEvent) {
+                                            onUpdateEvent(data.id, { title: editTitle, startTime: editStart, endTime: editEnd });
+                                        } else if (type === 'routine' && onUpdateRoutine) {
+                                            onUpdateRoutine(data.id, { title: editTitle, startTime: editStart, endTime: editEnd });
+                                        } else if (type === 'timeblock' && onUpdateTimeBlock) {
+                                            onUpdateTimeBlock(data.id, { label: editTitle, start: editStart, end: editEnd });
+                                        }
+                                        setEditingItem(null);
                                     }}
-                                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer' }}
+                                    style={{ width: '100%', background: 'linear-gradient(135deg, var(--domain-orange), #FF8C00)', color: 'white', border: 'none', borderRadius: '14px', padding: '14px', fontSize: '0.9rem', fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 20px rgba(255, 126, 0, 0.25)', transition: 'transform 0.2s' }}
                                 >
-                                    <Trash2 size={16} /> Eliminar
+                                    Guardar Cambios
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const { type, data } = editingItem;
+                                        if (type === 'calendar' && onRemoveEvent) onRemoveEvent(data.id);
+                                        else if (type === 'routine' && onRemoveRoutine) onRemoveRoutine(data.id);
+                                        else if (type === 'timeblock' && onRemoveTimeBlock) onRemoveTimeBlock(data.id);
+                                        setEditingItem(null);
+                                    }}
+                                    style={{ width: '100%', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: '14px', padding: '12px', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                                >
+                                    <Trash2 size={16} /> Eliminar {editingItem.type === 'calendar' ? 'Cita' : editingItem.type === 'routine' ? 'Rutina' : 'Bloque'}
                                 </button>
                             </div>
                         </motion.div>

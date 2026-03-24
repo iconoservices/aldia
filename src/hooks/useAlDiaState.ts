@@ -159,11 +159,11 @@ export const useAlDiaState = () => {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     // 1. Estados Modularizados
-    const { 
-        transactions, setTransactions, balance, 
+    const {
+        transactions, setTransactions, balance,
         monthlyBudget, setMonthlyBudget, fixedExpenses, setFixedExpenses,
-        addTransaction, addFixedExpense, removeFixedExpense, toggleFixedExpense, 
-        updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid, repayDebt: repayDebtBase, 
+        addTransaction, addFixedExpense, removeFixedExpense, toggleFixedExpense,
+        updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid, repayDebt: repayDebtBase,
         todayIncome, todayExpense, todayNet, todayIncomeReal, todayExpenseReal,
         totalIncomeReal, totalExpenseReal, totalNetReal, debtsOwe, debtsOwed,
         removeTransaction, updateTransaction, updateTransactionGroup
@@ -173,16 +173,16 @@ export const useAlDiaState = () => {
         missions: misionesState, setMissions: setMisionesDirect,
         habits, setHabits, agenda, setAgenda,
         toggleMission, updateMission, removeMission, addMission,
-        toggleHabit, addHabit, removeHabit, addCalendarEvent, removeCalendarEvent,
+        toggleHabit, addHabit, removeHabit, addCalendarEvent, removeCalendarEvent, updateCalendarEvent,
         reorderMissions,
         performanceScore, missionFocusScore, completedMissionsCount
     } = useMisionesState();
-    
+
     const {
         projects, setProjects, timeBlocks, setTimeBlocks, rutinas, setRutinas,
         addProject, addProjectTask, toggleProjectTask, removeProjectTask,
         promoteTaskToRoutine, updateProject, deleteProject, reorderProjectTasks, reorderProjects,
-        addTimeBlock, removeTimeBlock,
+        addTimeBlock, removeTimeBlock, updateTimeBlock,
         addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
         addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
         updateRoutine, addRoutine, removeRoutine, updateProjectTask,
@@ -255,11 +255,11 @@ export const useAlDiaState = () => {
 
         const userId = user.uid;
         const docRef = doc(db, 'users', userId);
-        
+
         const unsubSnap = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                 const cloud = docSnap.data();
-                
+
                 // Si el snapshot es anterior a nuestro último cambio local, ignorarlo.
                 // Esto previene que snapshots con datos viejos sobreescriban transacciones recién añadidas.
                 const cloudLastSync = cloud.lastSync ? new Date(cloud.lastSync).getTime() : 0;
@@ -346,7 +346,7 @@ export const useAlDiaState = () => {
             const timer = setTimeout(() => {
                 const docRef = doc(db, 'users', user.uid);
                 const syncTimestamp = new Date().toISOString();
-                
+
                 // Sanitizar payload usando latestStateRef para asegurar data fresca
                 const payload = JSON.parse(JSON.stringify({
                     ...latestStateRef.current,
@@ -386,9 +386,9 @@ export const useAlDiaState = () => {
         }
 
         // Recuperar Proyecto "Personal" con ID 1
-        const hasId1 = transactions.some(tx => tx.projectId === 1) || 
-                       misionesState.some(m => m.projectId === 1) ||
-                       accounts.some(acc => acc.projectIds?.includes(1));
+        const hasId1 = transactions.some(tx => tx.projectId === 1) ||
+            misionesState.some(m => m.projectId === 1) ||
+            accounts.some(acc => acc.projectIds?.includes(1));
         if (hasId1 && !projects.some(p => p.id === 1)) {
             setProjects(prev => [{ id: 1, name: '☕ Personal (Recuperado)', color: '#888', status: 'activo' }, ...prev]);
         }
@@ -444,7 +444,7 @@ export const useAlDiaState = () => {
     return {
         // Misiones
         missions: misionesState, todayMissions, toggleMission, updateMission, addMission, removeMission, reorderMissions,
-        habits, toggleHabit, addHabit, removeHabit, agenda, addCalendarEvent, removeCalendarEvent,
+        habits, toggleHabit, addHabit, removeHabit, agenda, addCalendarEvent, removeCalendarEvent, updateCalendarEvent,
         performanceScore, missionFocusScore, completedMissionsCount,
         // Finanzas
         transactions, balance, todayIncome, todayExpense, todayNet, todayIncomeReal, todayExpenseReal,
@@ -471,7 +471,7 @@ export const useAlDiaState = () => {
         projects, addProject, addProjectTask, toggleProjectTask, removeProjectTask, reorderProjectTasks, reorderProjects,
         promoteTaskToRoutine, updateProject, deleteProject, updateProjectTask,
         addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
-        timeBlocks, addTimeBlock, removeTimeBlock,
+        timeBlocks, addTimeBlock, removeTimeBlock, updateTimeBlock,
         rutinas, addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
         updateRoutine, addRoutine, removeRoutine, addProjectCategory, removeProjectCategory,
         reorderRoutineItems,
