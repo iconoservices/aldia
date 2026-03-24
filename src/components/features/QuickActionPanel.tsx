@@ -41,13 +41,18 @@ export const QuickActionPanel = ({
     const [contactName, setContactName] = useState('');
     
     // Efecto para manejar el proyecto por defecto según cantidad
+    // NOTA: NO incluir `projects` en deps — se actualizaría en cada re-render del padre
+    // y resetearía la selección del usuario mid-form.
     useEffect(() => {
-        if (isOpen && projects.length === 1) {
-            setSelectedProjectId(projects[0].id);
-        } else if (isOpen && projects.length >= 2) {
-            setSelectedProjectId(undefined);
+        if (isOpen) {
+            if (projects.length === 1) {
+                setSelectedProjectId(projects[0].id);
+            } else {
+                setSelectedProjectId(undefined);
+            }
         }
-    }, [isOpen, projects]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
     
     // Cuentas: Todas disponibles, pero priorizamos las del proyecto seleccionado
     const { projectAccounts } = useMemo(() => {
@@ -100,10 +105,15 @@ export const QuickActionPanel = ({
                 alert("Debes seleccionar una cuenta obligatoriamente.");
                 return;
             }
+            const parsedAmount = parseFloat(amount);
+            if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+                alert("Debes ingresar un monto válido mayor a 0.");
+                return;
+            }
             const isActuallyDebt = debtMode !== 'normal';
             const isCashless = debtMode === 'fiao';
             const cName = contactName.trim();
-            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parseFloat(amount) || 0, actionType as any, isActuallyDebt, selectedProjectId, selectedAccountId, isCashless, selectedCategory, cName);
+            addTransaction(concept || (actionType === 'gasto' ? 'Gasto' : 'Ingreso'), parsedAmount, actionType as any, isActuallyDebt, selectedProjectId, selectedAccountId, isCashless, selectedCategory, cName);
             confetti({
                 particleCount: 80,
                 spread: 70,
@@ -253,10 +263,10 @@ export const QuickActionPanel = ({
                             background: 'white',
                             borderTopLeftRadius: '32px',
                             borderTopRightRadius: '32px',
-                            padding: '1.5rem 1.5rem 3rem 1.5rem',
-                            boxShadow: '0 -10px 40px rgba(0,0,0,0.1)',
+                            padding: '1rem 1rem 2rem 1rem',
+                            boxShadow: '0 -10px 40px rgba(0,0,0,0.12)',
                             zIndex: 1100,
-                            maxHeight: '90vh',
+                            maxHeight: '95vh',
                             overflowY: 'auto'
                         }}
                     >
@@ -273,264 +283,251 @@ export const QuickActionPanel = ({
 
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-                            {/* TIPO DE MOVIMIENTO (PRIORIDAD 1 PARA FINANZAS) */}
+                            {/* ===== SECCIÓN DE FINANZAS (REDISEÑADA) ===== */}
                             {currentConfig.isFinancial && (
-                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '24px', border: '1px solid #EEE' }}>
-                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.65rem', color: '#BBB', textTransform: 'uppercase' }}>Tipo de Movimiento</p>
-                                    <div style={{ display: 'flex', gap: '6px' }}>
-                                        {[
-                                            { id: 'normal', label: 'Efectivo', color: 'var(--domain-green)' },
-                                            { id: 'fiao', label: actionType === 'ingreso' ? 'Por Cobrar' : 'A Cuenta', color: 'var(--domain-orange)' },
-                                            { id: 'prestamo', label: actionType === 'ingreso' ? 'Préstamo Recibido' : 'Préstamo Realizado', color: 'var(--domain-blue)' }
-                                        ].map(m => (
-                                            <button
-                                                key={m.id} type="button" onClick={() => setDebtMode(m.id as any)}
-                                                style={{
-                                                    flex: 1, padding: '12px 6px', borderRadius: '16px', border: 'none',
-                                                    fontWeight: 900, fontSize: '0.65rem', cursor: 'pointer',
-                                                    background: debtMode === m.id ? m.color : 'white',
-                                                    color: debtMode === m.id ? 'white' : '#CCC',
-                                                    boxShadow: debtMode === m.id ? `0 4px 12px ${m.color}30` : 'none',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >{m.label.toUpperCase()}</button>
-                                        ))}
-                                    </div>
-                                    <p style={{ margin: '8px 0 0 10px', fontSize: '0.6rem', color: '#AAA', fontWeight: 600 }}>
-                                        {debtMode === 'normal' && '✓ Afecta tu saldo actual.'}
-                                        {debtMode === 'fiao' && '⚠ No mueve efectivo. Solo anota la deuda.'}
-                                        {debtMode === 'prestamo' && '⚠ Mueve efectivo y registra la deuda.'}
-                                    </p>
-                                </div>
-                            )}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
-                            {/* CAMPO DE CONTACTO (PRIORIDAD 2 SI ES DEUDA) */}
-                            {currentConfig.isFinancial && debtMode !== 'normal' && (
-                                <motion.div 
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    style={{ background: '#F9F9F9', padding: '16px', borderRadius: '24px', border: `2px solid ${debtMode === 'fiao' ? 'var(--domain-orange)' : 'var(--domain-blue)'}30` }}
-                                >
-                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.65rem', color: '#666', textTransform: 'uppercase' }}>
-                                        {actionType === 'ingreso' ? '👤 ¿Quién te debe? (Cliente)' : '👤 ¿A quién le debes?'}
-                                    </p>
-                                    <input 
-                                        type="text"
-                                        placeholder="Nombre o entidad..."
-                                        value={contactName}
-                                        onChange={(e) => setContactName(e.target.value)}
-                                        style={{ width: '100%', padding: '12px', borderRadius: '16px', border: '1px solid #EEE', outline: 'none', fontSize: '1rem', fontWeight: 700, background: 'white' }}
-                                    />
-                                </motion.div>
-                            )}
-
-                            {/* CANTIDAD (FINANZAS) */}
-                            {currentConfig.isFinancial && (
-                                <div style={{ 
-                                    background: '#F9F9F9', 
-                                    padding: '1.5rem', 
-                                    borderRadius: '24px', 
-                                    display: 'flex', 
-                                    flexDirection: 'column', 
-                                    alignItems: 'center', 
-                                    gap: '4px',
-                                    border: '1px solid #EEE'
-                                }}>
-                                    <span style={{ fontSize: '0.7rem', color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Cantidad</span>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <span style={{ fontSize: '2rem', fontWeight: 600, color: '#CCC' }}>$</span>
-                                        <input
-                                            type="number"
-                                            autoFocus
-                                            value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
-                                            placeholder="0.00"
-                                            style={{
-                                                fontSize: '2.5rem',
-                                                fontWeight: 900,
-                                                color: currentConfig.color,
-                                                border: 'none',
-                                                outline: 'none',
-                                                background: 'transparent',
-                                                width: '160px',
-                                                textAlign: 'center'
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* SELECTOR DE PROYECTO (Para Tareas, Bloques, Agenda y Finanzas) */}
-                            {(actionType === 'tarea' || actionType === 'bloque' || actionType === 'agenda' || currentConfig.isFinancial) && (
-                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                        <p style={{ margin: '0 0 0 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>
-                                            {currentConfig.isFinancial ? 'Proyecto (Obligatorio)' : 'Proyecto (Opcional)'}
-                                        </p>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => setIsCreatingProject(!isCreatingProject)}
-                                            style={{ background: isCreatingProject ? 'var(--domain-orange)' : '#EEE', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                        >
-                                            {isCreatingProject ? <X size={12} color="white" /> : <Plus size={12} color="#888" />}
-                                        </button>
-                                    </div>
-
-                                    {isCreatingProject ? (
-                                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <input 
-                                                type="text" 
-                                                placeholder="Nombre del proyecto..." 
-                                                value={quickProjectName}
-                                                onChange={(e) => setQuickProjectName(e.target.value)}
-                                                style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', border: '1px solid #DDD', fontSize: '0.8rem', fontWeight: 600 }}
-                                            />
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div style={{ display: 'flex', gap: '6px' }}>
-                                                    {['#ff8c42', '#3b82f6', '#10B911', '#8b5cf6', '#EC4899'].map(c => (
-                                                        <button 
-                                                            key={c} type="button" onClick={() => setQuickProjectColor(c)}
-                                                            style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, border: quickProjectColor === c ? '2px solid #333' : 'none', cursor: 'pointer' }}
-                                                        />
-                                                    ))}
-                                                </div>
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => {
-                                                        if (quickProjectName && addProject) {
-                                                            const newId = Date.now() + Math.random();
-                                                            addProject(quickProjectName, quickProjectColor);
-                                                            setSelectedProjectId(newId);
-                                                            setIsCreatingProject(false);
-                                                            setQuickProjectName('');
-                                                        }
+                                    {/* FILA 1: TIPO DE MOVIMIENTO */}
+                                    <div style={{ background: '#F9F9F9', padding: '10px 12px', borderRadius: '20px', border: '1px solid #EEE' }}>
+                                        <p style={{ margin: '0 0 8px 2px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Tipo de Movimiento</p>
+                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                            {[
+                                                { id: 'normal', label: 'Efectivo', color: 'var(--domain-green)' },
+                                                { id: 'fiao', label: actionType === 'ingreso' ? 'Por Cobrar' : 'A Cuenta', color: 'var(--domain-orange)' },
+                                                { id: 'prestamo', label: actionType === 'ingreso' ? 'Préstamo Recibido' : 'Préstamo Dado', color: 'var(--domain-blue)' }
+                                            ].map(m => (
+                                                <button
+                                                    key={m.id} type="button" onClick={() => setDebtMode(m.id as any)}
+                                                    style={{
+                                                        flex: 1, padding: '10px 4px', borderRadius: '14px', border: 'none',
+                                                        fontWeight: 900, fontSize: '0.6rem', cursor: 'pointer',
+                                                        background: debtMode === m.id ? m.color : 'white',
+                                                        color: debtMode === m.id ? 'white' : '#CCC',
+                                                        transition: 'all 0.2s'
                                                     }}
-                                                    style={{ background: 'var(--domain-green)', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer' }}
+                                                >{m.label.toUpperCase()}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* FILA 2: MONTO + CONCEPTO (2 COLUMNAS) */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                        {/* MONTO */}
+                                        <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '20px', border: amount && parseFloat(amount) > 0 ? `2px solid ${currentConfig.color}50` : '1px solid #EEE', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                                            <span style={{ fontSize: '0.6rem', color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Monto *</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                <span style={{ fontSize: '1.2rem', fontWeight: 600, color: '#CCC' }}>$</span>
+                                                <input
+                                                    type="number"
+                                                    autoFocus
+                                                    value={amount}
+                                                    onChange={(e) => setAmount(e.target.value)}
+                                                    placeholder="0.00"
+                                                    style={{
+                                                        fontSize: '1.8rem',
+                                                        fontWeight: 900,
+                                                        color: amount && parseFloat(amount) > 0 ? currentConfig.color : '#DDD',
+                                                        border: 'none',
+                                                        outline: 'none',
+                                                        background: 'transparent',
+                                                        width: '100px',
+                                                        textAlign: 'center'
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        {/* CONCEPTO */}
+                                        <div style={{ position: 'relative' }}>
+                                            <label style={{ fontSize: '0.6rem', fontWeight: 800, color: '#AAA', position: 'absolute', top: '10px', left: '14px', textTransform: 'uppercase', zIndex: 1 }}>Concepto</label>
+                                            <input
+                                                type="text"
+                                                value={concept}
+                                                onChange={(e) => setConcept(e.target.value)}
+                                                placeholder="..."
+                                                style={{
+                                                    width: '100%', height: '100%',
+                                                    padding: '28px 14px 10px 14px',
+                                                    borderRadius: '20px',
+                                                    border: '1px solid #EEE',
+                                                    background: '#F9F9F9',
+                                                    fontSize: '0.95rem',
+                                                    fontWeight: 700,
+                                                    outline: 'none',
+                                                    boxSizing: 'border-box'
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* FILA 3: CONTACTO (si es deuda) */}
+                                    {debtMode !== 'normal' && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            style={{ background: '#F9F9F9', padding: '12px', borderRadius: '20px', border: `2px solid ${debtMode === 'fiao' ? 'var(--domain-orange)' : 'var(--domain-blue)'}30` }}
+                                        >
+                                            <p style={{ margin: '0 0 6px 2px', fontWeight: 800, fontSize: '0.6rem', color: '#888', textTransform: 'uppercase' }}>
+                                                {actionType === 'ingreso' ? '👤 ¿Quién te debe?' : '👤 ¿A quién le debes?'}
+                                            </p>
+                                            <input
+                                                type="text" placeholder="Nombre o entidad..."
+                                                value={contactName} onChange={(e) => setContactName(e.target.value)}
+                                                style={{ width: '100%', padding: '10px 12px', borderRadius: '14px', border: '1px solid #EEE', outline: 'none', fontSize: '0.95rem', fontWeight: 700, background: 'white', boxSizing: 'border-box' }}
+                                            />
+                                        </motion.div>
+                                    )}
+
+                                    {/* FILA 4: PROYECTO + CUENTA (2 COLUMNAS si hay proyecto) */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: selectedProjectId ? '1fr 1fr' : '1fr', gap: '8px' }}>
+                                        {/* PROYECTO */}
+                                        <div style={{ background: '#F9F9F9', padding: '10px 12px', borderRadius: '18px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                                <p style={{ margin: 0, fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Proyecto *</p>
+                                                <button
+                                                    type="button" onClick={() => setIsCreatingProject(!isCreatingProject)}
+                                                    style={{ background: '#EEE', border: 'none', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                                                 >
-                                                    CREAR
+                                                    {isCreatingProject ? <X size={10} color="#888" /> : <Plus size={10} color="#888" />}
                                                 </button>
                                             </div>
-                                        </motion.div>
-                                    ) : (
-                                        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '4px' }}>
-                                            {projects.map(p => (
-                                                <button
-                                                    key={p.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setSelectedProjectId(p.id);
-                                                        setSelectedAccountId(undefined);
-                                                    }}
-                                                    style={{
-                                                        padding: '6px 12px', borderRadius: '12px', border: `1px solid ${p.id === selectedProjectId ? p.color : '#EEE'}`,
-                                                        background: selectedProjectId === p.id ? p.color : 'white',
-                                                        color: selectedProjectId === p.id ? 'white' : '#333',
-                                                        fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
-                                                    }}
-                                                >
-                                                    {p.name}
-                                                </button>
-                                            ))}
+                                            {isCreatingProject ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                    <input
+                                                        type="text" placeholder="Nombre..."
+                                                        value={quickProjectName} onChange={(e) => setQuickProjectName(e.target.value)}
+                                                        style={{ width: '100%', padding: '6px 10px', borderRadius: '10px', border: '1px solid #DDD', fontSize: '0.75rem', fontWeight: 600, boxSizing: 'border-box' }}
+                                                    />
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                                            {['#ff8c42', '#3b82f6', '#10B911', '#8b5cf6', '#EC4899'].map(c => (
+                                                                <button key={c} type="button" onClick={() => setQuickProjectColor(c)}
+                                                                    style={{ width: '16px', height: '16px', borderRadius: '50%', background: c, border: quickProjectColor === c ? '2px solid #333' : 'none', cursor: 'pointer' }}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        <button type="button" onClick={() => { if (quickProjectName && addProject) { addProject(quickProjectName, quickProjectColor); setIsCreatingProject(false); setQuickProjectName(''); } }}
+                                                            style={{ background: 'var(--domain-green)', color: 'white', border: 'none', padding: '3px 8px', borderRadius: '8px', fontSize: '0.6rem', fontWeight: 900, cursor: 'pointer' }}
+                                                        >CREAR</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                    {projects.map(p => (
+                                                        <button key={p.id} type="button" onClick={() => { setSelectedProjectId(p.id); setSelectedAccountId(undefined); }}
+                                                            style={{
+                                                                padding: '5px 10px', borderRadius: '10px',
+                                                                background: selectedProjectId === p.id ? p.color : 'white',
+                                                                color: selectedProjectId === p.id ? 'white' : '#555',
+                                                                border: `1px solid ${selectedProjectId === p.id ? p.color : '#EEE'}`,
+                                                                fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer', whiteSpace: 'nowrap'
+                                                            }}
+                                                        >{p.name}</button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* CUENTA (solo si hay proyecto) */}
+                                        {selectedProjectId && (
+                                            <div style={{ background: projectAccounts.length === 0 ? '#FFF5F5' : '#F9F9F9', padding: '10px 12px', borderRadius: '18px', border: projectAccounts.length === 0 ? '1px dashed #f87171' : '1px solid #EEE' }}>
+                                                <p style={{ margin: '0 0 6px 0', fontWeight: 800, fontSize: '0.6rem', color: projectAccounts.length === 0 ? '#f87171' : '#BBB', textTransform: 'uppercase' }}>
+                                                    {projectAccounts.length === 0 ? '⚠️ Sin cuentas' : 'Cuenta *'}
+                                                </p>
+                                                {projectAccounts.length === 0 ? (
+                                                    <p style={{ fontSize: '0.6rem', color: '#f87171', fontWeight: 700, margin: 0 }}>Crea una cuenta en Perfil/Finanzas.</p>
+                                                ) : (
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                        {projectAccounts.map(acc => (
+                                                            <button key={acc.id} type="button" onClick={() => setSelectedAccountId(acc.id)}
+                                                                style={{
+                                                                    padding: '5px 10px', borderRadius: '10px',
+                                                                    background: selectedAccountId === acc.id ? acc.color : 'white',
+                                                                    color: selectedAccountId === acc.id ? 'white' : '#555',
+                                                                    border: `1px solid ${selectedAccountId === acc.id ? acc.color : '#EEE'}`,
+                                                                    fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer', whiteSpace: 'nowrap'
+                                                                }}
+                                                            >{acc.name}</button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* FILA 5: CATEGORÍA */}
+                                    {selectedProjectId && (
+                                        <div style={{ background: '#F9F9F9', padding: '10px 12px', borderRadius: '18px' }}>
+                                            <p style={{ margin: '0 0 6px 0', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Categoría</p>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                                {(() => {
+                                                    const project = projects.find(p => p.id === selectedProjectId);
+                                                    const defaults = actionType === 'ingreso' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
+                                                    const categories = actionType === 'ingreso'
+                                                        ? (project?.incomeCategories && project.incomeCategories.length > 0 ? project.incomeCategories : defaults)
+                                                        : (project?.expenseCategories && project.expenseCategories.length > 0 ? project.expenseCategories : defaults);
+                                                    return categories.map(cat => (
+                                                        <button key={cat} type="button" onClick={() => setSelectedCategory(cat)}
+                                                            style={{
+                                                                padding: '5px 10px', borderRadius: '10px',
+                                                                background: selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : 'white',
+                                                                color: selectedCategory === cat ? 'white' : '#555',
+                                                                border: `1px solid ${selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : '#EEE'}`,
+                                                                fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer', whiteSpace: 'nowrap'
+                                                            }}
+                                                        >{cat}</button>
+                                                    ));
+                                                })()}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
                             )}
 
-                            {/* INPUT PRINCIPAL */}
-                            <div style={{ position: 'relative' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 800, color: '#AAA', position: 'absolute', top: '10px', left: '16px', textTransform: 'uppercase' }}>
-                                    {currentConfig.isFinancial ? 'Concepto' : (actionType === 'sueno' ? 'Hábito' : (actionType === 'nota' ? 'Título' : 'Nombre'))}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={concept}
-                                    onChange={(e) => setConcept(e.target.value)}
-                                    placeholder="..."
-                                    style={{
-                                        width: '100%',
-                                        padding: '24px 16px 12px 16px',
-                                        borderRadius: '20px',
-                                        border: '2px solid #F5F5F5',
-                                        background: '#FAFAFA',
-                                        fontSize: '1.1rem',
-                                        fontWeight: 700,
-                                        outline: 'none',
-                                        boxSizing: 'border-box'
-                                    }}
-                                />
-                            </div>
-
-                            {/* SELECTOR DE CATEGORÍA */}
-                            {currentConfig.isFinancial && (
-                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
-                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>
-                                        {!selectedProjectId ? '⚠️ Selecciona un proyecto' : 'Categoría'}
-                                    </p>
-                                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                                        {(() => {
-                                            if (!selectedProjectId) {
-                                                return <p style={{ margin: '0 0 0 10px', fontSize: '0.65rem', color: '#888', fontWeight: 700 }}>Debes elegir un proyecto arriba para ver sus categorías.</p>;
-                                            }
-
-                                            const project = projects.find(p => p.id === selectedProjectId);
-                                            const defaults = actionType === 'ingreso' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
-                                            
-                                            const categories = actionType === 'ingreso' 
-                                                ? (project?.incomeCategories && project.incomeCategories.length > 0 ? project.incomeCategories : defaults)
-                                                : (project?.expenseCategories && project.expenseCategories.length > 0 ? project.expenseCategories : defaults);
-                                            
-                                            return categories.map(cat => (
-                                                <button
-                                                    key={cat}
-                                                    type="button"
-                                                    onClick={() => setSelectedCategory(cat)}
-                                                    style={{
-                                                        padding: '6px 12px', borderRadius: '12px', border: `1px solid ${selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : '#EEE'}`,
-                                                        background: selectedCategory === cat ? (actionType === 'ingreso' ? '#4ade80' : '#f87171') : 'white',
-                                                        color: selectedCategory === cat ? 'white' : '#333',
-                                                        fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
-                                                    }}
-                                                >
-                                                    {cat}
-                                                </button>
-                                            ));
-                                        })()}
-                                    </div>
+                            {/* NOMBRE/CONCEPTO PARA FORMS NO-FINANCIEROS */}
+                            {!currentConfig.isFinancial && (
+                                <div style={{ position: 'relative' }}>
+                                    <label style={{ fontSize: '0.65rem', fontWeight: 800, color: '#AAA', position: 'absolute', top: '10px', left: '16px', textTransform: 'uppercase' }}>
+                                        {actionType === 'sueno' ? 'Hábito' : (actionType === 'nota' ? 'Título' : 'Nombre')}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        value={concept}
+                                        onChange={(e) => setConcept(e.target.value)}
+                                        placeholder="..."
+                                        style={{
+                                            width: '100%',
+                                            padding: '24px 16px 12px 16px',
+                                            borderRadius: '20px',
+                                            border: '2px solid #F5F5F5',
+                                            background: '#FAFAFA',
+                                            fontSize: '1.1rem',
+                                            fontWeight: 700,
+                                            outline: 'none',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
                                 </div>
                             )}
 
-                            {/* SELECTOR DE CUENTA */}
-                            {currentConfig.isFinancial && (
-                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px', border: (!selectedProjectId || projectAccounts.length === 0) ? '2px dashed #f87171' : '2px solid transparent' }}>
-                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.65rem', color: '#BBB', textTransform: 'uppercase' }}>
-                                        {!selectedProjectId ? '⚠️ Selecciona un proyecto' : (projectAccounts.length === 0 ? '⚠️ El proyecto no tiene cuentas' : 'Cuenta / Tarjeta')}
-                                    </p>
-                                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                                        {!selectedProjectId && (
-                                            <p style={{ margin: '0 0 0 10px', fontSize: '0.65rem', color: '#888', fontWeight: 700 }}>
-                                                Debes elegir un proyecto arriba para ver tus opciones de cuenta.
-                                            </p>
-                                        )}
-
-                                        {/* Cuentas exclusivas del proyecto */}
-                                        {selectedProjectId && projectAccounts.map(acc => (
+                            {/* SELECTOR DE PROYECTO (Para Tareas, Bloques, Agenda - NO finanzas que ya tienen el suyo) */}
+                            {(actionType === 'tarea' || actionType === 'bloque' || actionType === 'agenda') && (
+                                <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '18px' }}>
+                                    <p style={{ margin: '0 0 8px 10px', fontWeight: 800, fontSize: '0.6rem', color: '#BBB', textTransform: 'uppercase' }}>Proyecto (Opcional)</p>
+                                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '4px' }}>
+                                        {projects.map(p => (
                                             <button
-                                                key={acc.id} type="button" onClick={() => setSelectedAccountId(acc.id)}
+                                                key={p.id} type="button"
+                                                onClick={() => setSelectedProjectId(selectedProjectId === p.id ? undefined : p.id)}
                                                 style={{
-                                                    padding: '6px 12px', borderRadius: '12px', border: `1px solid ${acc.id === selectedAccountId ? acc.color : '#EEE'}`,
-                                                    background: selectedAccountId === acc.id ? acc.color : 'white',
-                                                    color: selectedAccountId === acc.id ? 'white' : '#333',
-                                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap',
-                                                    boxShadow: selectedAccountId === acc.id ? `0 4px 10px ${acc.color}40` : 'none'
+                                                    padding: '6px 12px', borderRadius: '12px',
+                                                    border: `1px solid ${p.id === selectedProjectId ? p.color : '#EEE'}`,
+                                                    background: selectedProjectId === p.id ? p.color : 'white',
+                                                    color: selectedProjectId === p.id ? 'white' : '#333',
+                                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap'
                                                 }}
-                                            >⭐ {acc.name}</button>
+                                            >{p.name}</button>
                                         ))}
-
-                                        {selectedProjectId && projectAccounts.length === 0 && (
-                                            <p style={{ margin: '0 0 0 10px', fontSize: '0.65rem', color: '#f87171', fontWeight: 700 }}>
-                                                Ve a la pestaña Perfil/Finanzas y crea una cuenta asignada a este proyecto.
-                                            </p>
-                                        )}
                                     </div>
                                 </div>
                             )}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { db, auth } from '../firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, type User } from 'firebase/auth';
@@ -174,6 +174,9 @@ export const useAlDiaState = () => {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
     const [hasLoadedFromCloud, setHasLoadedFromCloud] = useState(false);
+    // Timestamp del último cambio local del usuario. Los snapshots de Firestore con lastSync
+    // anterior a este valor serán ignorados para evitar sobreescribir cambios pendientes.
+    const localWriteTimestampRef = useRef<number>(0);
 
 
     // 2. Lógica de Sincronización Real-Time
@@ -233,6 +236,15 @@ export const useAlDiaState = () => {
             if (docSnap.exists()) {
                 const cloud = docSnap.data();
                 
+                // Si el snapshot es anterior a nuestro último cambio local, ignorarlo.
+                // Esto previene que snapshots con datos viejos sobreescriban transacciones recién añadidas.
+                const cloudLastSync = cloud.lastSync ? new Date(cloud.lastSync).getTime() : 0;
+                if (cloudLastSync < localWriteTimestampRef.current) {
+                    setHasLoadedFromCloud(true);
+                    setIsInitialLoad(false);
+                    return;
+                }
+
                 // Función helper que usa el setter funcional para no depender del valor actual
                 const sync = (newValue: any, setter: Function) => {
                     if (newValue !== undefined) {
@@ -275,6 +287,17 @@ export const useAlDiaState = () => {
         return () => unsubSnap();
     }, [user?.uid]); // Solo re-suscribir si cambia el usuario
 
+    // Mantenemos la referencia más reciente del estado completo.
+    // Esto previene "stale closures" en el setTimeout del debounced save,
+    // donde un array viejo de transactions podía enviarse a Firestore y causar un rollback visual.
+    const latestStateRef = useRef({
+        missions: misionesState, transactions, habits, agenda, timeBlocks, notes, projects, rutinas, monthlyBudget, fixedExpenses, accounts, preferences
+    });
+    // Actualizamos la ref en CADA render
+    latestStateRef.current = {
+        missions: misionesState, transactions, habits, agenda, timeBlocks, notes, projects, rutinas, monthlyBudget, fixedExpenses, accounts, preferences
+    };
+
     // 3. Persistencia Cloud (Debounced) y Local (Immediate)
     useEffect(() => {
         // SEGURIDAD: No guardar si todavía no hemos cargado de la nube
@@ -298,28 +321,23 @@ export const useAlDiaState = () => {
         if (user) {
             const timer = setTimeout(() => {
                 const docRef = doc(db, 'users', user.uid);
+                const syncTimestamp = new Date().toISOString();
                 
-                // Sanitizar payload para que sea idéntico a localStorage (evita errores de Firestore con undefined/NaN/etc)
+                // Sanitizar payload usando latestStateRef para asegurar data fresca
                 const payload = JSON.parse(JSON.stringify({
-                    missions: misionesState,
-                    transactions,
-                    habits,
-                    agenda,
-                    timeBlocks,
-                    notes,
-                    projects,
-                    rutinas,
-                    monthlyBudget,
-                    fixedExpenses,
-                    accounts,
-                    preferences,
-                    lastSync: new Date().toISOString()
+                    ...latestStateRef.current,
+                    lastSync: syncTimestamp
                 }));
 
-                setDoc(docRef, payload, { merge: true }).catch(error => {
-                    console.error("🔥 Error crítico guardando en Firestore:", error);
-                    alert("ERROR DE SINCRONIZACIÓN: No se pudo guardar en la nube. " + error.message);
-                });
+                setDoc(docRef, payload, { merge: true })
+                    .then(() => {
+                        // El snapshot que vuelva de Firestore tendrá lastSync = syncTimestamp
+                        // que será >= localWriteTimestampRef, así que pasará el filtro y sincronizará bien.
+                    })
+                    .catch(error => {
+                        console.error("🔥 Error crítico guardando en Firestore:", error);
+                        alert("ERROR DE SINCRONIZACIÓN: No se pudo guardar en la nube. " + error.message);
+                    });
             }, 2000);
 
             return () => clearTimeout(timer);
@@ -411,6 +429,9 @@ export const useAlDiaState = () => {
         fixedExpenses, addFixedExpense, removeFixedExpense, toggleFixedExpense, updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid,
         repayDebt: repayDebtBase,
         addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projId?: number, accId?: number, isCashless?: boolean, cat?: string, contact?: string) => {
+            // Marcar timestamp de escritura local ANTES de actualizar el estado
+            // para que el régimen de snapshot sepa que hay datos más nuevos que la nube
+            localWriteTimestampRef.current = Date.now();
             addTransaction(text, amount, type, isDebt, projId, accId, isCashless, cat, contact);
             if (projId && accId) {
                 setAccounts(prev => prev.map(acc => {
