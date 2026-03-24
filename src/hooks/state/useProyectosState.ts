@@ -107,6 +107,7 @@ export const useProyectosState = () => {
                 items: r.items.map(it => {
                     if (it.id !== itemId) return it;
                     const newCompleted = !it.completed;
+                    const todayStr = new Date().toLocaleDateString('en-CA');
                     // Sync linked project task if exists
                     if (it.linkedProjectId && it.linkedTaskId) {
                         setProjects(prevP => prevP.map(p => {
@@ -114,7 +115,7 @@ export const useProyectosState = () => {
                             return { ...p, checklist: (p.checklist || []).map(t => t.id === it.linkedTaskId ? { ...t, completed: newCompleted } : t) };
                         }));
                     }
-                    return { ...it, completed: newCompleted };
+                    return { ...it, completed: newCompleted, completedDate: newCompleted ? todayStr : undefined };
                 })
             };
         }));
@@ -210,7 +211,7 @@ export const useProyectosState = () => {
             if (r.id !== routineId) return r;
             return {
                 ...r,
-                items: [...r.items, { id: Date.now() + Math.random(), text, completed: false, time }]
+                items: [...r.items, { id: Date.now() + Math.random(), text, completed: false, time, completedDate: undefined }]
             };
         }));
     };

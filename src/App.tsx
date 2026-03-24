@@ -119,12 +119,14 @@ function App() {
                 projects={state.projects}
                 rutinas={state.rutinas}
                 timeBlocks={state.timeBlocks}
+                missions={state.missions}
                 onRemoveEvent={state.removeCalendarEvent}
                 onUpdateEvent={state.updateCalendarEvent}
                 onRemoveRoutine={state.removeRoutine}
                 onUpdateRoutine={state.updateRoutine}
                 onRemoveTimeBlock={state.removeTimeBlock}
                 onUpdateTimeBlock={state.updateTimeBlock}
+                onToggleMission={state.toggleMission}
               />
             ) : activeTab === 'Vida' ? (
               <VidaDashboard

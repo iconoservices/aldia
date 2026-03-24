@@ -13,10 +13,12 @@ interface TimelineAgendaViewProps {
     onUpdateRoutine?: (id: number, updates: any) => void;
     onRemoveTimeBlock?: (id: number) => void;
     onUpdateTimeBlock?: (id: number, updates: any) => void;
+    missions?: any[];
+    onToggleMission?: (id: number) => void;
 }
 
-export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], timeBlocks = [], onRemoveEvent, onUpdateEvent, onRemoveRoutine, onUpdateRoutine, onRemoveTimeBlock, onUpdateTimeBlock }: TimelineAgendaViewProps) => {
-    const [viewMode, setViewMode] = useState<'timeline' | 'month' | 'appointments'>('timeline');
+export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], timeBlocks = [], missions = [], onRemoveEvent, onUpdateEvent, onRemoveRoutine, onUpdateRoutine, onRemoveTimeBlock, onUpdateTimeBlock, onToggleMission }: TimelineAgendaViewProps) => {
+    const [viewMode, setViewMode] = useState<'timeline' | 'month' | 'appointments' | 'tasks'>('timeline');
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [editingItem, setEditingItem] = useState<{ type: 'calendar' | 'routine' | 'timeblock', data: any } | null>(null);
     
@@ -109,11 +111,24 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
         return items.sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
     }, [calendarEvents, todayStr]);
 
-    // 5. Rutinas del día
+    // 5. Rutinas del día con Reset Visual
     const dayRutinas = useMemo(() => {
         const dayIdx = selectedDate.getDay() === 0 ? 6 : selectedDate.getDay() - 1; // Lunes = 0
-        return rutinas.filter(r => r.isActive && r.repeatDays?.includes(dayIdx));
-    }, [rutinas, selectedDate]);
+        
+        return rutinas.filter(r => r.isActive && r.repeatDays?.includes(dayIdx)).map(r => ({
+            ...r,
+            items: (r.items || []).map((it: any) => ({
+                ...it,
+                // Si la fecha de completado no es HOY, se muestra como no completado visualmente
+                completed: it.completed && it.completedDate === todayStr
+            }))
+        }));
+    }, [rutinas, selectedDate, todayStr]);
+
+    // 5.1 Misiones (Tareas) del día
+    const dayMissions = useMemo(() => {
+        return (missions || []).filter(m => m.dueDate === todayStr);
+    }, [missions, todayStr]);
 
     // 6. Vista Mensual Logic
     const monthDays = useMemo(() => {
@@ -163,15 +178,18 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                 </div>
 
                 {/* View Switcher */}
-                <div style={{ display: 'flex', gap: '8px', background: '#F1F5F9', padding: '4px', borderRadius: '14px', marginBottom: '1.2rem' }}>
-                    <button onClick={() => setViewMode('timeline')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', border: 'none', borderRadius: '10px', background: viewMode === 'timeline' ? 'white' : 'transparent', fontSize: '0.75rem', fontWeight: 900, color: viewMode === 'timeline' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'timeline' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}>
-                        <Clock size={16} /> TIMELINE
+                <div style={{ display: 'flex', gap: '2px', background: '#F1F5F9', padding: '3px', borderRadius: '14px', marginBottom: '1rem', overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <button onClick={() => setViewMode('timeline')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', padding: '8px 4px', border: 'none', borderRadius: '10px', background: viewMode === 'timeline' ? 'white' : 'transparent', fontSize: '0.65rem', fontWeight: 900, color: viewMode === 'timeline' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'timeline' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', flexShrink: 1, minWidth: 0 }}>
+                        <Clock size={12} /> TIMELINE
                     </button>
-                    <button onClick={() => setViewMode('month')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', border: 'none', borderRadius: '10px', background: viewMode === 'month' ? 'white' : 'transparent', fontSize: '0.75rem', fontWeight: 900, color: viewMode === 'month' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'month' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}>
-                        <CalendarDays size={16} /> MES
+                    <button onClick={() => setViewMode('month')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', padding: '8px 4px', border: 'none', borderRadius: '10px', background: viewMode === 'month' ? 'white' : 'transparent', fontSize: '0.65rem', fontWeight: 900, color: viewMode === 'month' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'month' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', flexShrink: 1, minWidth: 0 }}>
+                        <CalendarDays size={12} /> MES
                     </button>
-                    <button onClick={() => setViewMode('appointments')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', border: 'none', borderRadius: '10px', background: viewMode === 'appointments' ? 'white' : 'transparent', fontSize: '0.75rem', fontWeight: 900, color: viewMode === 'appointments' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'appointments' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}>
-                        <Filter size={16} /> CITAS
+                    <button onClick={() => setViewMode('appointments')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', padding: '8px 4px', border: 'none', borderRadius: '10px', background: viewMode === 'appointments' ? 'white' : 'transparent', fontSize: '0.65rem', fontWeight: 900, color: viewMode === 'appointments' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'appointments' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', flexShrink: 1, minWidth: 0 }}>
+                        <Filter size={12} /> CITAS
+                    </button>
+                    <button onClick={() => setViewMode('tasks')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', padding: '8px 4px', border: 'none', borderRadius: '10px', background: viewMode === 'tasks' ? 'white' : 'transparent', fontSize: '0.65rem', fontWeight: 900, color: viewMode === 'tasks' ? 'var(--domain-orange)' : '#64748B', transition: 'all 0.2s', boxShadow: viewMode === 'tasks' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', flexShrink: 1, minWidth: 0 }}>
+                        <Calendar size={12} /> TAREAS
                     </button>
                 </div>
 
@@ -201,7 +219,7 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
             {/* Content Area */}
             <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }} ref={scrollRef}>
                 {viewMode === 'timeline' && (
-                    <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'relative', minHeight: '1440px' }}>
                         {/* Current Time Line */}
                         {isActualToday && (
                             <div style={{ position: 'absolute', top: currentPos, left: 0, right: 0, height: '2px', background: '#ef4444', zIndex: 10, pointerEvents: 'none' }}>
@@ -209,7 +227,7 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                             </div>
                         )}
 
-                        {/* Rutinas — overlay absoluto que abarca startTime→endTime */}
+                        {/* Rutinas — overlay */}
                         {dayRutinas.map(r => {
                             const startPx = toMin(r.startTime);
                             const endPx = toMin(r.endTime);
@@ -243,7 +261,7 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                             );
                         })}
 
-                        {/* Citas — overlay absoluto posicionado por hora+minuto exactos */}
+                        {/* Citas — overlay */}
                         {dayEvents.map((item: any) => {
                             const startPx = toMin(item.startTime);
                             const endPx = toMin(item.endTime);
@@ -293,37 +311,33 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
 
                 {viewMode === 'appointments' && (
                     <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div>
-                            <h3 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#64748B', marginBottom: '10px' }}>CITAS Y AGENDA</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {dayEvents.length > 0 ? dayEvents.map((e: any) => (
-                                    <div 
-                                        key={e.id} 
-                                        onClick={() => setEditingItem({ type: 'calendar', data: e })}
-                                        style={{ background: 'white', padding: '16px', borderRadius: '18px', borderLeft: `6px solid ${e.color}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', position: 'relative' }}
-                                    >
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-carbon)' }}>{e.title}</div>
-                                            <div style={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <Clock size={12} /> {e.startTime} - {e.endTime}
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                            <button 
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    if (onRemoveEvent) onRemoveEvent(e.id);
-                                                }}
-                                                style={{ background: '#FEF2F2', border: 'none', borderRadius: '10px', padding: '8px', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                        <h3 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#64748B', marginBottom: '10px' }}>CITAS Y AGENDA</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {dayEvents.length > 0 ? dayEvents.map((e: any) => (
+                                <div 
+                                    key={e.id} 
+                                    onClick={() => setEditingItem({ type: 'calendar', data: e })}
+                                    style={{ background: 'white', padding: '16px', borderRadius: '18px', borderLeft: `6px solid ${e.color}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', position: 'relative' }}
+                                >
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-carbon)' }}>{e.title}</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Clock size={12} /> {e.startTime} - {e.endTime}
                                         </div>
                                     </div>
-                                )) : (
-                                    <div style={{ padding: '2rem', textAlign: 'center', color: '#CBD5E1', fontSize: '0.8rem', fontWeight: 700 }}>No hay citas para este día</div>
-                                )}
-                            </div>
+                                    <button 
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            if (onRemoveEvent) onRemoveEvent(e.id);
+                                        }}
+                                        style={{ background: '#FEF2F2', border: 'none', borderRadius: '10px', padding: '8px', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            )) : (
+                                <div style={{ padding: '2rem', textAlign: 'center', color: '#CBD5E1', fontSize: '0.8rem', fontWeight: 700 }}>No hay citas para hoy</div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -338,7 +352,7 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                         ))}
                         {monthDays.days.map(day => {
                             const dateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-                            const isToday = dateStr === new Date().toISOString().split('T')[0];
+                            const isToday = dateStr === new Date().toLocaleDateString('en-CA');
                             const hasEvents = (calendarEvents || []).some(e => e.date === dateStr);
                             
                             return (
@@ -369,6 +383,52 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                         })}
                     </div>
                 )}
+
+                {viewMode === 'tasks' && (
+                    <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <h3 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#64748B', marginBottom: '5px' }}>TAREAS PARA ESTE DÍA</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {dayMissions.length > 0 ? dayMissions.map((m: any) => (
+                                <div 
+                                    key={m.id} 
+                                    style={{ 
+                                        background: 'white', 
+                                        padding: '16px', 
+                                        borderRadius: '20px', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: '12px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                                        border: m.completed ? '1px solid #E2E8F0' : '1px solid transparent'
+                                    }}
+                                >
+                                    <button 
+                                        onClick={() => onToggleMission && onToggleMission(m.id)}
+                                        style={{ 
+                                            width: '24px', height: '24px', borderRadius: '8px', 
+                                            border: m.completed ? 'none' : '2px solid #E2E8F0',
+                                            background: m.completed ? 'var(--domain-green)' : 'white',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {m.completed && <X size={14} color="white" strokeWidth={4} />}
+                                    </button>
+                                    <span style={{ 
+                                        fontSize: '0.95rem', fontWeight: 700, 
+                                        color: m.completed ? '#94A3B8' : 'var(--text-carbon)',
+                                        textDecoration: m.completed ? 'line-through' : 'none'
+                                    }}>
+                                        {m.text}
+                                    </span>
+                                    {m.q && <span style={{ marginLeft: 'auto', fontSize: '0.65rem', fontWeight: 900, background: '#F1F5F9', padding: '4px 8px', borderRadius: '8px', color: '#64748B' }}>{m.q}</span>}
+                                </div>
+                            )) : (
+                                <div style={{ padding: '3rem', textAlign: 'center', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: 700 }}>No hay tareas para hoy</div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Polymorphic Action Modal */}
@@ -396,7 +456,6 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-                                {/* Título/Label */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                     <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase' }}>{editingItem.type === 'timeblock' ? 'Nombre del Bloque' : 'Título'}</label>
                                     <input 
@@ -408,7 +467,6 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                                     />
                                 </div>
 
-                                {/* Horario */}
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                         <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase' }}>Inicio</label>
@@ -434,13 +492,12 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <button
                                     onClick={() => {
-                                        const { type, data } = editingItem;
-                                        if (type === 'calendar' && onUpdateEvent) {
-                                            onUpdateEvent(data.id, { title: editTitle, startTime: editStart, endTime: editEnd });
-                                        } else if (type === 'routine' && onUpdateRoutine) {
-                                            onUpdateRoutine(data.id, { title: editTitle, startTime: editStart, endTime: editEnd });
-                                        } else if (type === 'timeblock' && onUpdateTimeBlock) {
-                                            onUpdateTimeBlock(data.id, { label: editTitle, start: editStart, end: editEnd });
+                                        if (editingItem.type === 'calendar' && onUpdateEvent) {
+                                            onUpdateEvent(editingItem.data.id, { title: editTitle, startTime: editStart, endTime: editEnd });
+                                        } else if (editingItem.type === 'routine' && onUpdateRoutine) {
+                                            onUpdateRoutine(editingItem.data.id, { title: editTitle, startTime: editStart, endTime: editEnd });
+                                        } else if (editingItem.type === 'timeblock' && onUpdateTimeBlock) {
+                                            onUpdateTimeBlock(editingItem.data.id, { label: editTitle, start: editStart, end: editEnd });
                                         }
                                         setEditingItem(null);
                                     }}
@@ -450,10 +507,9 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                                 </button>
                                 <button
                                     onClick={() => {
-                                        const { type, data } = editingItem;
-                                        if (type === 'calendar' && onRemoveEvent) onRemoveEvent(data.id);
-                                        else if (type === 'routine' && onRemoveRoutine) onRemoveRoutine(data.id);
-                                        else if (type === 'timeblock' && onRemoveTimeBlock) onRemoveTimeBlock(data.id);
+                                        if (editingItem.type === 'calendar' && onRemoveEvent) onRemoveEvent(editingItem.data.id);
+                                        else if (editingItem.type === 'routine' && onRemoveRoutine) onRemoveRoutine(editingItem.data.id);
+                                        else if (editingItem.type === 'timeblock' && onRemoveTimeBlock) onRemoveTimeBlock(editingItem.data.id);
                                         setEditingItem(null);
                                     }}
                                     style={{ width: '100%', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: '14px', padding: '12px', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}

@@ -37,7 +37,7 @@ export interface Routine {
     repeatDays?: number[]; // [0,1,2,3,4,5,6]
     startTime?: string;
     endTime?: string;
-    items: { id: number; text: string; completed: boolean; time?: string; linkedProjectId?: number; linkedTaskId?: number }[];
+    items: { id: number; text: string; completed: boolean; time?: string; linkedProjectId?: number; linkedTaskId?: number; completedDate?: string }[];
 }
 
 export interface Transaction {
