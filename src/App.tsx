@@ -128,8 +128,6 @@ function App() {
                 onRemoveTimeBlock={state.removeTimeBlock}
                 onUpdateTimeBlock={state.updateTimeBlock}
                 onToggleMission={state.toggleMission}
-                onToggleHabit={state.toggleHabit}
-                onToggleRoutineItem={state.toggleRoutineItem}
               />
             ) : activeTab === 'Vida' ? (
               <VidaDashboard
@@ -244,7 +242,6 @@ function App() {
         agenda={state.agenda}
         fixedExpenses={state.fixedExpenses}
         habits={state.habits}
-        markFixedExpensePaid={state.markFixedExpensePaid}
       />
 
       <SuperFab
@@ -293,6 +290,7 @@ function App() {
             addProjectNode={state.addProjectNode}
             updateProjectNode={state.updateProjectNode}
             removeProjectNode={state.removeProjectNode}
+            promoteNodeToRoutine={state.promoteNodeToRoutine}
             addMission={state.addMission}
           />
         )}

@@ -16,14 +16,12 @@ interface TimelineAgendaViewProps {
     onUpdateTimeBlock?: (id: number, updates: any) => void;
     missions?: any[];
     onToggleMission?: (id: number) => void;
-    onToggleHabit?: (id: number, dayIdx: number) => void;
-    onToggleRoutineItem?: (routineId: number, itemId: number) => void;
 }
 
 export const TimelineAgendaView = ({ 
-    calendarEvents, projects, rutinas = [], habits = [], timeBlocks = [], missions = [], 
+    calendarEvents, projects, rutinas = [], timeBlocks = [], missions = [], 
     onRemoveEvent, onUpdateEvent, onRemoveRoutine, onUpdateRoutine, onRemoveTimeBlock, onUpdateTimeBlock, 
-    onToggleMission, onToggleHabit, onToggleRoutineItem 
+    onToggleMission
 }: TimelineAgendaViewProps) => {
     const [viewMode, setViewMode] = useState<'timeline' | 'month' | 'appointments' | 'tasks'>('timeline');
     const [selectedDate, setSelectedDate] = useState(new Date());

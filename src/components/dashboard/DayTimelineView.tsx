@@ -10,10 +10,9 @@ interface DayTimelineViewProps {
     agenda: CalendarEvent[];
     fixedExpenses: FixedExpense[];
     habits: any[];
-    markFixedExpensePaid: (id: number, monthStr: string) => void;
 }
 
-export const DayTimelineView = ({ isOpen, onClose, missions, rutinas, agenda, fixedExpenses, habits, markFixedExpensePaid }: DayTimelineViewProps) => {
+export const DayTimelineView = ({ isOpen, onClose, missions, rutinas, agenda, fixedExpenses, habits }: DayTimelineViewProps) => {
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday...
     // Adjust dayOfWeek to match rutinas (0=Mon, 6=Sun if following common ISO, but let's check useAlDiaState)

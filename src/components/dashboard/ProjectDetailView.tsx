@@ -204,7 +204,7 @@ const ProjectObjectiveItem = ({ project, obj, updateProjectObjective, removeProj
                                 if (rutinas.length === 0) { alert('No tienes rutinas disponibles.'); return; }
                                 let routineId = rutinas[0].id;
                                 if (rutinas.length > 1) {
-                                    const list = rutinas.map((r, i) => `${i+1}. ${r.title}`).join('\n');
+                                    const list = rutinas.map((r: Routine, i: number) => `${i+1}. ${r.title}`).join('\n');
                                     const idxStr = prompt(`¿A qué rutina enviarla?\n${list}`);
                                     const idx = parseInt(idxStr || '0') - 1;
                                     if (!rutinas[idx]) return;
@@ -411,7 +411,7 @@ const ProjectNodeItem = ({ project, objectiveId, node, updateProjectNode, remove
                                 if (rutinas.length === 0) { alert('No tienes rutinas disponibles.'); return; }
                                 let routineId = rutinas[0].id;
                                 if (rutinas.length > 1) {
-                                    const list = rutinas.map((r, i) => `${i+1}. ${r.title}`).join('\n');
+                                    const list = rutinas.map((r: Routine, i: number) => `${i+1}. ${r.title}`).join('\n');
                                     const idxStr = prompt(`¿A qué rutina enviarla?\n${list}`);
                                     const idx = parseInt(idxStr || '0') - 1;
                                     if (!rutinas[idx]) return;
