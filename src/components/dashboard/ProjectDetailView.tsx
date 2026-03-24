@@ -94,7 +94,7 @@ const ProjectNodeItem = ({ project, objectiveId, node, updateProjectNode, remove
                                                     setNewSubTask('');
                                                 }
                                             }}
-                                            placeholder="Nueva sub-tarea..."
+                                            placeholder="Nueva tarea..."
                                             style={{ flex: 1, border: 'none', background: 'transparent', fontSize: '0.75rem', outline: 'none' }}
                                         />
                                     </div>
@@ -107,8 +107,8 @@ const ProjectNodeItem = ({ project, objectiveId, node, updateProjectNode, remove
                 {/* Right side Actions */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.6 }}>
                     {node.type !== 'note' && <button onClick={() => toggleType('note')} style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 0 }} title="Convertir a Nota"><AlignLeft size={14} /></button>}
-                    {node.type !== 'checklist' && <button onClick={() => toggleType('checklist')} style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 0 }} title="Convertir a Checklist"><CheckSquare size={14} /></button>}
-                    {node.type !== 'task' && <button onClick={() => toggleType('task')} style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 0 }} title="Convertir a Tarea Simple"><TypeIcon size={14} /></button>}
+                    {node.type !== 'checklist' && <button onClick={() => toggleType('checklist')} style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 0 }} title="Convertir a Meta con Tareas"><CheckSquare size={14} /></button>}
+                    {node.type !== 'task' && <button onClick={() => toggleType('task')} style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 0 }} title="Convertir a Meta Simple"><TypeIcon size={14} /></button>}
                     <button onClick={() => removeProjectNode(project.id, objectiveId, node.id)} style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', padding: 0, marginLeft: '6px' }} title="Borrar nodo"><Trash2 size={14} /></button>
                 </div>
             </div>
@@ -277,7 +277,7 @@ export const ProjectDetailView = ({
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
                                 <input 
-                                    placeholder="Nuevas metas..."
+                                    placeholder="Nuevo objetivo..."
                                     value={newObjectiveTitle}
                                     onChange={(e) => setNewObjectiveTitle(e.target.value)}
                                     onKeyDown={(e) => {
@@ -297,7 +297,7 @@ export const ProjectDetailView = ({
                                     }} 
                                     style={{ background: project.color, color: 'white', border: 'none', borderRadius: '10px', padding: '0 12px', cursor: 'pointer', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px' }}
                                 >
-                                    <Plus size={16} /> METAS
+                                    <Plus size={16} /> OBJETIVO
                                 </button>
                             </div>
                             
@@ -320,7 +320,7 @@ export const ProjectDetailView = ({
                                             </h3>
                                         </div>
                                         <button 
-                                            onClick={() => removeProjectObjective && window.confirm('¿Borrar objetivo y todas sus tareas?') && removeProjectObjective(project.id, obj.id)}
+                                            onClick={() => removeProjectObjective && window.confirm('¿Borrar objetivo y todas sus metas?') && removeProjectObjective(project.id, obj.id)}
                                             style={{ background: 'transparent', border: 'none', color: '#CBD5E1', cursor: 'pointer', padding: '4px' }}
                                         >
                                             <Trash2 size={14} />
@@ -344,7 +344,7 @@ export const ProjectDetailView = ({
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                                             <Plus size={14} color="#CBD5E1" />
                                             <input 
-                                                placeholder="Agregar nota o tarea al objetivo..."
+                                                placeholder="Agregar meta al objetivo..."
                                                 onKeyDown={(e) => {
                                                     const target = e.target as HTMLInputElement;
                                                     if (e.key === 'Enter' && target.value.trim() && addProjectNode) {
