@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { ArrowLeft, Plus, Trash2, Edit2, GripVertical, CheckCircle2, Circle, Zap, Wallet, X, FolderTree, Link, AlignLeft, CheckSquare, Type as TypeIcon, CreditCard } from 'lucide-react';
-import { GlassCard } from '../ui/GlassCard';
+import { ArrowLeft, Plus, Trash2, Edit2, GripVertical, CheckCircle2, Circle, Zap, X, FolderTree, Link, AlignLeft, CheckSquare, Type as TypeIcon, CreditCard } from 'lucide-react';
+
 import type { Project, Transaction, Routine } from '../../hooks/useAlDiaState';
 import { DEFAULT_INCOME_CATEGORIES, DEFAULT_EXPENSE_CATEGORIES } from '../../hooks/useAlDiaState';
 
@@ -188,39 +188,7 @@ export const ProjectDetailView = ({
         }
     };
 
-    const handleAddAccount = () => {
-        const option = prompt('¿Qué tipo de acción?\n1. Crear nueva cuenta\n2. Enlazar cuenta existente');
-        if (option === '1') {
-            const name = prompt('Nombre de la cuenta (ej: BCP, Yape, Efectivo):');
-            if (name) {
-                const newAccount = { 
-                    id: Date.now(), 
-                    name, 
-                    color: '#'+Math.floor(Math.random()*16777215).toString(16), 
-                    projectIds: [project.id] 
-                };
-                setAccounts([...accounts, newAccount]);
-            }
-        } else if (option === '2') {
-            const available = accounts.filter(acc => !acc.projectIds?.includes(project.id));
-            if (available.length === 0) {
-                alert('No hay otras cuentas para enlazar.');
-                return;
-            }
-            const list = available.map((acc, i) => `${i+1}. ${acc.name}`).join('\n');
-            const idxStr = prompt(`Selecciona una cuenta para enlazar:\n${list}`);
-            const idx = parseInt(idxStr || '0') - 1;
-            if (available[idx]) {
-                const target = available[idx];
-                const updated = accounts.map(acc => 
-                    acc.id === target.id 
-                        ? { ...acc, projectIds: [...(acc.projectIds || []), project.id] } 
-                        : acc
-                );
-                setAccounts(updated);
-            }
-        }
-    };
+
 
     return (
         <motion.div 

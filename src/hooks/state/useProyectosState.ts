@@ -7,6 +7,10 @@ export const useProyectosState = () => {
     const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
     const [rutinas, setRutinas] = useState<Routine[]>([]);
 
+    const reorderProjects = (newOrder: Project[]) => {
+        setProjects(newOrder);
+    };
+
     const addProject = (name: string, color: string, targetHoursPerWeek?: number) => {
         const newProject: Project = { 
             id: Date.now() + Math.random(), 
@@ -379,6 +383,7 @@ export const useProyectosState = () => {
         removeProjectObjective,
         addProjectNode,
         updateProjectNode,
-        removeProjectNode
+        removeProjectNode,
+        reorderProjects
     };
 };

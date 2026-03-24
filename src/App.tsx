@@ -187,6 +187,7 @@ function App() {
                 deleteProject={state.deleteProject}
                 updateProject={state.updateProject}
                 onOpenDetail={(id: number) => setSelectedProjectDetailId(id)}
+                reorderProjects={state.reorderProjects}
               />
             ) : activeTab === 'Stats' ? (
               <StatsDashboard

@@ -176,7 +176,7 @@ export const useAlDiaState = () => {
     const {
         projects, setProjects, timeBlocks, setTimeBlocks, rutinas, setRutinas,
         addProject, addProjectTask, toggleProjectTask, removeProjectTask,
-        promoteTaskToRoutine, updateProject, deleteProject, reorderProjectTasks,
+        promoteTaskToRoutine, updateProject, deleteProject, reorderProjectTasks, reorderProjects,
         addTimeBlock, removeTimeBlock,
         addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
         addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
@@ -463,7 +463,7 @@ export const useAlDiaState = () => {
         },
         removeTransaction, updateTransaction, updateTransactionGroup,
         // Proyectos
-        projects, addProject, addProjectTask, toggleProjectTask, removeProjectTask, reorderProjectTasks,
+        projects, addProject, addProjectTask, toggleProjectTask, removeProjectTask, reorderProjectTasks, reorderProjects,
         promoteTaskToRoutine, updateProject, deleteProject, updateProjectTask,
         addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
         timeBlocks, addTimeBlock, removeTimeBlock,
