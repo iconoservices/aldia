@@ -19,7 +19,7 @@ export const ProfileOverlay = ({ isOpen, onClose, clearAllData, preferences, upd
     const { isInstalled, install, canInstall } = usePWA();
     const [showIOSGuide, setShowIOSGuide] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
-    const [view, setView] = useState<'main' | 'prefs'>('main');
+    const [view, setView] = useState<'main' | 'prefs' | 'glossary'>('main');
 
     // Syncing local identity for guest users (simplified)
     const [guestName, setGuestName] = useState(() => localStorage.getItem('aldia_user_name') || 'Usuario AlDía');
@@ -193,7 +193,7 @@ export const ProfileOverlay = ({ isOpen, onClose, clearAllData, preferences, upd
                                 </div>
                             )}
 
-                            {view === 'prefs' && (
+                             {view === 'prefs' && (
                                 <div style={{ padding: '0.5rem 0' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                                         <button onClick={() => setView('main')} style={{ border: 'none', background: '#F5F5F5', padding: '8px', borderRadius: '50%', cursor: 'pointer', display: 'flex' }}>
@@ -228,6 +228,47 @@ export const ProfileOverlay = ({ isOpen, onClose, clearAllData, preferences, upd
                                         <p style={{ fontSize: '0.7rem', color: '#AAA', textAlign: 'center', marginTop: '1rem', fontWeight: 600 }}>
                                             Estas preferencias se sincronizan automáticamente con tu cuenta.
                                         </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {view === 'glossary' && (
+                                <div style={{ padding: '0.5rem 0' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                                        <button onClick={() => setView('main')} style={{ border: 'none', background: '#F5F5F5', padding: '8px', borderRadius: '50%', cursor: 'pointer', display: 'flex' }}>
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900 }}>Glosario</h3>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                                        <div style={{ padding: '1.2rem', background: '#F9F9F9', borderRadius: '24px', border: '1px solid #EEE' }}>
+                                            <h4 style={{ margin: 0, color: 'var(--domain-orange)', fontSize: '0.9rem', fontWeight: 900 }}>MISIÓN</h4>
+                                            <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: '#64748B', fontWeight: 600, lineHeight: 1.5 }}>
+                                                Es una acción específica con una fecha y hora determinada. Son las "tareas" que debes cumplir para avanzar en tus objetivos.
+                                            </p>
+                                        </div>
+
+                                        <div style={{ padding: '1.2rem', background: '#F9F9F9', borderRadius: '24px', border: '1px solid #EEE' }}>
+                                            <h4 style={{ margin: 0, color: 'var(--domain-green)', fontSize: '0.9rem', fontWeight: 900 }}>HÁBITO</h4>
+                                            <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: '#64748B', fontWeight: 600, lineHeight: 1.5 }}>
+                                                Acciones recurrentes que forman tu estilo de vida. No tienen una hora fija, pero se marcan cuando se cumplen durante el día.
+                                            </p>
+                                        </div>
+
+                                        <div style={{ padding: '1.2rem', background: '#F9F9F9', borderRadius: '24px', border: '1px solid #EEE' }}>
+                                            <h4 style={{ margin: 0, color: 'var(--domain-purple)', fontSize: '0.9rem', fontWeight: 900 }}>RUTINA</h4>
+                                            <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: '#64748B', fontWeight: 600, lineHeight: 1.5 }}>
+                                                Un conjunto de misiones que se repiten en un bloque de tiempo específico (ej: Rutina de Mañana, Rutina de Gym).
+                                            </p>
+                                        </div>
+
+                                        <div style={{ padding: '1.2rem', background: '#F9F9F9', borderRadius: '24px', border: '1px solid #EEE' }}>
+                                            <h4 style={{ margin: 0, color: 'var(--text-carbon)', fontSize: '0.9rem', fontWeight: 900 }}>OBJETIVO</h4>
+                                            <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: '#64748B', fontWeight: 600, lineHeight: 1.5 }}>
+                                                La meta final de un proyecto. Los objetivos se dividen en misiones para que sean alcanzables.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             )}

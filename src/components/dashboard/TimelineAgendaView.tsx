@@ -6,6 +6,7 @@ interface TimelineAgendaViewProps {
     calendarEvents: any[];
     projects: any[];
     rutinas?: any[];
+    habits?: any[];
     timeBlocks?: any[];
     onRemoveEvent?: (id: number) => void;
     onUpdateEvent?: (id: number, updates: any) => void;
@@ -15,9 +16,15 @@ interface TimelineAgendaViewProps {
     onUpdateTimeBlock?: (id: number, updates: any) => void;
     missions?: any[];
     onToggleMission?: (id: number) => void;
+    onToggleHabit?: (id: number, dayIdx: number) => void;
+    onToggleRoutineItem?: (routineId: number, itemId: number) => void;
 }
 
-export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], timeBlocks = [], missions = [], onRemoveEvent, onUpdateEvent, onRemoveRoutine, onUpdateRoutine, onRemoveTimeBlock, onUpdateTimeBlock, onToggleMission }: TimelineAgendaViewProps) => {
+export const TimelineAgendaView = ({ 
+    calendarEvents, projects, rutinas = [], habits = [], timeBlocks = [], missions = [], 
+    onRemoveEvent, onUpdateEvent, onRemoveRoutine, onUpdateRoutine, onRemoveTimeBlock, onUpdateTimeBlock, 
+    onToggleMission, onToggleHabit, onToggleRoutineItem 
+}: TimelineAgendaViewProps) => {
     const [viewMode, setViewMode] = useState<'timeline' | 'month' | 'appointments' | 'tasks'>('timeline');
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [editingItem, setEditingItem] = useState<{ type: 'calendar' | 'routine' | 'timeblock', data: any } | null>(null);
@@ -48,8 +55,9 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
         }
     }, [editingItem]);
     
-    // Formato YYYY-MM-DD local para comparación con eventos
+    // Formato YYYY-MM-DD local para comparación con eventos e identificación de día
     const todayStr = selectedDate.toLocaleDateString('en-CA');
+    const dayIdx = (selectedDate.getDay() + 6) % 7; // 0=Lunes, ..., 6=Domingo
     const isActualToday = todayStr === new Date().toLocaleDateString('en-CA');
     const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -87,6 +95,13 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
         setSelectedDate(newDate);
     };
 
+    // Helper: convierte "HH:MM" a minutos desde medianoche → directo a px (1 min = 1 px)
+    const toMin = (t?: string) => {
+        if (!t) return -1;
+        const [hh, mm] = t.split(':').map(Number);
+        return hh * 60 + (mm || 0);
+    };
+
     // 3. Filtrar entregas del proyecto para el día seleccionado
     const dayDeliveries = useMemo(() => {
         const delivs: any[] = [];
@@ -106,15 +121,15 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
         const items = (calendarEvents || []).filter(e => e.date === todayStr).map(e => ({
             ...e,
             itemType: 'event',
-            color: e.color || '#3b82f6'
+            color: e.color || '#3b82f6',
+            startMin: toMin(e.startTime),
+            endMin: toMin(e.endTime)
         }));
         return items.sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
     }, [calendarEvents, todayStr]);
 
     // 5. Rutinas del día con Reset Visual
     const dayRutinas = useMemo(() => {
-        const dayIdx = selectedDate.getDay() === 0 ? 6 : selectedDate.getDay() - 1; // Lunes = 0
-        
         return rutinas.filter(r => r.isActive && r.repeatDays?.includes(dayIdx)).map(r => ({
             ...r,
             items: (r.items || []).map((it: any) => ({
@@ -123,12 +138,19 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                 completed: it.completed && it.completedDate === todayStr
             }))
         }));
-    }, [rutinas, selectedDate, todayStr]);
+    }, [rutinas, dayIdx, todayStr]);
 
-    // 5.1 Misiones (Tareas) del día
+    // 5.1 Misiones (Tareas) unificadas para la lista superior
     const dayMissions = useMemo(() => {
-        return (missions || []).filter(m => m.dueDate === todayStr);
-    }, [missions, todayStr]);
+        // Solo Misiones (Tareas específicas con fecha o repetición)
+        const dayMissionsList = (missions || []).filter(m => {
+            if (m.dueDate === todayStr) return true;
+            if (m.repeatDays?.includes(dayIdx)) return true;
+            return false;
+        }).map(m => ({ ...m, type: 'mission' }));
+
+        return dayMissionsList.sort((a, b) => (a.dueTime || '99:99').localeCompare(b.dueTime || '99:99'));
+    }, [missions, todayStr, dayIdx]);
 
     // 6. Vista Mensual Logic
     const monthDays = useMemo(() => {
@@ -149,13 +171,6 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
 
     const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     const dayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
-
-    // Helper: convierte "HH:MM" a minutos desde medianoche → directo a px (1 min = 1 px)
-    const toMin = (t?: string) => {
-        if (!t) return -1;
-        const [hh, mm] = t.split(':').map(Number);
-        return hh * 60 + (mm || 0);
-    };
 
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8FAFC', position: 'relative', overflow: 'hidden' }}>
@@ -263,8 +278,8 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
 
                         {/* Citas — overlay */}
                         {dayEvents.map((item: any) => {
-                            const startPx = toMin(item.startTime);
-                            const endPx = toMin(item.endTime);
+                            const startPx = item.startMin;
+                            const endPx = item.endMin;
                             if (startPx < 0) return null;
                             const evH = endPx > startPx ? endPx - startPx : 52;
                             return (
@@ -386,24 +401,25 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
 
                 {viewMode === 'tasks' && (
                     <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <h3 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#64748B', marginBottom: '5px' }}>TAREAS PARA ESTE DÍA</h3>
+                        <h3 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#64748B', marginBottom: '10px' }}>TAREAS PARA ESTE DÍA</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {dayMissions.length > 0 ? dayMissions.map((m: any) => (
                                 <div 
                                     key={m.id} 
                                     style={{ 
                                         background: 'white', 
-                                        padding: '16px', 
+                                        padding: '14px 18px', 
                                         borderRadius: '20px', 
                                         display: 'flex', 
                                         alignItems: 'center', 
                                         gap: '12px',
                                         boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                                        border: m.completed ? '1px solid #E2E8F0' : '1px solid transparent'
+                                        border: m.completed ? '1px solid #E2E8F0' : '1px solid transparent',
+                                        opacity: m.completed ? 0.7 : 1
                                     }}
                                 >
                                     <button 
-                                        onClick={() => onToggleMission && onToggleMission(m.id)}
+                                        onClick={() => onToggleMission?.(m.id)}
                                         style={{ 
                                             width: '24px', height: '24px', borderRadius: '8px', 
                                             border: m.completed ? 'none' : '2px solid #E2E8F0',
@@ -414,17 +430,23 @@ export const TimelineAgendaView = ({ calendarEvents, projects, rutinas = [], tim
                                     >
                                         {m.completed && <X size={14} color="white" strokeWidth={4} />}
                                     </button>
-                                    <span style={{ 
-                                        fontSize: '0.95rem', fontWeight: 700, 
-                                        color: m.completed ? '#94A3B8' : 'var(--text-carbon)',
-                                        textDecoration: m.completed ? 'line-through' : 'none'
-                                    }}>
-                                        {m.text}
-                                    </span>
-                                    {m.q && <span style={{ marginLeft: 'auto', fontSize: '0.65rem', fontWeight: 900, background: '#F1F5F9', padding: '4px 8px', borderRadius: '8px', color: '#64748B' }}>{m.q}</span>}
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: m.completed ? '#94A3B8' : 'var(--text-carbon)', textDecoration: m.completed ? 'line-through' : 'none' }}>
+                                            {m.text}
+                                        </div>
+                                        {m.dueTime && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                                <Clock size={10} color="var(--domain-orange)" />
+                                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--domain-orange)' }}>{m.dueTime}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )) : (
-                                <div style={{ padding: '3rem', textAlign: 'center', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: 700 }}>No hay tareas para hoy</div>
+                                <div style={{ padding: '3rem', textAlign: 'center', color: '#CBD5E1' }}>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800 }}>No hay misiones para hoy</p>
+                                    <p style={{ margin: '4px 0 0 0', fontSize: '0.7rem', fontWeight: 600 }}>Tus hábitos y rutinas están en la pestaña Vida</p>
+                                </div>
                             )}
                         </div>
                     </div>

@@ -108,7 +108,24 @@ export const useProyectosState = () => {
                     if (it.id !== itemId) return it;
                     const newCompleted = !it.completed;
                     const todayStr = new Date().toLocaleDateString('en-CA');
-                    // Sync linked project task if exists
+                    // Sync linked project node if exists
+                    if (it.linkedProjectId && it.linkedObjectiveId) {
+                        setProjects(prevP => prevP.map(p => {
+                            if (p.id !== it.linkedProjectId) return p;
+                            return {
+                                ...p,
+                                objectives: (p.objectives || []).map(o => {
+                                    if (o.id !== it.linkedObjectiveId) return o;
+                                    if (it.linkedNodeId) {
+                                        return { ...o, nodes: (o.nodes || []).map(n => n.id === it.linkedNodeId ? { ...n, completed: newCompleted } : n) };
+                                    } else {
+                                        return { ...o, completed: newCompleted };
+                                    }
+                                })
+                            };
+                        }));
+                    }
+                    // Original checklist sync
                     if (it.linkedProjectId && it.linkedTaskId) {
                         setProjects(prevP => prevP.map(p => {
                             if (p.id !== it.linkedProjectId) return p;
@@ -127,7 +144,6 @@ export const useProyectosState = () => {
         
         if (task && task.text) {
             const newItemId = Date.now() + Math.random();
-            // Add to routine with link back to project task
             setRutinas(prevRutinas => prevRutinas.map(r => {
                 if (r.id !== routineId) return r;
                 return {
@@ -141,7 +157,6 @@ export const useProyectosState = () => {
                     }]
                 };
             }));
-            // Update project task with link to routine item
             setProjects(prev => prev.map(p => {
                 if (p.id !== projectId) return p;
                 return {
@@ -151,6 +166,71 @@ export const useProyectosState = () => {
                         linkedRoutineId: routineId,
                         linkedRoutineItemId: newItemId
                     } : t)
+                };
+            }));
+        }
+    };
+
+    const promoteNodeToRoutine = (projectId: number, objectiveId: number, nodeId: number | undefined, routineId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        let text = '';
+        let completed = false;
+
+        if (nodeId) {
+            const obj = project?.objectives?.find(o => o.id === objectiveId);
+            const node = obj?.nodes?.find(n => n.id === nodeId);
+            if (node) {
+                text = node.title;
+                completed = !!node.completed;
+            }
+        } else {
+            const obj = project?.objectives?.find(o => o.id === objectiveId);
+            if (obj) {
+                text = obj.title;
+                completed = !!obj.completed;
+            }
+        }
+
+        if (text) {
+            const newItemId = Date.now() + Math.random();
+            setRutinas(prevRutinas => prevRutinas.map(r => {
+                if (r.id !== routineId) return r;
+                return {
+                    ...r,
+                    items: [...r.items, { 
+                        id: newItemId, 
+                        text, 
+                        completed,
+                        linkedProjectId: projectId,
+                        linkedObjectiveId: objectiveId,
+                        linkedNodeId: nodeId
+                    }]
+                };
+            }));
+            
+            setProjects(prev => prev.map(p => {
+                if (p.id !== projectId) return p;
+                return {
+                    ...p,
+                    objectives: (p.objectives || []).map(o => {
+                        if (o.id !== objectiveId) return o;
+                        if (nodeId) {
+                            return {
+                                ...o,
+                                nodes: (o.nodes || []).map(n => n.id === nodeId ? {
+                                    ...n,
+                                    linkedRoutineId: routineId,
+                                    linkedRoutineItemId: newItemId
+                                } : n)
+                            };
+                        } else {
+                            return {
+                                ...o,
+                                linkedRoutineId: routineId,
+                                linkedRoutineItemId: newItemId
+                            };
+                        }
+                    })
                 };
             }));
         }
@@ -378,9 +458,11 @@ export const useProyectosState = () => {
         updateProjectTask,
         addProjectCategory,
         removeProjectCategory,
+        removeProjectNode,
         reorderProjectTasks: (projectId: number, newChecklist: { id: number; text: string; completed: boolean; linkedRoutineId?: number; linkedRoutineItemId?: number }[]) => {
             setProjects(prev => prev.map(p => p.id === projectId ? { ...p, checklist: newChecklist } : p));
         },
+        promoteNodeToRoutine,
         addRoutine,
         removeRoutine,
         reorderRoutineItems,
@@ -389,7 +471,6 @@ export const useProyectosState = () => {
         removeProjectObjective,
         addProjectNode,
         updateProjectNode,
-        removeProjectNode,
         reorderProjects
     };
 };

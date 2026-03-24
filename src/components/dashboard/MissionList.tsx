@@ -9,7 +9,7 @@ interface MissionListProps {
     missions: Mission[];
     toggleMission: (id: number) => void;
     reorderMissions?: (newMissions: Mission[]) => void;
-    toggleHabit?: (id: number, dayIndex: number) => void;
+    toggleHabit?: (id: number, dayIndex?: number, date?: string) => void;
     toggleRoutineItem?: (routineId: number, itemId: number) => void;
     onOpenNote?: (id: number) => void;
     onEditMission?: (mission: Mission) => void;
@@ -36,8 +36,8 @@ export const MissionList = ({
             if (isRoutine && routineId && toggleRoutineItem) {
                 toggleRoutineItem(routineId, id);
             } else if (isHabit && toggleHabit) {
-                const todayIndex = (new Date().getDay() + 6) % 7;
-                toggleHabit(id, todayIndex);
+                const todayStr = new Date().toLocaleDateString('en-CA');
+                toggleHabit(id, undefined, todayStr);
             } else {
                 toggleMission(id);
             }
@@ -60,8 +60,8 @@ export const MissionList = ({
         if (isRoutine && routineId && toggleRoutineItem) {
             toggleRoutineItem(routineId, id);
         } else if (isHabit && toggleHabit) {
-            const todayIndex = (new Date().getDay() + 6) % 7;
-            toggleHabit(id, todayIndex);
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            toggleHabit(id, undefined, todayStr);
         } else {
             toggleMission(id);
         }

@@ -126,7 +126,7 @@ const ModernPicker = ({ isOpen, onClose, onSave, data, anchorRect }: any) => {
     );
 };
 
-const ProjectObjectiveItem = ({ project, obj, updateProjectObjective, removeProjectObjective, addProjectNode, updateProjectNode, removeProjectNode, addMission, onOpenPicker }: any) => {
+const ProjectObjectiveItem = ({ project, obj, updateProjectObjective, removeProjectObjective, addProjectNode, updateProjectNode, removeProjectNode, addMission, onOpenPicker, rutinas, promoteNodeToRoutine }: any) => {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [titleVal, setTitleVal] = useState(obj.title);
 
@@ -193,13 +193,31 @@ const ProjectObjectiveItem = ({ project, obj, updateProjectObjective, removeProj
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                     <button 
                         onClick={() => {
-                            if (addMission) {
-                                addMission(obj.title, '...', 'none', undefined, ['PROYECTO', 'HITOS'], obj.dueDate, undefined, project.id);
-                                alert('¡Objetivo enviado a tu Agenda! 🚀');
+                            const opt = prompt(`¿Dónde quieres enviar este objetivo?\n1. A la Agenda (Misión única)\n2. A una Rutina (Tarea repetitiva)`);
+                            
+                            if (opt === '1') {
+                                if (addMission) {
+                                    addMission(obj.title, '...', 'none', undefined, ['PROYECTO', 'HITOS'], obj.dueDate, undefined, project.id);
+                                    alert('¡Objetivo enviado a tu Agenda! 🚀');
+                                }
+                            } else if (opt === '2') {
+                                if (rutinas.length === 0) { alert('No tienes rutinas disponibles.'); return; }
+                                let routineId = rutinas[0].id;
+                                if (rutinas.length > 1) {
+                                    const list = rutinas.map((r, i) => `${i+1}. ${r.title}`).join('\n');
+                                    const idxStr = prompt(`¿A qué rutina enviarla?\n${list}`);
+                                    const idx = parseInt(idxStr || '0') - 1;
+                                    if (!rutinas[idx]) return;
+                                    routineId = rutinas[idx].id;
+                                }
+                                if (promoteNodeToRoutine) {
+                                    promoteNodeToRoutine(project.id, obj.id, undefined, routineId);
+                                    alert('¡Objetivo vinculado a la rutina! ⚡');
+                                }
                             }
                         }} 
-                        style={{ background: 'transparent', border: 'none', color: '#8b5cf6', cursor: 'pointer', padding: 0 }}
-                        title="Sincronizar Objetivo con Agenda"
+                        style={{ background: 'transparent', border: 'none', color: obj.linkedRoutineId ? '#86efac' : '#8b5cf6', cursor: 'pointer', padding: 0 }}
+                        title="Enviar a Agenda o Rutina"
                     ><Zap size={14} /></button>
 
                     <button 
@@ -235,6 +253,8 @@ const ProjectObjectiveItem = ({ project, obj, updateProjectObjective, removeProj
                         removeProjectNode={removeProjectNode}
                         addMission={addMission}
                         onOpenPicker={onOpenPicker}
+                        rutinas={rutinas}
+                        promoteNodeToRoutine={promoteNodeToRoutine}
                     />
                 ))}
                 
@@ -256,7 +276,7 @@ const ProjectObjectiveItem = ({ project, obj, updateProjectObjective, removeProj
         </div>
     );
 };
-const ProjectNodeItem = ({ project, objectiveId, node, updateProjectNode, removeProjectNode, addMission, onOpenPicker }: any) => {
+const ProjectNodeItem = ({ project, objectiveId, node, updateProjectNode, removeProjectNode, addMission, onOpenPicker, rutinas, promoteNodeToRoutine }: any) => {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [titleVal, setTitleVal] = useState(node.title);
     const [newSubTask, setNewSubTask] = useState('');
@@ -380,13 +400,31 @@ const ProjectNodeItem = ({ project, objectiveId, node, updateProjectNode, remove
                     
                     <button 
                         onClick={() => {
-                            if (addMission) {
-                                addMission(node.title, '...', 'none', undefined, ['PROYECTO'], node.dueDate, undefined, project.id);
-                                alert('¡Enviado a tu Agenda! 🚀');
+                            const opt = prompt(`¿Dónde quieres enviar esta meta?\n1. A la Agenda (Misión única)\n2. A una Rutina (Tarea repetitiva)`);
+                            
+                            if (opt === '1') {
+                                if (addMission) {
+                                    addMission(node.title, '...', 'none', undefined, ['PROYECTO'], node.dueDate, undefined, project.id);
+                                    alert('¡Enviado a tu Agenda! 🚀');
+                                }
+                            } else if (opt === '2') {
+                                if (rutinas.length === 0) { alert('No tienes rutinas disponibles.'); return; }
+                                let routineId = rutinas[0].id;
+                                if (rutinas.length > 1) {
+                                    const list = rutinas.map((r, i) => `${i+1}. ${r.title}`).join('\n');
+                                    const idxStr = prompt(`¿A qué rutina enviarla?\n${list}`);
+                                    const idx = parseInt(idxStr || '0') - 1;
+                                    if (!rutinas[idx]) return;
+                                    routineId = rutinas[idx].id;
+                                }
+                                if (promoteNodeToRoutine) {
+                                    promoteNodeToRoutine(project.id, objectiveId, node.id, routineId);
+                                    alert('¡Meta vinculada a la rutina! ⚡');
+                                }
                             }
                         }} 
-                        style={{ background: 'transparent', border: 'none', color: '#8b5cf6', cursor: 'pointer', padding: 0 }}
-                        title="Sincronizar con Agenda (Misión)"
+                        style={{ background: 'transparent', border: 'none', color: node.linkedRoutineId ? '#86efac' : '#8b5cf6', cursor: 'pointer', padding: 0 }}
+                        title="Enviar a Agenda o Rutina"
                     ><Zap size={14} /></button>
 
                     <button 
@@ -450,6 +488,7 @@ interface ProjectDetailViewProps {
     updateProjectNode?: (projectId: number, objectiveId: number, nodeId: number, updates: any) => void;
     removeProjectNode?: (projectId: number, objectiveId: number, nodeId: number) => void;
     addMission?: (text: string, q?: string, repeat?: 'none' | 'daily' | 'weekly' | 'monthly', noteId?: number, labels?: string[], dueDate?: string, dueTime?: string, projectId?: number) => void;
+    promoteNodeToRoutine?: (projectId: number, objectiveId: number, nodeId: number | undefined, routineId: number) => void;
     onOpenPicker?: (picker: any) => void;
 }
 
@@ -462,7 +501,7 @@ export const ProjectDetailView = ({
     projects, updateProject, onOpenSubProject,
     addProjectObjective, updateProjectObjective, removeProjectObjective,
     addProjectNode, updateProjectNode, removeProjectNode,
-    addMission
+    addMission, promoteNodeToRoutine
 }: ProjectDetailViewProps) => {
     const [newTaskText, setNewTaskText] = useState('');
     const [newItemText, setNewItemText] = useState('');
@@ -640,6 +679,8 @@ export const ProjectDetailView = ({
                                                 removeProjectNode={removeProjectNode}
                                                 addMission={addMission}
                                                 onOpenPicker={(p: any) => setActivePicker(p)}
+                                                rutinas={rutinas}
+                                                promoteNodeToRoutine={promoteNodeToRoutine}
                                             />
                                         ))}
                                     </div>

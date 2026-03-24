@@ -118,6 +118,7 @@ function App() {
                 calendarEvents={state.agenda}
                 projects={state.projects}
                 rutinas={state.rutinas}
+                habits={state.habits}
                 timeBlocks={state.timeBlocks}
                 missions={state.missions}
                 onRemoveEvent={state.removeCalendarEvent}
@@ -127,6 +128,8 @@ function App() {
                 onRemoveTimeBlock={state.removeTimeBlock}
                 onUpdateTimeBlock={state.updateTimeBlock}
                 onToggleMission={state.toggleMission}
+                onToggleHabit={state.toggleHabit}
+                onToggleRoutineItem={state.toggleRoutineItem}
               />
             ) : activeTab === 'Vida' ? (
               <VidaDashboard
@@ -240,6 +243,7 @@ function App() {
         rutinas={state.rutinas}
         agenda={state.agenda}
         fixedExpenses={state.fixedExpenses}
+        habits={state.habits}
         markFixedExpensePaid={state.markFixedExpensePaid}
       />
 

@@ -65,16 +65,33 @@ export const useMisionesState = () => {
         setMissions(prev => [newMission, ...prev]);
     };
 
-    const toggleHabit = (habitId: number, dayIndex: number) => {
+    const toggleHabit = (habitId: number, dayIndex?: number, date?: string) => {
         setHabits(prev => prev.map(h => {
             if (h.id !== habitId) return h;
-            const alreadyCompleted = h.completedDays.includes(dayIndex);
-            return {
-                ...h,
-                completedDays: alreadyCompleted
-                    ? h.completedDays.filter(d => d !== dayIndex)
-                    : [...h.completedDays, dayIndex]
-            };
+            
+            if (dayIndex !== undefined) {
+                // Toggle Schedule
+                const alreadyScheduled = (h.schedule || []).includes(dayIndex);
+                return {
+                    ...h,
+                    schedule: alreadyScheduled
+                        ? h.schedule.filter(d => d !== dayIndex)
+                        : [...(h.schedule || []), dayIndex]
+                };
+            }
+
+            if (date) {
+                // Toggle Completion
+                const alreadyCompleted = (h.completedDates || []).includes(date);
+                return {
+                    ...h,
+                    completedDates: alreadyCompleted
+                        ? h.completedDates.filter(d => d !== date)
+                        : [...(h.completedDates || []), date]
+                };
+            }
+
+            return h;
         }));
     };
 
@@ -82,7 +99,8 @@ export const useMisionesState = () => {
         const newHabit: Habit = {
             id: Date.now() + Math.random(),
             name,
-            completedDays: []
+            schedule: [0, 1, 2, 3, 4, 5, 6], // Por defecto todos los días
+            completedDates: []
         };
         setHabits(prev => [newHabit, ...prev]);
     };
@@ -121,7 +139,7 @@ export const useMisionesState = () => {
     const missionFocusScore = totalMissionsCount > 0 ? (completedMissionsCount / totalMissionsCount) * 100 : 0;
 
     const habitPerformance = (Array.isArray(habits) && habits.length > 0)
-        ? (habits.reduce((acc, h) => acc + (Array.isArray(h?.completedDays) ? h.completedDays.length : 0), 0) / (habits.length * 7)) * 100
+        ? (habits.reduce((acc, h) => acc + (Array.isArray(h?.completedDates) ? h.completedDates.length : 0), 0) / (habits.length * 30)) * 100
         : 0;
 
     const performanceScore = (missionFocusScore + habitPerformance) / 2;

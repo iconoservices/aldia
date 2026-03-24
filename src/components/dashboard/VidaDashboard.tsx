@@ -28,6 +28,8 @@ export const VidaDashboard = ({
     const [viewMode, setViewMode] = useState<'hoy' | 'semana'>('hoy');
     const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
     const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    const normalizedDay = (new Date().getDay() + 6) % 7;
 
     return (
         <div style={{ paddingBottom: '5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -73,37 +75,42 @@ export const VidaDashboard = ({
                                     <div style={{ width: '4px', height: '14px', borderRadius: '4px', background: 'var(--domain-purple)' }}></div>
                                     <div>
                                         <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900, color: 'var(--text-carbon)' }}>{habit.name}</h4>
-                                        <p style={{ margin: 0, fontSize: '0.6rem', color: '#BBB', fontWeight: 800, textTransform: 'uppercase' }}>Racha: {habit.completedDays.length}</p>
+                                        <p style={{ margin: 0, fontSize: '0.6rem', color: '#BBB', fontWeight: 800, textTransform: 'uppercase' }}>Programado: {habit.schedule?.length || 0} días</p>
                                     </div>
                                 </div>
 
                                 <div style={{ display: 'flex', gap: '4px', background: '#F9F9F9', padding: '4px', borderRadius: '8px' }}>
                                     {days.map((day, idx) => {
-                                        const isCompleted = habit.completedDays.includes(idx);
+                                        const isScheduled = (habit.schedule || []).includes(idx);
+                                        const isCompletedToday = (habit.completedDates || []).includes(todayStr);
                                         return (
                                             <div
                                                 key={idx}
                                                 onClick={() => toggleHabit(habit.id, idx)}
                                                 style={{
-                                                    width: '16px',
-                                                    height: '16px',
-                                                    borderRadius: '4px',
-                                                    background: isCompleted ? 'var(--domain-purple)' : 'white',
+                                                    width: '18px',
+                                                    height: '18px',
+                                                    borderRadius: '6px',
+                                                    background: isScheduled ? 'var(--domain-purple)' : 'white',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     cursor: 'pointer',
-                                                    boxShadow: isCompleted ? '0 2px 4px rgba(138, 92, 246, 0.2)' : 'none',
-                                                    border: isCompleted ? 'none' : '1px solid #EEE'
+                                                    boxShadow: isScheduled ? '0 2px 8px rgba(138, 92, 246, 0.25)' : 'none',
+                                                    border: isScheduled ? 'none' : '1px solid #EEE',
+                                                    position: 'relative'
                                                 }}
                                             >
                                                 <span style={{ 
-                                                    fontSize: '0.55rem', 
+                                                    fontSize: '0.65rem', 
                                                     fontWeight: 900, 
-                                                    color: isCompleted ? 'white' : '#CCC' 
+                                                    color: isScheduled ? 'white' : '#CCC' 
                                                 }}>
                                                     {day}
                                                 </span>
+                                                {idx === normalizedDay && isCompletedToday && (
+                                                    <div style={{ position: 'absolute', top: -2, right: -2, width: '6px', height: '6px', borderRadius: '50%', background: 'var(--domain-green)', border: '1px solid white' }} />
+                                                )}
                                             </div>
                                         );
                                     })}

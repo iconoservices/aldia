@@ -9,10 +9,11 @@ interface DayTimelineViewProps {
     rutinas: Routine[];
     agenda: CalendarEvent[];
     fixedExpenses: FixedExpense[];
+    habits: any[];
     markFixedExpensePaid: (id: number, monthStr: string) => void;
 }
 
-export const DayTimelineView = ({ isOpen, onClose, missions, rutinas, agenda, fixedExpenses, markFixedExpensePaid }: DayTimelineViewProps) => {
+export const DayTimelineView = ({ isOpen, onClose, missions, rutinas, agenda, fixedExpenses, habits, markFixedExpensePaid }: DayTimelineViewProps) => {
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday...
     // Adjust dayOfWeek to match rutinas (0=Mon, 6=Sun if following common ISO, but let's check useAlDiaState)
@@ -54,14 +55,27 @@ export const DayTimelineView = ({ isOpen, onClose, missions, rutinas, agenda, fi
     });
 
     // Misiones de hoy
-    missions.filter(m => !m.completed && (m.dueDate === todayStr || !m.dueDate)).forEach(m => {
+    missions.filter(m => (m.dueDate === todayStr || !m.dueDate) && !m.isRoutine && !m.isHabit).forEach(m => {
         timelineItems.push({
-            time: m.dueTime || '00:00', // Si no tiene hora, al inicio o manejamos "Todo el día"
+            time: m.dueTime || '09:00', // Default if no time
             type: 'mission',
             label: m.text,
             q: m.q,
             completed: m.completed,
             id: `m-${m.id}`
+        });
+    });
+
+    // Hábitos de hoy
+    habits.filter(h => (h.schedule || []).includes(normalizedDay)).forEach(h => {
+        const isCompleted = (h.completedDates || []).includes(todayStr);
+        timelineItems.push({
+            time: '07:00', // Hábitos suelen ser temprano o sin hora, los ponemos arriba
+            type: 'habit',
+            label: h.name,
+            completed: isCompleted,
+            color: 'var(--domain-purple)',
+            id: `h-${h.id}`
         });
     });
 
@@ -168,29 +182,21 @@ export const DayTimelineView = ({ isOpen, onClose, missions, rutinas, agenda, fi
                                                 <h4 style={cardTitleStyle}>{item.label}</h4>
                                             </div>
                                             
-                                            {(item.type === 'mission' || item.type === 'fixed-expense') && (
+                                            {(item.type === 'mission' || item.type === 'fixed-expense' || item.type === 'habit') && (
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    {item.type === 'fixed-expense' && (
-                                                        <button 
-                                                            onClick={() => {
-                                                                if (!item.completed) markFixedExpensePaid(item.expenseId, currentMonthStr);
-                                                            }}
-                                                            style={{
-                                                                background: 'transparent', border: 'none', cursor: item.completed ? 'default' : 'pointer', padding: 0,
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                            }}
-                                                        >
+                                                    {item.type !== 'mission' && (
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                             {item.completed ? <CheckCircle2 size={16} color="var(--domain-green)" /> : <Circle size={16} color="#CBD5E1" />}
-                                                        </button>
+                                                        </div>
                                                     )}
-                                                    <span style={{ 
+                                                    {item.q && <span style={{ 
                                                         fontSize: '0.65rem', 
                                                         fontWeight: 800, 
                                                         background: item.type === 'fixed-expense' ? '#DCFCE7' : '#EEE', 
                                                         padding: '2px 6px', 
                                                         borderRadius: '6px',
                                                         color: item.type === 'fixed-expense' ? 'var(--domain-green)' : '#888'
-                                                    }}>{item.q}</span>
+                                                    }}>{item.q}</span>}
                                                 </div>
                                             )}
 

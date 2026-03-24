@@ -37,7 +37,17 @@ export interface Routine {
     repeatDays?: number[]; // [0,1,2,3,4,5,6]
     startTime?: string;
     endTime?: string;
-    items: { id: number; text: string; completed: boolean; time?: string; linkedProjectId?: number; linkedTaskId?: number; completedDate?: string }[];
+    items: { 
+        id: number; 
+        text: string; 
+        completed: boolean; 
+        time?: string; 
+        linkedProjectId?: number; 
+        linkedTaskId?: number;
+        linkedObjectiveId?: number;
+        linkedNodeId?: number;
+        completedDate?: string;
+    }[];
 }
 
 export interface Transaction {
@@ -85,7 +95,8 @@ export interface CalendarEvent {
 export interface Habit {
     id: number;
     name: string;
-    completedDays: number[]; // Array de índices 0-6 (L-D)
+    schedule: number[]; // Array de índices 0-6 (L-D) - Días que debe aparecer
+    completedDates: string[]; // Array de fechas YYYY-MM-DD en que se completó
 }
 
 export interface TimeBlock {
@@ -114,6 +125,8 @@ export interface ProjectNode {
     subItems?: { id: number; text: string; completed: boolean }[];
     dueDate?: string; // YYYY-MM-DD
     color?: string; // Color específico para esta meta/entrega
+    linkedRoutineId?: number;
+    linkedRoutineItemId?: number;
 }
 
 export interface ProjectObjective {
@@ -124,6 +137,8 @@ export interface ProjectObjective {
     dueDate?: string; // YYYY-MM-DD
     color?: string; // Color para el objetivo/entrega mayor
     group?: string; // Grupo/Categoría (ej: "Entregas", "Ventas")
+    linkedRoutineId?: number;
+    linkedRoutineItemId?: number;
 }
 
 export interface Project {
@@ -188,7 +203,7 @@ export const useAlDiaState = () => {
         updateRoutine, addRoutine, removeRoutine, updateProjectTask,
         addProjectCategory, removeProjectCategory, reorderRoutineItems,
         addProjectObjective, updateProjectObjective, removeProjectObjective,
-        addProjectNode, updateProjectNode, removeProjectNode
+        addProjectNode, updateProjectNode, removeProjectNode, promoteNodeToRoutine
     } = useProyectosState();
 
     const {
@@ -397,14 +412,16 @@ export const useAlDiaState = () => {
     const todayStr = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
     const todayIndex = useMemo(() => (new Date().getDay() + 6) % 7, []); // 0=Mon
 
-    const habitMissions = useMemo(() => habits.map(h => ({
-        id: h.id,
-        uid: `habit-${h.id}`,
-        text: h.name,
-        completed: h.completedDays?.includes(todayIndex),
-        q: 'Q2' as const, repeat: 'none' as const, critical: false, isHabit: true,
-        habitCount: h.completedDays?.length || 0
-    })), [habits, todayIndex]);
+    const habitMissions = useMemo(() => habits
+        .filter(h => h.schedule?.includes(todayIndex))
+        .map(h => ({
+            id: h.id,
+            uid: `habit-${h.id}`,
+            text: h.name,
+            completed: h.completedDates?.includes(todayStr),
+            q: 'Q2' as const, repeat: 'none' as const, critical: false, isHabit: true,
+            habitCount: h.completedDates?.length || 0
+        })), [habits, todayIndex, todayStr]);
 
     const routineMissions = useMemo(() => rutinas
         .filter(r => r.isActive && r.repeatDays?.includes(todayIndex))
@@ -469,15 +486,14 @@ export const useAlDiaState = () => {
         removeTransaction, updateTransaction, updateTransactionGroup,
         // Proyectos
         projects, addProject, addProjectTask, toggleProjectTask, removeProjectTask, reorderProjectTasks, reorderProjects,
-        promoteTaskToRoutine, updateProject, deleteProject, updateProjectTask,
+        promoteTaskToRoutine, promoteNodeToRoutine, updateProject, deleteProject, updateProjectTask,
         addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
-        timeBlocks, addTimeBlock, removeTimeBlock, updateTimeBlock,
-        rutinas, addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
-        updateRoutine, addRoutine, removeRoutine, addProjectCategory, removeProjectCategory,
-        reorderRoutineItems,
-        // Objetivos y Tareas Profundas (Niveles 2 y 3)
         addProjectObjective, updateProjectObjective, removeProjectObjective,
         addProjectNode, updateProjectNode, removeProjectNode,
+        addProjectCategory, removeProjectCategory,
+        timeBlocks, addTimeBlock, removeTimeBlock, updateTimeBlock,
+        rutinas, addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
+        updateRoutine, addRoutine, removeRoutine, reorderRoutineItems,
         // Otros
         notes, addNote, removeNote, toggleNoteItem, updateNote,
         accounts, setAccounts,
