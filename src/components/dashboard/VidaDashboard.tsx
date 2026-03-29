@@ -40,6 +40,13 @@ export const VidaDashboard = ({
                     gap: 1.5rem;
                     align-items: start;
                 }
+                .time-input-clean::-webkit-calendar-picker-indicator {
+                    display: none;
+                    -webkit-appearance: none;
+                }
+                .time-input-clean {
+                    text-align: center;
+                }
                 @media (min-width: 1024px) {
                     .vida-layout {
                         grid-template-columns: 380px 1fr;
@@ -318,14 +325,16 @@ export const VidaDashboard = ({
                                                     type="time" 
                                                     value={rutina.startTime || ''} 
                                                     onChange={(e) => updateRoutine(rutina.id, { startTime: e.target.value })}
-                                                    style={{ border: 'none', background: 'transparent', fontSize: '0.65rem', fontWeight: 800, color: '#666', outline: 'none', width: '45px' }}
+                                                    className="time-input-clean"
+                                                    style={{ border: 'none', background: 'transparent', fontSize: '0.65rem', fontWeight: 800, color: '#666', outline: 'none', width: '75px' }}
                                                 />
                                                 <span style={{ fontSize: '0.65rem', color: '#CCC' }}>-</span>
                                                 <input 
                                                     type="time" 
                                                     value={rutina.endTime || ''} 
                                                     onChange={(e) => updateRoutine(rutina.id, { endTime: e.target.value })}
-                                                    style={{ border: 'none', background: 'transparent', fontSize: '0.65rem', fontWeight: 800, color: '#666', outline: 'none', width: '45px' }}
+                                                    className="time-input-clean"
+                                                    style={{ border: 'none', background: 'transparent', fontSize: '0.65rem', fontWeight: 800, color: '#666', outline: 'none', width: '75px' }}
                                                 />
                                             </div>
                                             {/* FB Style Switch */}
@@ -407,7 +416,8 @@ export const VidaDashboard = ({
                                                                     value={item.time || ''} 
                                                                     onClick={(e) => e.stopPropagation()}
                                                                     onChange={(e) => updateRoutineItem(rutina.id, item.id, { time: e.target.value })}
-                                                                    style={{ border: 'none', background: 'transparent', fontSize: '0.65rem', fontWeight: 850, color: '#555', outline: 'none', width: '45px' }}
+                                                                    className="time-input-clean"
+                                                                    style={{ border: 'none', background: 'transparent', fontSize: '0.65rem', fontWeight: 850, color: '#555', outline: 'none', width: '70px' }}
                                                                 />
                                                             </div>
 
