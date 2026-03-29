@@ -1,4 +1,4 @@
-import { Plus, Check, Trash2, Calendar, LayoutGrid, Clock, Edit2, GripVertical } from 'lucide-react';
+import { Plus, Check, Trash2, Calendar, LayoutGrid, Clock, Edit2, GripVertical, Leaf } from 'lucide-react';
 import type { Habit, Routine } from '../../hooks/useAlDiaState';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useState } from 'react';
@@ -7,7 +7,7 @@ import { RoutineEditOverlay } from '../features/RoutineEditOverlay';
 interface VidaProps {
     habits: Habit[];
     toggleHabit: (id: number, dayIndex: number) => void;
-    addHabit: (name: string) => void;
+    addHabit: (name: string, schedule?: number[], linkedRoutineId?: number, linkedRoutineItemId?: number) => void;
     removeHabit: (id: number) => void;
     rutinas: Routine[];
     addRoutineItem: (routineId: number, text: string) => void;
@@ -83,7 +83,17 @@ export const VidaDashboard = ({
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <div 
                                         onClick={() => {
-                                            if(confirm(`¿Borrar hábito "${habit.name}"?`)) removeHabit(habit.id);
+                                            if (confirm(`¿Borrar hábito "${habit.name}"?`)) {
+                                                if (habit.linkedRoutineId && habit.linkedRoutineItemId) {
+                                                    const alsoRemoveItem = confirm('¿También eliminar la tarea vinculada de la rutina?');
+                                                    removeHabit(habit.id);
+                                                    if (alsoRemoveItem) {
+                                                        removeRoutineItem(habit.linkedRoutineId, habit.linkedRoutineItemId);
+                                                    }
+                                                } else {
+                                                    removeHabit(habit.id);
+                                                }
+                                            }
                                         }}
                                         style={{ cursor: 'pointer', opacity: 0.2, transition: 'opacity 0.2s' }}
                                         onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
@@ -341,7 +351,7 @@ export const VidaDashboard = ({
                                                 axis="y" 
                                                 values={rutina.items} 
                                                 onReorder={(newItems: any[]) => reorderRoutineItems(rutina.id, newItems)}
-                                                style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', listStyle: 'none', padding: 0 }}
+                                                style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '10px', listStyle: 'none', padding: 0 }}
                                             >
                                                 {rutina.items.map(item => {
                                                     const isDone = item.completed;
@@ -350,9 +360,9 @@ export const VidaDashboard = ({
                                                             key={item.id}
                                                             value={item}
                                                             style={{ 
-                                                                display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', 
-                                                                background: isDone ? '#F9F9F9' : 'transparent', borderRadius: '12px', 
-                                                                cursor: 'default', border: '1px solid #EEE',
+                                                                display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 8px', 
+                                                                background: isDone ? '#F9F9F9' : 'transparent', borderRadius: '10px', 
+                                                                cursor: 'default',
                                                                 listStyle: 'none'
                                                             }}
                                                         >
@@ -400,6 +410,38 @@ export const VidaDashboard = ({
                                                                     style={{ border: 'none', background: 'transparent', fontSize: '0.65rem', fontWeight: 850, color: '#555', outline: 'none', width: '45px' }}
                                                                 />
                                                             </div>
+
+                                                            {/* Boton Promover/Desvincular Habito */}
+                                                            {(() => {
+                                                                const linkedHabit = habits.find(h => h.linkedRoutineItemId === item.id && h.linkedRoutineId === rutina.id);
+                                                                const isLinked = !!linkedHabit;
+                                                                return (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            if (isLinked) {
+                                                                                // Desvincular: preguntar qué eliminar
+                                                                                if (confirm(`¿Quitar "${linkedHabit.name}" de los hábitos?`)) {
+                                                                                    const alsoRemoveItem = confirm('¿También eliminar esta tarea de la rutina?');
+                                                                                    removeHabit(linkedHabit.id);
+                                                                                    if (alsoRemoveItem) {
+                                                                                        removeRoutineItem(rutina.id, item.id);
+                                                                                    }
+                                                                                }
+                                                                            } else {
+                                                                                // Promover a hábito con vínculo
+                                                                                addHabit(item.text, rutina.repeatDays, rutina.id, item.id);
+                                                                            }
+                                                                        }}
+                                                                        title={isLinked ? 'Quitar de hábitos' : 'Convertir en hábito'}
+                                                                        style={{ background: isLinked ? 'rgba(168,218,220,0.15)' : 'transparent', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '3px 5px', opacity: 1, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '3px' }}
+                                                                        onMouseEnter={(e) => { e.currentTarget.style.background = isLinked ? 'rgba(168,218,220,0.3)' : 'rgba(0,0,0,0.06)'; }}
+                                                                        onMouseLeave={(e) => { e.currentTarget.style.background = isLinked ? 'rgba(168,218,220,0.15)' : 'transparent'; }}
+                                                                    >
+                                                                        <Leaf size={10} color={isLinked ? 'var(--domain-green)' : '#BBB'} fill={isLinked ? 'var(--domain-green)' : 'none'} />
+                                                                    </button>
+                                                                );
+                                                            })()}
 
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); removeRoutineItem(rutina.id, item.id); }}

@@ -519,7 +519,7 @@ export const TimelineAgendaView = ({
                                             // 3. Hábitos
                                             dayHabits.forEach((h: any) => {
                                                 allItems.push({
-                                                    id: `h-${h.id}`, type: 'habito', time: h.timeOfDay || '08:00', label: h.name, color: '#EC4899', raw: h, completed: h.history?.some((entry: any) => entry.date === todayStr) || false
+                                                    id: `h-${h.id}`, type: 'habito', time: h.timeOfDay || '08:00', label: h.name, color: '#EC4899', raw: h, completed: (h.completedDates || []).includes(todayStr)
                                                 });
                                             });
 
@@ -636,7 +636,7 @@ export const TimelineAgendaView = ({
                                             </div>
                                             
                                             {(() => {
-                                                const isCompleted = h.history?.some((entry: any) => entry.date === todayStr);
+                                                const isCompleted = (h.completedDates || []).includes(todayStr);
                                                 return (
                                                     <>
                                                         <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: isCompleted ? config.color : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '8px', zIndex: 1, boxShadow: '0 0 0 4px white', flexShrink: 0 }}>

@@ -97,6 +97,8 @@ export interface Habit {
     name: string;
     schedule: number[]; // Array de índices 0-6 (L-D) - Días que debe aparecer
     completedDates: string[]; // Array de fechas YYYY-MM-DD en que se completó
+    linkedRoutineId?: number;     // Rutina de origen (si fue promovido desde rutina)
+    linkedRoutineItemId?: number; // Ítem de rutina de origen
 }
 
 export interface TimeBlock {
@@ -216,6 +218,10 @@ export const useAlDiaState = () => {
     // Timestamp del último cambio local del usuario. Los snapshots de Firestore con lastSync
     // anterior a este valor serán ignorados para evitar sobreescribir cambios pendientes.
     const localWriteTimestampRef = useRef<number>(0);
+    // Timestamp del último snapshot recibido de Firestore.
+    // Si no hubo escritura local después de este punto, no re-guardamos (evita el echo-save
+    // que sobreescribía cambios del otro dispositivo).
+    const lastSnapshotTimestampRef = useRef<number>(0);
 
 
     // 2. Lógica de Sincronización Real-Time
@@ -312,9 +318,11 @@ export const useAlDiaState = () => {
                     setMonthlyBudget(prev => Math.abs(cloud.monthlyBudget - prev) > 0.01 ? Number(cloud.monthlyBudget) : prev);
                 }
 
+                lastSnapshotTimestampRef.current = Date.now();
                 setHasLoadedFromCloud(true);
                 setIsInitialLoad(false);
             } else {
+                lastSnapshotTimestampRef.current = Date.now();
                 setHasLoadedFromCloud(true);
                 setIsInitialLoad(false);
             }
@@ -359,26 +367,24 @@ export const useAlDiaState = () => {
         // Guardado Cloud debounced
         if (user) {
             const timer = setTimeout(() => {
+                // GUARD ANTI-ECHO: Solo guardar si hubo una escritura LOCAL
+                // después del último snapshot recibido. Esto evita que el
+                // dispositivo A re-envíe a Firestore datos que solo cambiaron
+                // porque recibió un snapshot del dispositivo B.
+                if (localWriteTimestampRef.current <= lastSnapshotTimestampRef.current) return;
+
                 const docRef = doc(db, 'users', user.uid);
                 const syncTimestamp = new Date().toISOString();
-
-                // Sanitizar payload usando latestStateRef para asegurar data fresca
                 const payload = JSON.parse(JSON.stringify({
                     ...latestStateRef.current,
                     lastSync: syncTimestamp
                 }));
-
                 setDoc(docRef, payload, { merge: true })
-                    .then(() => {
-                        // El snapshot que vuelva de Firestore tendrá lastSync = syncTimestamp
-                        // que será >= localWriteTimestampRef, así que pasará el filtro y sincronizará bien.
-                    })
                     .catch(error => {
                         console.error("🔥 Error crítico guardando en Firestore:", error);
                         alert("ERROR DE SINCRONIZACIÓN: No se pudo guardar en la nube. " + error.message);
                     });
             }, 2000);
-
             return () => clearTimeout(timer);
         }
     }, [user, isInitialLoad, hasLoadedFromCloud, misionesState, transactions, habits, agenda, notes, projects, rutinas, fixedExpenses, timeBlocks, monthlyBudget, accounts, preferences]);
@@ -458,21 +464,32 @@ export const useAlDiaState = () => {
         }
     };
 
+    // Helper: marca escritura local antes de cualquier mutación.
+    // Garantiza que el debounce de Firestore se active y que el guard anti-echo
+    // sepa que este cambio viene del usuario, no de un snapshot.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lw = <T extends any[]>(fn: (...args: T) => any) => (...args: T) => {
+        localWriteTimestampRef.current = Date.now();
+        return fn(...args);
+    };
+
     return {
         // Misiones
-        missions: misionesState, todayMissions, toggleMission, updateMission, addMission, removeMission, reorderMissions,
-        habits, toggleHabit, addHabit, removeHabit, agenda, addCalendarEvent, removeCalendarEvent, updateCalendarEvent,
+        missions: misionesState, todayMissions,
+        toggleMission: lw(toggleMission), updateMission: lw(updateMission),
+        addMission: lw(addMission), removeMission: lw(removeMission), reorderMissions: lw(reorderMissions),
+        habits, toggleHabit: lw(toggleHabit), addHabit: lw(addHabit), removeHabit: lw(removeHabit),
+        agenda, addCalendarEvent: lw(addCalendarEvent), removeCalendarEvent: lw(removeCalendarEvent), updateCalendarEvent: lw(updateCalendarEvent),
         performanceScore, missionFocusScore, completedMissionsCount,
         // Finanzas
         transactions, balance, todayIncome, todayExpense, todayNet, todayIncomeReal, todayExpenseReal,
         totalIncomeReal, totalExpenseReal, totalNetReal, debtsOwe, debtsOwed,
-        monthlyBudget, updateMonthlyBudget: (a: number) => setMonthlyBudget(a),
-        fixedExpenses, addFixedExpense, removeFixedExpense, toggleFixedExpense, updateFixedExpense, markFixedExpensePaid, unmarkFixedExpensePaid,
-        repayDebt: repayDebtBase,
-        addTransaction: (text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projId?: number, accId?: number, isCashless?: boolean, cat?: string, contact?: string) => {
-            // Marcar timestamp de escritura local ANTES de actualizar el estado
-            // para que el régimen de snapshot sepa que hay datos más nuevos que la nube
-            localWriteTimestampRef.current = Date.now();
+        monthlyBudget, updateMonthlyBudget: lw((a: number) => setMonthlyBudget(a)),
+        fixedExpenses, addFixedExpense: lw(addFixedExpense), removeFixedExpense: lw(removeFixedExpense),
+        toggleFixedExpense: lw(toggleFixedExpense), updateFixedExpense: lw(updateFixedExpense),
+        markFixedExpensePaid: lw(markFixedExpensePaid), unmarkFixedExpensePaid: lw(unmarkFixedExpensePaid),
+        repayDebt: lw(repayDebtBase),
+        addTransaction: lw((text: string, amount: number, type: 'ingreso' | 'gasto', isDebt: boolean, projId?: number, accId?: number, isCashless?: boolean, cat?: string, contact?: string) => {
             addTransaction(text, amount, type, isDebt, projId, accId, isCashless, cat, contact);
             if (projId && accId) {
                 setAccounts(prev => prev.map(acc => {
@@ -482,22 +499,26 @@ export const useAlDiaState = () => {
                     return acc;
                 }));
             }
-        },
-        removeTransaction, updateTransaction, updateTransactionGroup,
+        }),
+        removeTransaction: lw(removeTransaction), updateTransaction: lw(updateTransaction), updateTransactionGroup: lw(updateTransactionGroup),
         // Proyectos
-        projects, addProject, addProjectTask, toggleProjectTask, removeProjectTask, reorderProjectTasks, reorderProjects,
-        promoteTaskToRoutine, promoteNodeToRoutine, updateProject, deleteProject, updateProjectTask,
-        addInventoryItem, updateInventoryItemQuantity, removeInventoryItem,
-        addProjectObjective, updateProjectObjective, removeProjectObjective,
-        addProjectNode, updateProjectNode, removeProjectNode,
-        addProjectCategory, removeProjectCategory,
-        timeBlocks, addTimeBlock, removeTimeBlock, updateTimeBlock,
-        rutinas, addRoutineItem, updateRoutineItem, toggleRoutineItem, removeRoutineItem,
-        updateRoutine, addRoutine, removeRoutine, reorderRoutineItems,
+        projects, addProject: lw(addProject), addProjectTask: lw(addProjectTask),
+        toggleProjectTask: lw(toggleProjectTask), removeProjectTask: lw(removeProjectTask),
+        reorderProjectTasks: lw(reorderProjectTasks), reorderProjects: lw(reorderProjects),
+        promoteTaskToRoutine: lw(promoteTaskToRoutine), promoteNodeToRoutine: lw(promoteNodeToRoutine),
+        updateProject: lw(updateProject), deleteProject: lw(deleteProject), updateProjectTask: lw(updateProjectTask),
+        addInventoryItem: lw(addInventoryItem), updateInventoryItemQuantity: lw(updateInventoryItemQuantity), removeInventoryItem: lw(removeInventoryItem),
+        addProjectObjective: lw(addProjectObjective), updateProjectObjective: lw(updateProjectObjective), removeProjectObjective: lw(removeProjectObjective),
+        addProjectNode: lw(addProjectNode), updateProjectNode: lw(updateProjectNode), removeProjectNode: lw(removeProjectNode),
+        addProjectCategory: lw(addProjectCategory), removeProjectCategory: lw(removeProjectCategory),
+        timeBlocks, addTimeBlock: lw(addTimeBlock), removeTimeBlock: lw(removeTimeBlock), updateTimeBlock: lw(updateTimeBlock),
+        rutinas, addRoutineItem: lw(addRoutineItem), updateRoutineItem: lw(updateRoutineItem),
+        toggleRoutineItem: lw(toggleRoutineItem), removeRoutineItem: lw(removeRoutineItem),
+        updateRoutine: lw(updateRoutine), addRoutine: lw(addRoutine), removeRoutine: lw(removeRoutine), reorderRoutineItems: lw(reorderRoutineItems),
         // Otros
-        notes, addNote, removeNote, toggleNoteItem, updateNote,
-        accounts, setAccounts,
-        preferences, updatePreference: (key: keyof UserPreferences, value: any) => setPreferences(prev => ({ ...prev, [key]: value })),
+        notes, addNote: lw(addNote), removeNote: lw(removeNote), toggleNoteItem: lw(toggleNoteItem), updateNote: lw(updateNote),
+        accounts, setAccounts: lw(setAccounts),
+        preferences, updatePreference: lw((key: keyof UserPreferences, value: any) => setPreferences(prev => ({ ...prev, [key]: value }))),
         user, isInitialLoad, clearAllData
     };
 };

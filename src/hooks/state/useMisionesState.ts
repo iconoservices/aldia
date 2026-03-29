@@ -95,12 +95,14 @@ export const useMisionesState = () => {
         }));
     };
 
-    const addHabit = (name: string) => {
+    const addHabit = (name: string, schedule?: number[], linkedRoutineId?: number, linkedRoutineItemId?: number) => {
         const newHabit: Habit = {
             id: Date.now() + Math.random(),
             name,
-            schedule: [0, 1, 2, 3, 4, 5, 6], // Por defecto todos los días
-            completedDates: []
+            schedule: schedule || [0, 1, 2, 3, 4, 5, 6], // Por defecto todos los días
+            completedDates: [],
+            ...(linkedRoutineId !== undefined && { linkedRoutineId }),
+            ...(linkedRoutineItemId !== undefined && { linkedRoutineItemId })
         };
         setHabits(prev => [newHabit, ...prev]);
     };
