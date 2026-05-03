@@ -11,6 +11,7 @@ import { FinanzasDashboard } from './components/dashboard/FinanzasDashboard';
 import { StatsDashboard } from './components/dashboard/StatsDashboard';
 import { ProyectosDashboard } from './components/dashboard/ProyectosDashboard';
 import { ProjectDetailView } from './components/dashboard/ProjectDetailView';
+import { ProjectsKanbanView } from './components/dashboard/ProjectsKanbanView';
 import { TimelineAgendaView } from './components/dashboard/TimelineAgendaView';
 import { SuperFab } from './components/features/SuperFab';
 import { NoteDetailView } from './components/dashboard/NoteDetailView';
@@ -202,6 +203,15 @@ function App() {
                 updateProject={state.updateProject}
                 onOpenDetail={(id: number) => setSelectedProjectDetailId(id)}
                 reorderProjects={state.reorderProjects}
+              />
+            ) : activeTab === 'Tablero' ? (
+              <ProjectsKanbanView 
+                projects={state.projects}
+                addProjectTask={state.addProjectTask}
+                toggleProjectTask={state.toggleProjectTask}
+                removeProjectTask={state.removeProjectTask}
+                updateProjectTask={state.updateProjectTask}
+                reorderProjectTasks={state.reorderProjectTasks}
               />
             ) : activeTab === 'Stats' ? (
               <StatsDashboard
