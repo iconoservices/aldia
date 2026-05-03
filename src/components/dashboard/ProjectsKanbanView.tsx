@@ -8,7 +8,7 @@ interface ProjectsKanbanViewProps {
     addProjectTask: (projectId: number, text: string) => void;
     toggleProjectTask: (projectId: number, taskId: number) => void;
     removeProjectTask: (projectId: number, taskId: number) => void;
-    updateProjectTask: (projectId: number, taskId: number, newText: string) => void;
+    updateProjectTask: (projectId: number, taskId: number, updates: Partial<{ text: string; completed: boolean }>) => void;
     reorderProjectTasks: (projectId: number, newTasks: any[]) => void;
 }
 
@@ -91,7 +91,7 @@ const ProjectColumn = ({
 
     const handleUpdateTask = (taskId: number) => {
         if (editTaskText.trim()) {
-            updateProjectTask(project.id, taskId, editTaskText.trim());
+            updateProjectTask(project.id, taskId, { text: editTaskText.trim() });
         }
         setEditingTaskId(null);
     };
